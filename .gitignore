@@ -1,0 +1,36 @@
+# Env
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# Laravel/PHP
+/vendor/
+/storage/*.key
+/storage/logs/*.log
+/bootstrap/cache/*.php
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Build/test
+coverage/
+.phpunit.cache/
+
+# Misc
+*.log
+*.cache
+*.tmp
+docs/*
+docs/
+AGENTS.md
+PACK_MANIFEST.md
+
+

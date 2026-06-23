@@ -1,0 +1,14 @@
+{
+  "name": "educonnect",
+  "private": true,
+  "version": "0.1.0",
+  "description": "EduConnect MVP monorepo: Laravel API, Next.js web app, Next.js admin console, shared docs and engineering rules.",
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "docs:check": "echo 'Docs-only pack. Initialize apps before running app scripts.'"
+  }
+}

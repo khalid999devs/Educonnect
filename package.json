@@ -2,13 +2,22 @@
   "name": "educonnect",
   "private": true,
   "version": "0.1.0",
-  "description": "EduConnect MVP monorepo: Laravel API, Next.js web app, Next.js admin console, shared docs and engineering rules.",
-  "packageManager": "pnpm@10.17.0",
+  "description": "EduConnect MVP monorepo with a Laravel API and separate planned student and administration surfaces.",
+  "packageManager": "pnpm@11.11.0",
   "engines": {
-    "node": ">=24 <25",
-    "pnpm": ">=10"
+    "node": "24.18.0",
+    "pnpm": "11.11.0"
   },
   "scripts": {
-    "docs:check": "echo 'Docs-only pack. Initialize apps before running app scripts.'"
+    "versions:check": "node scripts/verify-toolchain.mjs",
+    "install:all": "pnpm install --frozen-lockfile && composer --working-dir=apps/api install --no-interaction --prefer-dist --no-progress",
+    "format": "pnpm --recursive --if-present run format && composer --working-dir=apps/api exec pint",
+    "format:check": "pnpm --recursive --if-present run format:check && composer --working-dir=apps/api exec pint -- --test",
+    "lint": "pnpm --recursive --if-present run lint",
+    "typecheck": "pnpm --recursive --if-present run typecheck",
+    "test": "composer --working-dir=apps/api test && pnpm --recursive --if-present run test",
+    "build": "pnpm --recursive --if-present run build",
+    "audit": "pnpm audit --audit-level=high && composer --working-dir=apps/api audit --locked --no-interaction",
+    "check": "pnpm run versions:check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   }
 }

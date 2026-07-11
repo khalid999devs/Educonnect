@@ -4,18 +4,26 @@ The EduConnect API is a Laravel 13 modular-monolith backend for the public websi
 
 ## Requirements
 
-- PHP 8.5
-- Composer 2.x
-- PostgreSQL 18.x
+- PHP 8.5.8
+- Composer 2.10.2
+- PostgreSQL 18.4
+- Node.js 24.18.0 and pnpm 11.11.0 for the Vite asset pipeline
 - Redis or Valkey for production cache and queues
 - S3-compatible private object storage for production files
 
 ## Local Setup
 
-Install dependencies and create local environment configuration from the provided example:
+From the repository root, activate Corepack and install both lock-backed dependency sets:
 
 ```bash
-composer install
+corepack enable
+pnpm run install:all
+```
+
+Then create local API configuration from the provided example:
+
+```bash
+cd apps/api
 cp .env.example .env
 php artisan key:generate
 ```
@@ -70,5 +78,7 @@ composer exec pint -- --test
 composer validate --strict
 composer check-platform-reqs
 ```
+
+From the repository root, `pnpm run check` runs these backend checks together with toolchain verification and the current workspace asset build.
 
 The API must remain independently runnable and must not contain frontend or administration interface code.

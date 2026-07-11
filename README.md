@@ -34,7 +34,7 @@ educonnect/
 ├── packages/
 │   └── ui/        Shared interface components when needed
 ├── infra/
-│   └── docker/    Local infrastructure configuration
+│   └── docker/    Reserved for phase-owned local infrastructure
 └── .github/       Repository automation and contribution templates
 ```
 
@@ -44,83 +44,93 @@ The backend is a Laravel modular monolith. Business capabilities remain separate
 
 | Layer | Technology |
 |---|---|
-| Backend | Laravel 13.x |
-| Backend runtime | PHP 8.5 preferred, PHP 8.4 fallback |
-| Database | PostgreSQL 18.x |
+| Backend | Laravel 13.17.0 |
+| Backend runtime | PHP 8.5.8 |
+| Database | PostgreSQL 18.4 |
 | Cache and queues | Redis or Valkey |
 | Object storage | Cloudflare R2 or another S3-compatible service |
-| Web applications | Next.js 16.x and React 19.x |
-| Frontend language | TypeScript 5.x |
-| Styling | Tailwind CSS 4.x and shadcn/ui |
-| Node runtime | Node.js 24 LTS |
-| Package manager | pnpm 10.x |
+| Web application targets | Next.js 16.2.x and React 19.2.x |
+| Frontend language target | TypeScript 6.0.x |
+| Styling target | Tailwind CSS 4.3.x and shadcn/ui |
+| Node runtime | Node.js 24.18.0 LTS |
+| Package manager | pnpm 11.11.0 |
 
 ## Current Status
 
-EduConnect is under active MVP development. The Laravel 13 API foundation is initialized and verified. Student web and administration applications will be introduced after the required backend foundations and API contracts are ready.
+EduConnect is under active MVP development. A Laravel 13 API and partial first-party authentication foundation exist, but the API, data, and authentication phases still require reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
 
 ## Requirements
 
 Install the following supported toolchain before developing locally:
 
-- PHP 8.5
-- Composer 2.x
-- PostgreSQL 18.x
-- Node.js 24 LTS
-- pnpm 10.x
+- PHP 8.5.8
+- Composer 2.10.2
+- PostgreSQL 18.4
+- Node.js 24.18.0 LTS
+- pnpm 11.11.0 through Corepack
 - Redis or Valkey when queue and cache-backed features are enabled
 
-## Backend Development
+## Fresh-clone setup
 
-Install backend dependencies:
+Activate the package manager pinned in `package.json`, then install the lock-backed JavaScript and PHP dependencies:
+
+```bash
+corepack enable
+pnpm run install:all
+```
+
+Create the isolated local PostgreSQL databases once:
+
+```bash
+createdb educonnect
+createdb educonnect_test
+```
+
+Create `apps/api/.env` from `apps/api/.env.example`, set the local PostgreSQL connection without committing credentials, then initialize the API:
 
 ```bash
 cd apps/api
-composer install
-```
-
-Create local runtime configuration from the provided example, set the required service values, generate an application key, and apply migrations:
-
-```bash
+cp .env.example .env
 php artisan key:generate
 php artisan migrate
 ```
 
-Start the local API server:
+Do not run destructive migration commands against an unknown or shared database.
 
-```bash
-php artisan serve
-```
+## Backend development
 
-## Quality Checks
-
-Run backend tests:
+Start the API from `apps/api`:
 
 ```bash
 cd apps/api
-php artisan test
+php artisan serve
 ```
 
-Check backend formatting:
+The combined API/queue/log/Vite development command remains available through `composer run dev` after dependencies and local services are configured.
+
+## Quality checks
+
+Run the complete currently available workspace baseline from the repository root:
 
 ```bash
-composer exec pint -- --test
+pnpm run check
+pnpm run audit
 ```
 
-Validate backend dependencies:
+The baseline verifies exact toolchain pins, PHP formatting, all registered workspace lint/type-check/test scripts, PostgreSQL-backed Laravel tests, and the production asset build. `pnpm run lint` and `pnpm run typecheck` are intentional no-op fan-outs today because no JavaScript/TypeScript workspace defines those scripts; they begin running automatically when future applications introduce them.
+
+The current Laravel asset build bundles Instrument Sans from Bunny Fonts and therefore requires outbound access to `fonts.bunny.net`.
+
+Useful targeted commands:
 
 ```bash
-composer validate --strict
-composer check-platform-reqs
-composer audit --locked
-```
-
-Verify the JavaScript toolchain from the repository root:
-
-```bash
-node --version
-pnpm --version
-pnpm list --recursive --depth -1
+pnpm run versions:check
+pnpm run format:check
+pnpm run typecheck
+pnpm run test
+pnpm run build
+composer --working-dir=apps/api validate --strict
+composer --working-dir=apps/api check-platform-reqs
 ```
 
 ## Engineering Principles

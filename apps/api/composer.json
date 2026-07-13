@@ -8,8 +8,7 @@
     "require": {
         "php": "^8.5",
         "laravel/framework": "^13.0",
-        "laravel/sanctum": "^4.3",
-        "laravel/tinker": "^3.0"
+        "laravel/sanctum": "^4.3"
     },
     "require-dev": {
         "devizzent/cebe-php-openapi": "^1.1.5",
@@ -57,26 +56,14 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
-    "extra": {
-        "laravel": {
-            "dont-discover": []
-        }
-    },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
+        "sort-packages": true
     },
     "minimum-stability": "stable",
     "prefer-stable": true

@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Domains\Auth\Actions\RegisterUserAction;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
-final class RegisterController extends Controller
+final class RegisterController
 {
     public function __invoke(RegisterRequest $request, RegisterUserAction $registerUser): JsonResponse
     {

@@ -57,7 +57,7 @@ The backend is a Laravel modular monolith. Business capabilities remain separate
 
 ## Current Status
 
-EduConnect is under active MVP development. The Laravel 13 API foundation is reconciled and partial first-party authentication exists; the data and authentication phases still require reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
+EduConnect is under active MVP development. The Laravel 13 API and PostgreSQL data foundations are reconciled, and partial first-party authentication exists; authentication still requires reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
 
 ## Requirements
 

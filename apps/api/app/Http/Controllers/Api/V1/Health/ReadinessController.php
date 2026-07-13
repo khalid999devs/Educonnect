@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Health;
 
-use App\Http\Controllers\Controller;
 use App\Support\ApiErrorCode;
 use App\Support\ApiResponse;
 use App\Support\Health\ReadinessCheck;
@@ -12,7 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class ReadinessController extends Controller
+final class ReadinessController
 {
     public function __invoke(ReadinessCheck $readiness): JsonResponse
     {

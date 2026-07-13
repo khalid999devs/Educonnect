@@ -14,9 +14,12 @@ final class ApiOnlyStructureTest extends TestCase
             'package.json',
             'vite.config.js',
             'routes/web.php',
+            'routes/console.php',
             'resources/css/app.css',
             'resources/js/app.js',
             'resources/views/welcome.blade.php',
+            'app/Http/Controllers/Controller.php',
+            'config/services.php',
             'public/favicon.ico',
             'public/robots.txt',
         ] as $relativePath) {
@@ -35,6 +38,24 @@ final class ApiOnlyStructureTest extends TestCase
         $this->assertFalse((bool) data_get($disks, 'local.serve', false));
         $this->assertFalse((bool) data_get($disks, 'public.serve', false));
         $this->assertSame([], config('filesystems.links'));
+    }
+
+    public function test_runtime_configuration_excludes_unsupported_scaffold_drivers(): void
+    {
+        $mailers = config('mail.mailers');
+        $cacheStores = config('cache.stores');
+        $queueConnections = config('queue.connections');
+        $logChannels = config('logging.channels');
+
+        $this->assertIsArray($mailers);
+        $this->assertIsArray($cacheStores);
+        $this->assertIsArray($queueConnections);
+        $this->assertIsArray($logChannels);
+        $this->assertSame(['smtp', 'log', 'array'], array_keys($mailers));
+        $this->assertSame(['array', 'database', 'redis'], array_keys($cacheStores));
+        $this->assertSame(['sync', 'database', 'redis'], array_keys($queueConnections));
+        $this->assertSame(['stack', 'single', 'stderr', 'null', 'emergency'], array_keys($logChannels));
+        $this->assertSame([], config('services'));
     }
 
     private function applicationRoot(): string

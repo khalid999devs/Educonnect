@@ -91,6 +91,16 @@ composer check-platform-reqs
 
 The Phase 03 OpenAPI contract is stored at `openapi.yaml`; focused feature tests validate real liveness/readiness requests and responses against it. Authentication routes remain outside that contract until their dedicated reconciliation phase.
 
+## Data Foundation
+
+- PostgreSQL is the only supported relational database.
+- Database sessions and application datetimes use UTC; SQL datetime columns use PostgreSQL `timestamptz` semantics.
+- Bigint primary and foreign keys remain internal. Externally exposed aggregate identifiers are immutable lowercase ULIDs.
+- Email values are stored as trimmed lowercase values and protected by PostgreSQL constraints.
+- Default seeding never creates a user account. Reference data is introduced only with its owning feature.
+
+When upgrading a non-empty schema created before the Phase 04 migrations, first verify that every legacy `timestamp without time zone` value represents UTC. Then set `DB_LEGACY_TIMESTAMP_TIMEZONE=UTC`, clear any cached configuration, and run the migrations. Leave the variable blank otherwise. The Phase 04 entry migration stops before its first write when legacy timestamp provenance has not been explicitly verified.
+
 From the repository root, `pnpm run check` runs these backend checks together with toolchain verification and any scripts owned by future web/admin/shared workspace packages.
 
 The API is independently runnable and intentionally contains no Blade application views, frontend asset pipeline, or administration interface code.

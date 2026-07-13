@@ -50,7 +50,7 @@ final class AuthenticationTest extends TestCase
 
         $response
             ->assertCreated()
-            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.id', $user->public_id)
             ->assertJsonPath('data.user.name', 'Khalid Ahammed')
             ->assertJsonPath('data.user.email', 'khalid@example.com')
             ->assertJsonPath('data.user.primary_role', null)
@@ -115,7 +115,7 @@ final class AuthenticationTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.id', $user->public_id)
             ->assertJsonPath('data.user.name', $user->name)
             ->assertJsonPath('data.user.email', 'student@example.com')
             ->assertJsonPath('data.user.primary_role', null);
@@ -172,7 +172,7 @@ final class AuthenticationTest extends TestCase
 
         $currentUser
             ->assertOk()
-            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.id', $user->public_id)
             ->assertJsonMissingPath('data.user.password');
 
         $this->assertSuccessRequestId($currentUser);

@@ -12,7 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
         apiPrefix: 'api/v1',
         then: function (): void {
             Route::middleware('api')->group(base_path('routes/health.php'));

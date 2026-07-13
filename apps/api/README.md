@@ -7,23 +7,21 @@ The EduConnect API is a Laravel 13 modular-monolith backend for the public websi
 - PHP 8.5.8
 - Composer 2.10.2
 - PostgreSQL 18.4
-- Node.js 24.18.0 and pnpm 11.11.0 for the Vite asset pipeline
 - Redis or Valkey for production cache and queues
 - S3-compatible private object storage for production files
 
 ## Local Setup
 
-From the repository root, activate Corepack and install both lock-backed dependency sets:
-
-```bash
-corepack enable
-pnpm run install:all
-```
-
-Then create local API configuration from the provided example:
+Install the API dependencies directly:
 
 ```bash
 cd apps/api
+composer install
+```
+
+Alternatively, the root `pnpm run install:all` command installs all current workspace dependencies. Then create local API configuration from the provided example:
+
+```bash
 cp .env.example .env
 php artisan key:generate
 ```
@@ -93,6 +91,6 @@ composer check-platform-reqs
 
 The Phase 03 OpenAPI contract is stored at `openapi.yaml`; focused feature tests validate real liveness/readiness requests and responses against it. Authentication routes remain outside that contract until their dedicated reconciliation phase.
 
-From the repository root, `pnpm run check` runs these backend checks together with toolchain verification and the current workspace asset build.
+From the repository root, `pnpm run check` runs these backend checks together with toolchain verification and any scripts owned by future web/admin/shared workspace packages.
 
-The API must remain independently runnable and must not contain frontend or administration interface code.
+The API is independently runnable and intentionally contains no Blade application views, frontend asset pipeline, or administration interface code.

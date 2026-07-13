@@ -57,7 +57,7 @@ The backend is a Laravel modular monolith. Business capabilities remain separate
 
 ## Current Status
 
-EduConnect is under active MVP development. A Laravel 13 API and partial first-party authentication foundation exist, but the API, data, and authentication phases still require reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
+EduConnect is under active MVP development. The Laravel 13 API foundation is reconciled and partial first-party authentication exists; the data and authentication phases still require reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
 
 ## Requirements
 
@@ -72,7 +72,7 @@ Install the following supported toolchain before developing locally:
 
 ## Fresh-clone setup
 
-Activate the package manager pinned in `package.json`, then install the lock-backed JavaScript and PHP dependencies:
+Activate the package manager pinned in `package.json`, then install the workspace metadata and lock-backed PHP dependencies:
 
 ```bash
 corepack enable
@@ -106,7 +106,7 @@ cd apps/api
 php artisan serve
 ```
 
-The combined API/queue/log/Vite development command remains available through `composer run dev` after dependencies and local services are configured.
+`composer run dev` is an API-server shortcut. Start `php artisan queue:listen` or `php artisan pail` in separate terminals only when that backend work is needed.
 
 ## Quality checks
 
@@ -117,7 +117,7 @@ pnpm run check
 pnpm run audit
 ```
 
-The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test scripts, PostgreSQL-backed Laravel tests, and the production asset build. `pnpm run lint` and `pnpm run typecheck` are intentional no-op JavaScript/TypeScript fan-outs today; they begin running automatically when future applications introduce those scripts.
+The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test/build scripts, and PostgreSQL-backed Laravel tests. The JavaScript/TypeScript fan-outs are intentional no-ops until the separate web, admin, or shared packages introduce their own scripts.
 
 Useful targeted commands:
 

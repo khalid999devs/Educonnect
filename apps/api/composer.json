@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "educonnect/api",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "EduConnect Laravel API and worker application.",
+    "keywords": ["educonnect", "laravel", "api"],
     "license": "MIT",
     "require": {
         "php": "^8.5",
@@ -12,13 +12,17 @@
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
+        "devizzent/cebe-php-openapi": "^1.1.5",
         "fakerphp/faker": "^1.23",
+        "kirschbaum-development/laravel-openapi-validator": "^2.0.2",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
         "laravel/pint": "^1.27",
+        "larastan/larastan": "^3.10.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^12.5.12"
+        "phpunit/phpunit": "^12.5.12",
+        "symfony/yaml": "^8.1.1"
     },
     "autoload": {
         "psr-4": {
@@ -33,6 +37,8 @@
         }
     },
     "scripts": {
+        "analyse": "@php vendor/bin/phpstan analyse --debug --no-progress --memory-limit=1G",
+        "contract:validate": "@php vendor/bin/php-openapi validate openapi.yaml",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

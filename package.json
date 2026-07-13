@@ -13,11 +13,13 @@
     "install:all": "pnpm install --frozen-lockfile && composer --working-dir=apps/api install --no-interaction --prefer-dist --no-progress",
     "format": "pnpm --recursive --if-present run format && composer --working-dir=apps/api exec pint",
     "format:check": "pnpm --recursive --if-present run format:check && composer --working-dir=apps/api exec pint -- --test",
+    "analyse": "composer --working-dir=apps/api analyse",
+    "contracts:check": "composer --working-dir=apps/api contract:validate",
     "lint": "pnpm --recursive --if-present run lint",
     "typecheck": "pnpm --recursive --if-present run typecheck",
     "test": "composer --working-dir=apps/api test && pnpm --recursive --if-present run test",
     "build": "pnpm --recursive --if-present run build",
     "audit": "pnpm audit --audit-level=high && composer --working-dir=apps/api audit --locked --no-interaction",
-    "check": "pnpm run versions:check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+    "check": "pnpm run versions:check && pnpm run format:check && pnpm run analyse && pnpm run contracts:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   }
 }

@@ -117,15 +117,15 @@ pnpm run check
 pnpm run audit
 ```
 
-The baseline verifies exact toolchain pins, PHP formatting, all registered workspace lint/type-check/test scripts, PostgreSQL-backed Laravel tests, and the production asset build. `pnpm run lint` and `pnpm run typecheck` are intentional no-op fan-outs today because no JavaScript/TypeScript workspace defines those scripts; they begin running automatically when future applications introduce them.
-
-The current Laravel asset build bundles Instrument Sans from Bunny Fonts and therefore requires outbound access to `fonts.bunny.net`.
+The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test scripts, PostgreSQL-backed Laravel tests, and the production asset build. `pnpm run lint` and `pnpm run typecheck` are intentional no-op JavaScript/TypeScript fan-outs today; they begin running automatically when future applications introduce those scripts.
 
 Useful targeted commands:
 
 ```bash
 pnpm run versions:check
 pnpm run format:check
+pnpm run analyse
+pnpm run contracts:check
 pnpm run typecheck
 pnpm run test
 pnpm run build

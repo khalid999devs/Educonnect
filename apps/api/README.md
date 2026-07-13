@@ -49,6 +49,14 @@ Start the API:
 php artisan serve
 ```
 
+Foundation operational endpoints are available at:
+
+- `GET /api/v1/health` for process liveness;
+- `GET /api/v1/health/readiness` for application and PostgreSQL readiness;
+- `GET /api/health` as a temporary compatibility alias.
+
+The probes do not start a first-party Sanctum session, so liveness is independent of the session backend. Every JSON API response includes a server-generated `X-Request-ID` header and matching request ID in its success or error envelope.
+
 ## Local Service Defaults
 
 Local development uses:
@@ -59,6 +67,8 @@ Local development uses:
 - Logged mail delivery
 
 Production environments should switch cache and queues to Redis or Valkey and file storage to the configured private S3-compatible disk.
+
+Production boot fails clearly unless `APP_KEY` is valid, `APP_DEBUG=false`, `APP_URL` uses HTTPS, and `DB_CONNECTION=pgsql`. Session cookie/origin topology is configured separately when the authentication phase is reconciled.
 
 Cloudflare R2 can use the standard S3 variables. Set the region to `auto`, provide the bucket and account endpoint, and keep credentials outside source control.
 
@@ -75,9 +85,13 @@ The test suite forces the `pgsql` connection and `educonnect_test` database name
 ```bash
 php artisan test
 composer exec pint -- --test
+composer analyse
+composer contract:validate
 composer validate --strict
 composer check-platform-reqs
 ```
+
+The Phase 03 OpenAPI contract is stored at `openapi.yaml`; focused feature tests validate real liveness/readiness requests and responses against it. Authentication routes remain outside that contract until their dedicated reconciliation phase.
 
 From the repository root, `pnpm run check` runs these backend checks together with toolchain verification and the current workspace asset build.
 

@@ -11,12 +11,47 @@ final class ApiResponse
      */
     public static function success(mixed $data, array $meta = [], int $status = 200): JsonResponse
     {
-        $payload = ['data' => $data];
+        $requestId = RequestId::getOrCreate(request());
+        $payload = [
+            'data' => $data,
+            'meta' => [
+                ...$meta,
+                'request_id' => $requestId,
+            ],
+        ];
 
-        if ($meta !== []) {
-            $payload['meta'] = $meta;
+        $response = response()->json($payload, $status);
+        RequestId::attach($response, $requestId);
+
+        return $response;
+    }
+
+    /**
+     * @param  array<string, mixed>  $details
+     * @param  array<string, string|array<int, string>>  $headers
+     */
+    public static function error(
+        ApiErrorCode $code,
+        string $message,
+        int $status,
+        array $details = [],
+        array $headers = [],
+    ): JsonResponse {
+        $requestId = RequestId::getOrCreate(request());
+        $error = [
+            'code' => $code->value,
+            'message' => $message,
+        ];
+
+        if ($details !== []) {
+            $error['details'] = $details;
         }
 
-        return response()->json($payload, $status);
+        $error['request_id'] = $requestId;
+
+        $response = response()->json(['error' => $error], $status, $headers);
+        RequestId::attach($response, $requestId);
+
+        return $response;
     }
 }

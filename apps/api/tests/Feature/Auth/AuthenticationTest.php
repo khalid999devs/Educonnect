@@ -1,14 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Auth;
 
 use App\Domains\Users\Models\User;
+use App\Support\ApiErrorCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\Concerns\AssertsApiResponses;
 use Tests\TestCase;
 
 final class AuthenticationTest extends TestCase
 {
+    use AssertsApiResponses;
     use RefreshDatabase;
 
     public function test_first_party_spa_can_initialize_csrf_protection(): void
@@ -23,14 +28,13 @@ final class AuthenticationTest extends TestCase
 
     public function test_auth_endpoints_reject_requests_without_a_stateful_spa_session(): void
     {
-        $this->postJson('/api/v1/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => 'student@example.com',
             'password' => 'secret123',
-        ])
-            ->assertBadRequest()
-            ->assertExactJson([
-                'message' => 'A stateful SPA session is required.',
-            ]);
+        ]);
+
+        $this->assertApiError($response, 400, ApiErrorCode::BadRequest);
+        $response->assertJsonPath('error.message', 'The request could not be processed.');
     }
 
     public function test_student_can_register_and_start_an_authenticated_session(): void
@@ -46,47 +50,52 @@ final class AuthenticationTest extends TestCase
 
         $response
             ->assertCreated()
-            ->assertExactJson([
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => 'Khalid Ahammed',
-                        'email' => 'khalid@example.com',
-                        'primary_role' => null,
-                    ],
-                ],
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.name', 'Khalid Ahammed')
+            ->assertJsonPath('data.user.email', 'khalid@example.com')
+            ->assertJsonPath('data.user.primary_role', null)
+            ->assertJsonStructure([
+                'data' => ['user'],
+                'meta' => ['request_id'],
             ]);
 
+        $this->assertSuccessRequestId($response);
         $this->assertTrue(Hash::check('secret123', $user->password));
         $this->assertAuthenticatedAs($user);
     }
 
     public function test_registration_validates_required_fields_and_password_confirmation(): void
     {
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/register', [
-                'name' => '',
-                'email' => 'not-an-email',
-                'password' => 'short',
-                'password_confirmation' => 'different',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email', 'password']);
+        $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/register', [
+            'name' => '',
+            'email' => 'not-an-email',
+            'password' => 'short',
+            'password_confirmation' => 'different',
+        ]);
+
+        $this->assertApiError($response, 422, ApiErrorCode::ValidationFailed);
+        $response->assertJsonStructure([
+            'error' => [
+                'details' => [
+                    'fields' => ['name', 'email', 'password'],
+                ],
+            ],
+        ]);
     }
 
     public function test_registration_rejects_duplicate_email_case_insensitively(): void
     {
         User::factory()->create(['email' => 'student@example.com']);
 
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/register', [
-                'name' => 'Another Student',
-                'email' => 'STUDENT@example.com',
-                'password' => 'secret123',
-                'password_confirmation' => 'secret123',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email']);
+        $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/register', [
+            'name' => 'Another Student',
+            'email' => 'STUDENT@example.com',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+
+        $this->assertApiError($response, 422, ApiErrorCode::ValidationFailed);
+        $response->assertJsonStructure(['error' => ['details' => ['fields' => ['email']]]]);
 
         $this->assertDatabaseCount('users', 1);
     }
@@ -99,22 +108,19 @@ final class AuthenticationTest extends TestCase
             'last_login_at' => null,
         ]);
 
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/login', [
-                'email' => 'STUDENT@example.com',
-                'password' => 'secret123',
-            ])
+        $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/login', [
+            'email' => 'STUDENT@example.com',
+            'password' => 'secret123',
+        ]);
+
+        $response
             ->assertOk()
-            ->assertExactJson([
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => 'student@example.com',
-                        'primary_role' => null,
-                    ],
-                ],
-            ]);
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.name', $user->name)
+            ->assertJsonPath('data.user.email', 'student@example.com')
+            ->assertJsonPath('data.user.primary_role', null);
+
+        $this->assertSuccessRequestId($response);
 
         $this->assertAuthenticatedAs($user);
         $this->assertNotNull($user->refresh()->last_login_at);
@@ -137,10 +143,13 @@ final class AuthenticationTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
-        $unknownEmail->assertUnprocessable()->assertJsonValidationErrors(['email']);
-        $wrongPassword->assertUnprocessable()->assertJsonValidationErrors(['email']);
+        $this->assertApiError($unknownEmail, 422, ApiErrorCode::ValidationFailed);
+        $this->assertApiError($wrongPassword, 422, ApiErrorCode::ValidationFailed);
 
-        $this->assertSame($unknownEmail->json('errors.email.0'), $wrongPassword->json('errors.email.0'));
+        $this->assertSame(
+            $unknownEmail->json('error.details.fields.email.0'),
+            $wrongPassword->json('error.details.fields.email.0'),
+        );
         $this->assertGuest('web');
     }
 
@@ -158,48 +167,58 @@ final class AuthenticationTest extends TestCase
             ])
             ->assertOk();
 
-        $this->withHeaders($this->statefulHeaders())
-            ->getJson('/api/v1/auth/me')
+        $currentUser = $this->withHeaders($this->statefulHeaders())
+            ->getJson('/api/v1/auth/me');
+
+        $currentUser
             ->assertOk()
             ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonMissingPath('data.user.password');
 
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/logout')
+        $this->assertSuccessRequestId($currentUser);
+
+        $logout = $this->withHeaders($this->statefulHeaders())
+            ->postJson('/api/v1/auth/logout');
+
+        $logout
             ->assertOk()
-            ->assertExactJson(['data' => null]);
+            ->assertJsonPath('data', null);
+
+        $this->assertSuccessRequestId($logout);
 
         $this->assertGuest('web');
     }
 
     public function test_unauthenticated_users_cannot_access_protected_auth_endpoints(): void
     {
-        $this->withHeaders($this->statefulHeaders())
-            ->getJson('/api/v1/auth/me')
-            ->assertUnauthorized();
+        $currentUser = $this->withHeaders($this->statefulHeaders())
+            ->getJson('/api/v1/auth/me');
 
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/logout')
-            ->assertUnauthorized();
+        $logout = $this->withHeaders($this->statefulHeaders())
+            ->postJson('/api/v1/auth/logout');
+
+        $this->assertApiError($currentUser, 401, ApiErrorCode::AuthenticationRequired);
+        $this->assertApiError($logout, 401, ApiErrorCode::AuthenticationRequired);
     }
 
     public function test_login_is_rate_limited(): void
     {
         for ($attempt = 1; $attempt <= 5; $attempt++) {
-            $this->withHeaders($this->statefulHeaders())
-                ->postJson('/api/v1/auth/login', [
-                    'email' => 'student@example.com',
-                    'password' => 'wrong-password',
-                ])
-                ->assertUnprocessable();
-        }
-
-        $this->withHeaders($this->statefulHeaders())
-            ->postJson('/api/v1/auth/login', [
+            $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/login', [
                 'email' => 'student@example.com',
                 'password' => 'wrong-password',
-            ])
-            ->assertTooManyRequests();
+            ]);
+
+            $this->assertApiError($response, 422, ApiErrorCode::ValidationFailed);
+        }
+
+        $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/login', [
+            'email' => 'student@example.com',
+            'password' => 'wrong-password',
+        ]);
+
+        $this->assertApiError($response, 429, ApiErrorCode::RateLimited);
+        $this->assertNotNull($response->headers->get('Retry-After'));
     }
 
     /**

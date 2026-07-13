@@ -1,0 +1,189 @@
+openapi: 3.0.4
+info:
+  title: EduConnect API Foundation
+  version: 1.0.0
+  description: >-
+    Canonical Phase 03 liveness, readiness, request-ID, and response-envelope
+    contracts. Authentication endpoints are intentionally excluded until their
+    Phase 05 reconciliation.
+tags:
+  - name: Health
+    description: Process liveness and dependency readiness probes.
+paths:
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      operationId: getApiLiveness
+      summary: Report API process liveness
+      responses:
+        '200':
+          description: The API process is running.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessSuccess'
+              example:
+                data:
+                  status: up
+                meta:
+                  request_id: req_00000000000000000000000000000000
+  /api/v1/health/readiness:
+    get:
+      tags:
+        - Health
+      operationId: getApiReadiness
+      summary: Report API dependency readiness
+      responses:
+        '200':
+          description: The API and its required dependencies are ready.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessSuccess'
+              example:
+                data:
+                  status: ready
+                  checks:
+                    database: up
+                meta:
+                  request_id: req_11111111111111111111111111111111
+        '503':
+          description: A required dependency is unavailable.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceUnavailableError'
+              example:
+                error:
+                  code: SERVICE_UNAVAILABLE
+                  message: The service is not ready to receive traffic.
+                  request_id: req_22222222222222222222222222222222
+components:
+  headers:
+    RequestId:
+      description: Correlates the response body with request-scoped logs.
+      required: true
+      schema:
+        $ref: '#/components/schemas/RequestId'
+  schemas:
+    RequestId:
+      type: string
+      description: A non-semantic, request-scoped correlation identifier.
+      pattern: '^req_[a-f0-9]{32}$'
+      example: req_0123456789abcdef0123456789abcdef
+    ResponseMeta:
+      type: object
+      required:
+        - request_id
+      additionalProperties: false
+      properties:
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    SuccessEnvelope:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ErrorBody:
+      type: object
+      required:
+        - code
+        - message
+        - request_id
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_]*$'
+        message:
+          type: string
+          minLength: 1
+        details:
+          type: object
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      additionalProperties: false
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    LivenessData:
+      type: object
+      required:
+        - status
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+            - up
+    LivenessSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LivenessData'
+    ReadinessChecks:
+      type: object
+      required:
+        - database
+      additionalProperties: false
+      properties:
+        database:
+          type: string
+          enum:
+            - up
+    ReadinessData:
+      type: object
+      required:
+        - status
+        - checks
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+        checks:
+          $ref: '#/components/schemas/ReadinessChecks'
+    ReadinessSuccess:
+      allOf:
+        - $ref: '#/components/schemas/SuccessEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ReadinessData'
+    ServiceUnavailableError:
+      allOf:
+        - $ref: '#/components/schemas/ErrorEnvelope'
+        - type: object
+          properties:
+            error:
+              allOf:
+                - $ref: '#/components/schemas/ErrorBody'
+                - type: object
+                  properties:
+                    code:
+                      type: string
+                      enum:
+                        - SERVICE_UNAVAILABLE

@@ -49,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAuthenticationRateLimiters();
         $this->registerOnboardingRateLimiters();
         $this->registerAcademicRateLimiters();
+        $this->registerPlannerRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -142,6 +143,28 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('academic.destructive', fn (Request $request): array => $this->actorAndIpLimits(
             request: $request,
             scope: 'academic-destructive',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
+    }
+
+    private function registerPlannerRateLimiters(): void
+    {
+        RateLimiter::for('planner.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'planner-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('planner.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'planner-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('planner.destructive', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'planner-destructive',
             actorAttempts: 20,
             ipAttempts: 20,
         ));

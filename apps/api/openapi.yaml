@@ -17,6 +17,8 @@ tags:
     description: Verified, current-user academic profile and resumable onboarding flows.
   - name: Courses
     description: Verified, current-user academic terms and independent course workspaces.
+  - name: Planner
+    description: Verified, current-user tasks, focus sessions, agenda, and weekly planning.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -816,6 +818,562 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/tasks:
+    get:
+      tags:
+        - Planner
+      operationId: listTasks
+      summary: List the current user's tasks
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PlannerTaskSearch'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: all
+            enum:
+              - pending
+              - in_progress
+              - completed
+              - all
+        - name: archive_status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: active
+            enum:
+              - active
+              - archived
+              - all
+        - name: course_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PlannerPublicId'
+        - name: due_from
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PlannerOffsetDateTime'
+        - name: due_before
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PlannerOffsetDateTime'
+        - name: has_due
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/PlannerTaskSort'
+        - $ref: '#/components/parameters/PlannerPerPage'
+        - $ref: '#/components/parameters/PlannerCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Planner
+      operationId: createTask
+      summary: Create a current-user task
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWriteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/TaskCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/tasks/{task}:
+    parameters:
+      - $ref: '#/components/parameters/TaskPublicId'
+    get:
+      tags:
+        - Planner
+      operationId: getTask
+      summary: Return one current-user task
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Planner
+      operationId: updateTask
+      summary: Replace one current-user task
+      description: An exact canonical retry is a no-op even when expected_version is stale.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Planner
+      operationId: deleteTask
+      summary: Permanently delete one current-user task
+      description: Tasks referenced by a focus session return 409.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlannerVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/tasks/{task}/status:
+    parameters:
+      - $ref: '#/components/parameters/TaskPublicId'
+    put:
+      tags:
+        - Planner
+      operationId: updateTaskStatus
+      summary: Change the status of one current-user task
+      description: Repeating the current status is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStatusUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/tasks/{task}/archive:
+    parameters:
+      - $ref: '#/components/parameters/TaskPublicId'
+    put:
+      tags:
+        - Planner
+      operationId: archiveTask
+      summary: Archive one current-user task
+      description: Repeating the archive action is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlannerVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Planner
+      operationId: restoreTask
+      summary: Restore one archived current-user task
+      description: Repeating the restore action is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlannerVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/focus-sessions:
+    get:
+      tags:
+        - Planner
+      operationId: listFocusSessions
+      summary: List the current user's focus sessions
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: task_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PlannerPublicId'
+        - name: course_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PlannerPublicId'
+        - name: overlap_from
+          in: query
+          required: false
+          description: Inclusive lower bound used for half-open interval overlap.
+          schema:
+            $ref: '#/components/schemas/PlannerOffsetDateTime'
+        - name: overlap_before
+          in: query
+          required: false
+          description: Exclusive upper bound used for half-open interval overlap.
+          schema:
+            $ref: '#/components/schemas/PlannerOffsetDateTime'
+        - $ref: '#/components/parameters/PlannerFocusSort'
+        - $ref: '#/components/parameters/PlannerPerPage'
+        - $ref: '#/components/parameters/PlannerCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/FocusSessionCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Planner
+      operationId: createFocusSession
+      summary: Create a current-user focus session
+      description: A focus session may target one owned task, one owned course, or neither, but never both.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FocusSessionWriteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/FocusSessionCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/focus-sessions/{focus_session}:
+    parameters:
+      - $ref: '#/components/parameters/FocusSessionPublicId'
+    get:
+      tags:
+        - Planner
+      operationId: getFocusSession
+      summary: Return one current-user focus session
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/FocusSessionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Planner
+      operationId: updateFocusSession
+      summary: Replace one current-user focus session
+      description: An exact canonical retry is a no-op even when expected_version is stale.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FocusSessionUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/FocusSessionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Planner
+      operationId: deleteFocusSession
+      summary: Permanently delete one current-user focus session
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlannerVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/planner/agenda:
+    get:
+      tags:
+        - Planner
+      operationId: getPlannerAgenda
+      summary: Return a bounded local-day planner window
+      description: Local midnight boundaries are converted through the required IANA timezone and queried as a half-open UTC interval.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PlannerTimezone'
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            maxLength: 10
+        - $ref: '#/components/parameters/PlannerWindowLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PlannerWindowSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/planner/weekly:
+    get:
+      tags:
+        - Planner
+      operationId: getWeeklyPlanner
+      summary: Return a bounded seven-local-day planner window
+      description: The caller selects the local week start; daylight-saving transitions are respected when UTC boundaries are derived.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PlannerTimezone'
+        - name: week_start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            maxLength: 10
+        - $ref: '#/components/parameters/PlannerWindowLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/PlannerWindowSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -1004,6 +1562,87 @@ components:
         type: string
         minLength: 1
         maxLength: 2048
+    TaskPublicId:
+      name: task
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/PlannerPublicId'
+    FocusSessionPublicId:
+      name: focus_session
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/PlannerPublicId'
+    PlannerTaskSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive title-prefix search scoped to the current user.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    PlannerTaskSort:
+      name: sort
+      in: query
+      required: false
+      description: Task cursors contain only an update timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        default: '-updated_at'
+        enum:
+          - updated_at
+          - '-updated_at'
+    PlannerFocusSort:
+      name: sort
+      in: query
+      required: false
+      description: Focus-session cursors contain only a start timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        default: starts_at
+        enum:
+          - starts_at
+          - '-starts_at'
+    PlannerPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    PlannerCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor containing only a timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2048
+    PlannerTimezone:
+      name: timezone
+      in: query
+      required: true
+      description: A PHP-supported IANA timezone used to derive daylight-saving-safe local boundaries.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        example: Asia/Dhaka
+    PlannerWindowLimit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum tasks and maximum focus sessions returned in this bounded window.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -1092,6 +1731,69 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CourseCollectionSuccess'
+    TaskCreated:
+      description: The user-owned task was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskSuccess'
+    TaskSuccess:
+      description: The operation returned one user-owned task.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskSuccess'
+    TaskCollectionSuccess:
+      description: The operation returned a cursor-paginated current-user task collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskCollectionSuccess'
+    FocusSessionCreated:
+      description: The user-owned focus session was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FocusSessionSuccess'
+    FocusSessionSuccess:
+      description: The operation returned one user-owned focus session.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FocusSessionSuccess'
+    FocusSessionCollectionSuccess:
+      description: The operation returned a cursor-paginated current-user focus-session collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FocusSessionCollectionSuccess'
+    PlannerWindowSuccess:
+      description: The operation returned a bounded, timezone-derived planner window.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlannerWindowSuccess'
     NoContent:
       description: The owned resource was permanently deleted.
       headers:
@@ -1155,7 +1857,7 @@ components:
       description: The account or source IP has temporarily exhausted its request allowance.
       $ref: '#/components/responses/GenericError'
     Conflict:
-      description: The submitted version is stale and the requested content differs from current state.
+      description: The submitted version is stale, a relationship target is unavailable, or dependent state blocks the requested change.
       $ref: '#/components/responses/GenericError'
     GenericError:
       description: A stable API error envelope.
@@ -1581,6 +2283,505 @@ components:
       properties:
         expected_version:
           $ref: '#/components/schemas/AcademicVersion'
+    PlannerPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz6m5g0b7h2q3r4s5t6v7w8x
+    PlannerVersion:
+      type: integer
+      minimum: 1
+    PlannerOffsetDateTime:
+      type: string
+      format: date-time
+      minLength: 20
+      maxLength: 25
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$'
+      description: A second-precision RFC3339 instant with Z or an explicit numeric offset.
+    TaskStatus:
+      type: string
+      enum:
+        - pending
+        - in_progress
+        - completed
+    PlannerArchiveStatus:
+      type: string
+      enum:
+        - active
+        - archived
+    PlannerCourseReference:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - code
+        - archive_status
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        version:
+          $ref: '#/components/schemas/AcademicVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+        archive_status:
+          $ref: '#/components/schemas/PlannerArchiveStatus'
+    PlannerTaskReference:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - status
+        - archive_status
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PlannerPublicId'
+        version:
+          $ref: '#/components/schemas/PlannerVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        archive_status:
+          $ref: '#/components/schemas/PlannerArchiveStatus'
+    Task:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - description
+        - course
+        - due_at
+        - status
+        - completed_at
+        - archive_status
+        - archived_at
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PlannerPublicId'
+        version:
+          $ref: '#/components/schemas/PlannerVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        course:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerCourseReference'
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        archive_status:
+          $ref: '#/components/schemas/PlannerArchiveStatus'
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    FocusSession:
+      type: object
+      required:
+        - id
+        - version
+        - task
+        - course
+        - starts_at
+        - ends_at
+        - note
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PlannerPublicId'
+        version:
+          $ref: '#/components/schemas/PlannerVersion'
+        task:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerTaskReference'
+        course:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerCourseReference'
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        note:
+          type: string
+          nullable: true
+          maxLength: 2000
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PlannerCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    TaskSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Task'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    TaskCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Task'
+        meta:
+          $ref: '#/components/schemas/PlannerCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    FocusSessionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/FocusSession'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    FocusSessionCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/FocusSession'
+        meta:
+          $ref: '#/components/schemas/PlannerCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    PlannerWindow:
+      type: object
+      required:
+        - starts_at
+        - ends_at
+      additionalProperties: false
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+          description: Inclusive UTC boundary derived from local midnight.
+        ends_at:
+          type: string
+          format: date-time
+          description: Exclusive UTC boundary derived from the next local midnight.
+    PlannerWindowDataBase:
+      type: object
+      required:
+        - timezone
+        - window
+        - tasks
+        - focus_sessions
+      properties:
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        window:
+          $ref: '#/components/schemas/PlannerWindow'
+        tasks:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Task'
+        focus_sessions:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/FocusSession'
+    PlannerAgendaData:
+      allOf:
+        - $ref: '#/components/schemas/PlannerWindowDataBase'
+        - type: object
+          required:
+            - date
+          additionalProperties: false
+          properties:
+            timezone:
+              type: string
+            date:
+              type: string
+              format: date
+            window:
+              $ref: '#/components/schemas/PlannerWindow'
+            tasks:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/Task'
+            focus_sessions:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/FocusSession'
+    PlannerWeeklyData:
+      allOf:
+        - $ref: '#/components/schemas/PlannerWindowDataBase'
+        - type: object
+          required:
+            - week_start
+          additionalProperties: false
+          properties:
+            timezone:
+              type: string
+            week_start:
+              type: string
+              format: date
+            window:
+              $ref: '#/components/schemas/PlannerWindow'
+            tasks:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/Task'
+            focus_sessions:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/FocusSession'
+    PlannerWindowData:
+      oneOf:
+        - $ref: '#/components/schemas/PlannerAgendaData'
+        - $ref: '#/components/schemas/PlannerWeeklyData'
+    PlannerWindowSummary:
+      type: object
+      required:
+        - tasks
+        - focus_sessions
+      additionalProperties: false
+      properties:
+        tasks:
+          type: integer
+          minimum: 0
+        focus_sessions:
+          type: integer
+          minimum: 0
+    PlannerWindowHasMore:
+      type: object
+      required:
+        - tasks
+        - focus_sessions
+      additionalProperties: false
+      properties:
+        tasks:
+          type: boolean
+        focus_sessions:
+          type: boolean
+    PlannerWindowMeta:
+      type: object
+      required:
+        - summary
+        - has_more
+        - limit
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/PlannerWindowSummary'
+        has_more:
+          $ref: '#/components/schemas/PlannerWindowHasMore'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    PlannerWindowSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/PlannerWindowData'
+        meta:
+          $ref: '#/components/schemas/PlannerWindowMeta'
+    TaskWriteRequest:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        due_at:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerOffsetDateTime'
+    TaskUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - title
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/PlannerVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        due_at:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerOffsetDateTime'
+    TaskStatusUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - status
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/PlannerVersion'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+    FocusSessionWriteRequest:
+      type: object
+      required:
+        - starts_at
+        - ends_at
+      additionalProperties: false
+      description: task_id and course_id are individually optional but cannot both be non-null.
+      properties:
+        task_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerPublicId'
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        starts_at:
+          $ref: '#/components/schemas/PlannerOffsetDateTime'
+        ends_at:
+          $ref: '#/components/schemas/PlannerOffsetDateTime'
+        note:
+          type: string
+          nullable: true
+          maxLength: 2000
+    FocusSessionUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - starts_at
+        - ends_at
+      additionalProperties: false
+      description: task_id and course_id are individually optional but cannot both be non-null.
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/PlannerVersion'
+        task_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PlannerPublicId'
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        starts_at:
+          $ref: '#/components/schemas/PlannerOffsetDateTime'
+        ends_at:
+          $ref: '#/components/schemas/PlannerOffsetDateTime'
+        note:
+          type: string
+          nullable: true
+          maxLength: 2000
+    PlannerVersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/PlannerVersion'
     RoleKey:
       type: string
       enum:

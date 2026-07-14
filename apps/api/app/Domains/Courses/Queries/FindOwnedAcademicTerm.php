@@ -44,6 +44,10 @@ final class FindOwnedAcademicTerm
 
             return $term;
         } catch (QueryException $exception) {
+            if ($lockForUpdate) {
+                throw $exception;
+            }
+
             throw AcademicPersistenceFailure::fromQueryException($exception, 'term.read');
         }
     }

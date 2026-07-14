@@ -13,6 +13,8 @@ use App\Domains\Courses\Models\AcademicTerm;
 use App\Domains\Courses\Models\Course;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Models\UserProfile;
+use App\Domains\Planner\Models\FocusSession;
+use App\Domains\Planner\Models\Task;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -79,6 +81,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class);
+    }
+
+    /** @return HasMany<Task, $this> */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    /** @return HasMany<FocusSession, $this> */
+    public function focusSessions(): HasMany
+    {
+        return $this->hasMany(FocusSession::class);
     }
 
     public function hasRole(RoleKey|string $role): bool

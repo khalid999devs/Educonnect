@@ -22,7 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
-        $courses = $this->lowerPhaseEightAcademicFoundation();
+        [$courses, $planner] = $this->lowerPhaseEightAcademicFoundation();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -52,6 +52,7 @@ final class DataFoundationMigrationTest extends TestCase
         $timestamps->up();
         $sessions->up();
         $courses->up();
+        $planner->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -191,12 +192,15 @@ final class DataFoundationMigrationTest extends TestCase
         return $migration;
     }
 
-    private function lowerPhaseEightAcademicFoundation(): Migration
+    /** @return array{Migration, Migration} */
+    private function lowerPhaseEightAcademicFoundation(): array
     {
-        $migration = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
-        $migration->down();
+        $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
+        $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $planner->down();
+        $courses->down();
 
-        return $migration;
+        return [$courses, $planner];
     }
 
     private function insertLegacyUser(string $email, ?string $timestamp = null): int

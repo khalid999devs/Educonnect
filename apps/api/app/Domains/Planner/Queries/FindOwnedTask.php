@@ -2,47 +2,47 @@
 
 declare(strict_types=1);
 
-namespace App\Domains\Courses\Queries;
+namespace App\Domains\Planner\Queries;
 
 use App\Domains\Authorization\Enums\CapabilityKey;
-use App\Domains\Courses\Exceptions\AcademicPersistenceFailure;
-use App\Domains\Courses\Models\Course;
+use App\Domains\Planner\Exceptions\PlannerPersistenceFailure;
+use App\Domains\Planner\Models\Task;
 use App\Domains\Users\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-final class FindOwnedCourse
+final class FindOwnedTask
 {
-    public function execute(User $user, string $publicId, bool $lockForUpdate = false): Course
+    public function execute(User $user, string $publicId, bool $lockForUpdate = false): Task
     {
         Gate::forUser($user)->authorize(CapabilityKey::AcademicManageOwn->value);
 
         try {
-            $query = Course::query()
+            $query = Task::query()
                 ->where('user_id', $user->getKey())
                 ->where('public_id', $publicId)
-                ->with('academicTerm');
+                ->with('course');
 
             if ($lockForUpdate) {
                 $query->lockForUpdate();
             }
 
-            $course = $query->first();
+            $task = $query->first();
 
-            if (! $course instanceof Course) {
+            if (! $task instanceof Task) {
                 throw new NotFoundHttpException;
             }
 
-            Gate::forUser($user)->authorize('view', $course);
+            Gate::forUser($user)->authorize('view', $task);
 
-            return $course;
+            return $task;
         } catch (QueryException $exception) {
             if ($lockForUpdate) {
                 throw $exception;
             }
 
-            throw AcademicPersistenceFailure::fromQueryException($exception, 'course.read');
+            throw PlannerPersistenceFailure::fromQueryException($exception, 'task.read');
         }
     }
 }

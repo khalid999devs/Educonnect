@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Courses\Actions;
 
 use App\Domains\Courses\Exceptions\AcademicPersistenceFailure;
+use App\Domains\Courses\Exceptions\AcademicStateConflict;
 use App\Domains\Courses\Exceptions\AcademicVersionConflict;
 use App\Domains\Courses\Queries\FindOwnedCourse;
 use App\Domains\Users\Models\User;
@@ -25,6 +26,10 @@ final readonly class DeleteCourseAction
 
                 if ($course->version !== $expectedVersion) {
                     throw new AcademicVersionConflict;
+                }
+
+                if ($course->tasks()->exists() || $course->focusSessions()->exists()) {
+                    throw new AcademicStateConflict;
                 }
 
                 $course->delete();

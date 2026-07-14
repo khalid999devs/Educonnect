@@ -142,13 +142,16 @@ final class CourseMigrationTest extends TestCase
     public function test_migration_rolls_back_when_empty_and_refuses_rows_or_materialization_evidence(): void
     {
         $migration = $this->migration();
+        $plannerMigration = $this->plannerMigration();
 
+        $plannerMigration->down();
         $migration->down();
         $this->assertFalse(Schema::hasTable('courses'));
         $this->assertFalse(Schema::hasTable('academic_terms'));
         $this->assertFalse(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));
 
         $migration->up();
+        $plannerMigration->up();
         $this->assertTrue(Schema::hasTable('courses'));
         $this->assertTrue(Schema::hasTable('academic_terms'));
         $this->assertTrue(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));
@@ -211,6 +214,14 @@ final class CourseMigrationTest extends TestCase
     private function migration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000007_create_courses_and_academic_terms.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function plannerMigration(): Migration
+    {
+        $migration = require database_path('migrations/2026_07_14_000008_create_planner_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

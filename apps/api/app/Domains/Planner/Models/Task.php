@@ -2,34 +2,35 @@
 
 declare(strict_types=1);
 
-namespace App\Domains\Courses\Models;
+namespace App\Domains\Planner\Models;
 
-use App\Domains\Planner\Models\FocusSession;
-use App\Domains\Planner\Models\Task;
+use App\Domains\Courses\Models\Course;
+use App\Domains\Planner\Enums\TaskStatus;
 use App\Domains\Users\Models\User;
 use App\Support\StoresUtcDateTimes;
-use Database\Factories\CourseFactory;
+use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-final class Course extends Model
+final class Task extends Model
 {
-    /** @use HasFactory<CourseFactory> */
+    /** @use HasFactory<TaskFactory> */
     use HasFactory, HasUlids, StoresUtcDateTimes;
 
     protected $guarded = [
         'id',
         'public_id',
         'user_id',
+        'course_id',
         'version',
-        'onboarding_position',
+        'completed_at',
         'archived_at',
     ];
 
-    protected $hidden = ['id', 'user_id', 'academic_term_id', 'onboarding_position'];
+    protected $hidden = ['id', 'user_id', 'course_id'];
 
     /** @return list<string> */
     public function uniqueIds(): array
@@ -48,16 +49,10 @@ final class Course extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** @return BelongsTo<AcademicTerm, $this> */
-    public function academicTerm(): BelongsTo
+    /** @return BelongsTo<Course, $this> */
+    public function course(): BelongsTo
     {
-        return $this->belongsTo(AcademicTerm::class);
-    }
-
-    /** @return HasMany<Task, $this> */
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class);
+        return $this->belongsTo(Course::class);
     }
 
     /** @return HasMany<FocusSession, $this> */
@@ -66,20 +61,20 @@ final class Course extends Model
         return $this->hasMany(FocusSession::class);
     }
 
-    protected static function newFactory(): CourseFactory
+    protected static function newFactory(): TaskFactory
     {
-        return CourseFactory::new();
+        return TaskFactory::new();
     }
 
     /** @return array<string, string> */
     protected function casts(): array
     {
         return [
+            'status' => TaskStatus::class,
             'version' => 'integer',
-            'onboarding_position' => 'integer',
-            'archived_at' => 'datetime',
-            'cursor_created_at_asc' => 'immutable_datetime',
-            'cursor_created_at_desc' => 'immutable_datetime',
+            'due_at' => 'immutable_datetime',
+            'completed_at' => 'immutable_datetime',
+            'archived_at' => 'immutable_datetime',
             'cursor_updated_at_asc' => 'immutable_datetime',
             'cursor_updated_at_desc' => 'immutable_datetime',
         ];

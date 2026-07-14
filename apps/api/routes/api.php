@@ -27,6 +27,21 @@ use App\Http\Controllers\Api\V1\Courses\UpdateCourseController;
 use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
+use App\Http\Controllers\Api\V1\Planner\ArchiveTaskController;
+use App\Http\Controllers\Api\V1\Planner\CreateFocusSessionController;
+use App\Http\Controllers\Api\V1\Planner\CreateTaskController;
+use App\Http\Controllers\Api\V1\Planner\DeleteFocusSessionController;
+use App\Http\Controllers\Api\V1\Planner\DeleteTaskController;
+use App\Http\Controllers\Api\V1\Planner\ListFocusSessionsController;
+use App\Http\Controllers\Api\V1\Planner\ListTasksController;
+use App\Http\Controllers\Api\V1\Planner\RestoreTaskController;
+use App\Http\Controllers\Api\V1\Planner\ShowAgendaController;
+use App\Http\Controllers\Api\V1\Planner\ShowFocusSessionController;
+use App\Http\Controllers\Api\V1\Planner\ShowTaskController;
+use App\Http\Controllers\Api\V1\Planner\ShowWeeklyPlannerController;
+use App\Http\Controllers\Api\V1\Planner\UpdateFocusSessionController;
+use App\Http\Controllers\Api\V1\Planner\UpdateTaskController;
+use App\Http\Controllers\Api\V1\Planner\UpdateTaskStatusController;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -153,6 +168,75 @@ Route::middleware([
                         ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
                         ->name('restore');
+                });
+
+            Route::prefix('tasks')
+                ->name('tasks.')
+                ->group(function (): void {
+                    Route::get('/', ListTasksController::class)
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateTaskController::class)
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{task}', ShowTaskController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{task}', UpdateTaskController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{task}', DeleteTaskController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::put('/{task}/status', UpdateTaskStatusController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('status.update');
+                    Route::put('/{task}/archive', ArchiveTaskController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('archive');
+                    Route::delete('/{task}/archive', RestoreTaskController::class)
+                        ->where('task', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('restore');
+                });
+
+            Route::prefix('focus-sessions')
+                ->name('focus-sessions.')
+                ->group(function (): void {
+                    Route::get('/', ListFocusSessionsController::class)
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateFocusSessionController::class)
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{focus_session}', ShowFocusSessionController::class)
+                        ->where('focus_session', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{focus_session}', UpdateFocusSessionController::class)
+                        ->where('focus_session', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{focus_session}', DeleteFocusSessionController::class)
+                        ->where('focus_session', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:planner.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                });
+
+            Route::prefix('planner')
+                ->name('planner.')
+                ->group(function (): void {
+                    Route::get('/agenda', ShowAgendaController::class)
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('agenda');
+                    Route::get('/weekly', ShowWeeklyPlannerController::class)
+                        ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
+                        ->name('weekly');
                 });
         });
     });

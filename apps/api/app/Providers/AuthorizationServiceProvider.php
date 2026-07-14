@@ -11,6 +11,10 @@ use App\Domains\Courses\Policies\AcademicTermPolicy;
 use App\Domains\Courses\Policies\CoursePolicy;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Policies\OnboardingProgressPolicy;
+use App\Domains\Planner\Models\FocusSession;
+use App\Domains\Planner\Models\Task;
+use App\Domains\Planner\Policies\FocusSessionPolicy;
+use App\Domains\Planner\Policies\TaskPolicy;
 use App\Domains\Users\Models\User;
 use App\Domains\Users\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +28,8 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(OnboardingProgress::class, OnboardingProgressPolicy::class);
         Gate::policy(AcademicTerm::class, AcademicTermPolicy::class);
         Gate::policy(Course::class, CoursePolicy::class);
+        Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(FocusSession::class, FocusSessionPolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {
             Gate::define(

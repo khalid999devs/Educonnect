@@ -57,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
             emailAttempts: 5,
             ipAttempts: 30,
         ));
+        RateLimiter::for('auth.admin-login', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'admin-login',
+            emailAttempts: 5,
+            ipAttempts: 15,
+        ));
         RateLimiter::for('auth.register', fn (Request $request): array => $this->emailAndIpLimits(
             request: $request,
             scope: 'register',

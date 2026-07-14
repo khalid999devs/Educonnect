@@ -11,6 +11,8 @@ tags:
     description: Process liveness and dependency readiness probes.
   - name: Authentication
     description: First-party browser session, credential, and email-ownership flows.
+  - name: Administration
+    description: Isolated first-party administration session and access-shell flows.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -315,6 +317,73 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/AuthenticationRequired'
+  /api/v1/admin/auth/login:
+    post:
+      tags:
+        - Administration
+      operationId: loginAdministrator
+      summary: Authenticate an authorized administrator into an isolated admin session
+      description: Invalid credentials and accounts without admin access share the same response.
+      security:
+        - xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminSessionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/auth/logout:
+    post:
+      tags:
+        - Administration
+      operationId: logoutAdministrator
+      summary: Revoke the current isolated administration session
+      security:
+        - adminSessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/NullSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+  /api/v1/admin/me:
+    get:
+      tags:
+        - Administration
+      operationId: getCurrentAdministrator
+      summary: Return the authorized administration identity and capabilities
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminSessionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
 components:
   securitySchemes:
     sessionCookie:
@@ -327,6 +396,13 @@ components:
       in: header
       name: X-XSRF-TOKEN
       description: Decoded value of the XSRF-TOKEN cookie.
+    adminSessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-educonnect-session
+      description: >-
+        Host-only session cookie whose admin guard state is isolated from the
+        student session and accepted only through the admin gateway.
   parameters:
     XsrfToken:
       name: X-XSRF-TOKEN
@@ -387,6 +463,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UserSuccess'
+    AdminSessionSuccess:
+      description: The operation returned the authorized administration identity.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminSessionSuccess'
     NullSuccess:
       description: The operation completed successfully.
       headers:
@@ -499,6 +584,31 @@ components:
       type: string
       pattern: '^[0-9abcdefghjkmnpqrstvwxyz]{26}$'
       example: 01jz6m5g0b7h2q3r4s5t6v7w8x
+    RoleKey:
+      type: string
+      enum:
+        - student
+        - mentor
+        - moderator
+        - admin
+        - super_admin
+    CapabilityKey:
+      type: string
+      enum:
+        - academic.manage-own
+        - admin.access
+        - moderation.scoped
+        - moderation.global
+        - users.private-support-access
+        - users.suspend
+        - content.curate
+        - mentors.curate
+        - authorization.roles-view
+        - authorization.roles-assign
+        - authorization.protected-roles-manage
+        - authorization.capabilities-manage
+        - audit.view-scoped
+        - audit.view-all
     User:
       type: object
       required:
@@ -522,8 +632,7 @@ components:
         email_verified:
           type: boolean
         primary_role:
-          type: string
-          nullable: true
+          $ref: '#/components/schemas/RoleKey'
     UserData:
       type: object
       required:
@@ -541,6 +650,45 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/UserData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminAuthorization:
+      type: object
+      required:
+        - roles
+        - capabilities
+      additionalProperties: false
+      properties:
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/RoleKey'
+        capabilities:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/CapabilityKey'
+    AdminSessionData:
+      type: object
+      required:
+        - user
+        - authorization
+      additionalProperties: false
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        authorization:
+          $ref: '#/components/schemas/AdminAuthorization'
+    AdminSessionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminSessionData'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
     NullSuccess:

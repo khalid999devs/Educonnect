@@ -38,6 +38,7 @@ final class StatefulBrowserAuthenticationTest extends TestCase
 
         config()->set([
             'app.env' => 'local',
+            'app.frontend_url' => self::ORIGIN,
             'cors.allowed_origins' => [self::ORIGIN],
             'cors.allowed_origins_patterns' => [],
             'cors.supports_credentials' => true,

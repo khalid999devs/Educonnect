@@ -57,6 +57,9 @@ return [
     // Public browser origin used for first-party links and stateful authentication.
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    // Separate administration browser origin. It proxies API requests to this app.
+    'admin_url' => env('ADMIN_URL', 'http://localhost:3001'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

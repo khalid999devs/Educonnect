@@ -73,6 +73,21 @@ final class ProductionConfigurationTest extends TestCase
             'https://web.educonnect.example',
             'APP_URL and FRONTEND_URL must use the same public origin',
         ];
+        yield 'insecure admin URL' => [
+            'app.admin_url',
+            'http://admin.educonnect.example',
+            'ADMIN_URL must be an HTTPS origin without a path, query, or fragment',
+        ];
+        yield 'shared student and admin origin' => [
+            'app.admin_url',
+            'https://educonnect.example',
+            'ADMIN_URL must use a distinct administration host',
+        ];
+        yield 'shared student and admin host on different ports' => [
+            'app.admin_url',
+            'https://educonnect.example:8443',
+            'ADMIN_URL must use a distinct administration host',
+        ];
         yield 'wrong database driver' => ['database.default', 'sqlite', 'DB_CONNECTION must be pgsql'];
         yield 'non-expiring password reset' => [
             'auth.passwords.users.expire',
@@ -91,23 +106,33 @@ final class ProductionConfigurationTest extends TestCase
         ];
         yield 'unexpected CORS origin' => [
             'cors.allowed_origins',
-            ['https://admin.educonnect.example'],
-            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL origin with credentials enabled',
+            ['https://educonnect.example', 'https://attacker.example'],
+            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL and ADMIN_URL origins with credentials enabled',
         ];
         yield 'CORS origin pattern' => [
             'cors.allowed_origins_patterns',
             ['#^https://.*\\.educonnect\\.example$#'],
-            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL origin with credentials enabled',
+            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL and ADMIN_URL origins with credentials enabled',
         ];
         yield 'credentials disabled' => [
             'cors.supports_credentials',
             false,
-            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL origin with credentials enabled',
+            'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL and ADMIN_URL origins with credentials enabled',
         ];
         yield 'unexpected Sanctum stateful domain' => [
             'sanctum.stateful',
-            ['api.educonnect.example'],
-            'SANCTUM_STATEFUL_DOMAINS must contain only the FRONTEND_URL host',
+            ['educonnect.example', 'api.educonnect.example'],
+            'SANCTUM_STATEFUL_DOMAINS must contain only the FRONTEND_URL and ADMIN_URL hosts',
+        ];
+        yield 'admin included in Sanctum authentication guards' => [
+            'sanctum.guard',
+            ['web', 'admin'],
+            'web and admin must use isolated session guards while Sanctum authenticates only the web guard',
+        ];
+        yield 'admin shares the web guard configuration' => [
+            'auth.guards.admin',
+            ['driver' => 'token', 'provider' => 'users'],
+            'web and admin must use isolated session guards while Sanctum authenticates only the web guard',
         ];
         yield 'non-database sessions' => ['session.driver', 'redis', 'SESSION_DRIVER must be database'];
         yield 'wrong session connection' => [
@@ -168,14 +193,22 @@ final class ProductionConfigurationTest extends TestCase
             'app.debug' => false,
             'app.url' => 'https://educonnect.example',
             'app.frontend_url' => 'https://educonnect.example',
+            'app.admin_url' => 'https://admin.educonnect.example',
             'database.default' => 'pgsql',
             'auth.passwords.users.expire' => 60,
             'auth.passwords.users.throttle' => 60,
             'auth.verification.expire' => 60,
-            'cors.allowed_origins' => ['https://educonnect.example'],
+            'cors.allowed_origins' => [
+                'https://educonnect.example',
+                'https://admin.educonnect.example',
+            ],
             'cors.allowed_origins_patterns' => [],
             'cors.supports_credentials' => true,
-            'sanctum.stateful' => ['educonnect.example'],
+            'sanctum.stateful' => ['educonnect.example', 'admin.educonnect.example'],
+            'sanctum.guard' => ['web'],
+            'auth.defaults.guard' => 'web',
+            'auth.guards.web' => ['driver' => 'session', 'provider' => 'users'],
+            'auth.guards.admin' => ['driver' => 'session', 'provider' => 'users'],
             'session.driver' => 'database',
             'session.connection' => null,
             'session.table' => 'sessions',

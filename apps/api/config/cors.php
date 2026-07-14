@@ -30,7 +30,10 @@ $allowedOrigins = array_values(array_unique(array_filter(array_map(
         return $normalized;
     }, explode(',', (string) env(
         'CORS_ALLOWED_ORIGINS',
-        env('FRONTEND_URL', 'http://localhost:3000'),
+        implode(',', array_filter([
+            env('FRONTEND_URL', 'http://localhost:3000'),
+            env('ADMIN_URL', 'http://localhost:3001'),
+        ], is_string(...))),
     ))
 ))));
 

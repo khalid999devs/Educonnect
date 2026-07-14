@@ -3,7 +3,27 @@
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
-use Laravel\Sanctum\Sanctum;
+
+$configuredBrowserHosts = array_filter(array_map(
+    static function (mixed $url): ?string {
+        if (! is_string($url)) {
+            return null;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        $port = parse_url($url, PHP_URL_PORT);
+
+        if (! is_string($host) || $host === '') {
+            return null;
+        }
+
+        return strtolower($host).(is_int($port) ? ':'.$port : '');
+    },
+    [
+        env('FRONTEND_URL', 'http://localhost:3000'),
+        env('ADMIN_URL', 'http://localhost:3001'),
+    ],
+));
 
 $statefulDomains = array_values(array_unique(array_filter(array_map(
     static function (string $domain): ?string {
@@ -14,12 +34,11 @@ $statefulDomains = array_values(array_unique(array_filter(array_map(
         }
 
         return $domain;
-    }, explode(',', (string) env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
+    }, explode(',', (string) env(
+        'SANCTUM_STATEFUL_DOMAINS',
+        implode(',', $configuredBrowserHosts),
     )))
-))));
+)));
 
 return [
 

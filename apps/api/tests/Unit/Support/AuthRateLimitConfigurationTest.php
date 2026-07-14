@@ -64,6 +64,7 @@ final class AuthRateLimitConfigurationTest extends TestCase
     public static function limiterProvider(): iterable
     {
         yield 'login' => ['auth.login', 5, 30];
+        yield 'admin login' => ['auth.admin-login', 5, 15];
         yield 'registration' => ['auth.register', 3, 10];
         yield 'password email' => ['auth.password-email', 3, 15];
         yield 'password reset' => ['auth.password-reset', 5, 15];

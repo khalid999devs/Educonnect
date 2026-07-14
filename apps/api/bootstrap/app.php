@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\RequireBrowserSurface;
+use App\Http\Middleware\RequireStatefulSpaSession;
 use App\Support\ApiExceptionRenderer;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->statefulApi();
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, RequireBrowserSurface::class);
+        $middleware->prependToPriorityList(RequireBrowserSurface::class, RequireStatefulSpaSession::class);
         $middleware->preventRequestsDuringMaintenance(except: [
             'api/health',
             'api/v1/health',

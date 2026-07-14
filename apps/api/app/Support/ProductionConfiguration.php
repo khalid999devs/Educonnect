@@ -20,6 +20,7 @@ final readonly class ProductionConfiguration
         $url = $this->config->get('app.url');
         $origin = $this->httpsOrigin($url);
         $frontendOrigin = $this->httpsOrigin($this->config->get('app.frontend_url'));
+        $adminOrigin = $this->httpsOrigin($this->config->get('app.admin_url'));
 
         if (! $this->hasValidKey($key, $cipher)) {
             $violations[] = 'APP_KEY must be a valid encryption key';
@@ -39,6 +40,13 @@ final readonly class ProductionConfiguration
             $violations[] = 'APP_URL and FRONTEND_URL must use the same public origin';
         }
 
+        if ($adminOrigin === null) {
+            $violations[] = 'ADMIN_URL must be an HTTPS origin without a path, query, or fragment';
+        } elseif ($frontendOrigin !== null
+            && $this->originHost($adminOrigin) === $this->originHost($frontendOrigin)) {
+            $violations[] = 'ADMIN_URL must use a distinct administration host';
+        }
+
         if ($this->config->get('database.default') !== 'pgsql') {
             $violations[] = 'DB_CONNECTION must be pgsql';
         }
@@ -55,16 +63,29 @@ final readonly class ProductionConfiguration
             $violations[] = 'AUTH_VERIFICATION_EXPIRE must be between 1 and 1440 minutes';
         }
 
-        if ($frontendOrigin !== null) {
-            if ($this->config->get('cors.allowed_origins') !== [$frontendOrigin]
+        if ($frontendOrigin !== null && $adminOrigin !== null && $adminOrigin !== $frontendOrigin) {
+            if (! $this->containsExactly(
+                $this->config->get('cors.allowed_origins'),
+                [$frontendOrigin, $adminOrigin],
+            )
                 || $this->config->get('cors.allowed_origins_patterns') !== []
                 || $this->config->get('cors.supports_credentials') !== true) {
-                $violations[] = 'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL origin with credentials enabled';
+                $violations[] = 'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL and ADMIN_URL origins with credentials enabled';
             }
 
-            if ($this->config->get('sanctum.stateful') !== [$this->statefulDomain($frontendOrigin)]) {
-                $violations[] = 'SANCTUM_STATEFUL_DOMAINS must contain only the FRONTEND_URL host';
+            if (! $this->containsExactly(
+                $this->config->get('sanctum.stateful'),
+                [$this->statefulDomain($frontendOrigin), $this->statefulDomain($adminOrigin)],
+            )) {
+                $violations[] = 'SANCTUM_STATEFUL_DOMAINS must contain only the FRONTEND_URL and ADMIN_URL hosts';
             }
+        }
+
+        if ($this->config->get('auth.defaults.guard') !== 'web'
+            || $this->config->get('auth.guards.web') !== ['driver' => 'session', 'provider' => 'users']
+            || $this->config->get('auth.guards.admin') !== ['driver' => 'session', 'provider' => 'users']
+            || $this->config->get('sanctum.guard') !== ['web']) {
+            $violations[] = 'web and admin must use isolated session guards while Sanctum authenticates only the web guard';
         }
 
         if ($this->config->get('session.driver') !== 'database') {
@@ -187,9 +208,32 @@ final readonly class ProductionConfiguration
         return (string) $host.($port === null ? '' : ':'.$port);
     }
 
+    private function originHost(string $origin): string
+    {
+        return strtolower((string) parse_url($origin, PHP_URL_HOST));
+    }
+
     private function isPositiveBoundedInteger(mixed $value, int $maximum): bool
     {
         return is_int($value) && $value >= 1 && $value <= $maximum;
+    }
+
+    /**
+     * @param  list<string>  $expected
+     */
+    private function containsExactly(mixed $actual, array $expected): bool
+    {
+        if (! is_array($actual)
+            || count($actual) !== count($expected)
+            || array_filter($actual, is_string(...)) !== $actual) {
+            return false;
+        }
+
+        $actual = array_values($actual);
+        sort($actual, SORT_STRING);
+        sort($expected, SORT_STRING);
+
+        return $actual === $expected;
     }
 
     /**

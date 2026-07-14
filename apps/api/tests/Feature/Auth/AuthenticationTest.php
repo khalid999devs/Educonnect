@@ -53,7 +53,7 @@ final class AuthenticationTest extends TestCase
             ->assertJsonPath('data.user.id', $user->public_id)
             ->assertJsonPath('data.user.name', 'Khalid Ahammed')
             ->assertJsonPath('data.user.email', 'khalid@example.com')
-            ->assertJsonPath('data.user.primary_role', null)
+            ->assertJsonPath('data.user.primary_role', 'student')
             ->assertJsonStructure([
                 'data' => ['user'],
                 'meta' => ['request_id'],
@@ -134,7 +134,7 @@ final class AuthenticationTest extends TestCase
             ->assertJsonPath('data.user.id', $user->public_id)
             ->assertJsonPath('data.user.name', $user->name)
             ->assertJsonPath('data.user.email', 'student@example.com')
-            ->assertJsonPath('data.user.primary_role', null);
+            ->assertJsonPath('data.user.primary_role', 'student');
 
         $this->assertSuccessRequestId($response);
 

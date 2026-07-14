@@ -272,13 +272,16 @@ final class OnboardingDataIntegrityTest extends TestCase
 
     public function test_onboarding_migration_rolls_back_when_empty_and_refuses_to_erase_private_data(): void
     {
-        $migration = $this->migration('2026_07_14_000006_create_onboarding_foundation.php');
+        $onboardingMigration = $this->migration('2026_07_14_000006_create_onboarding_foundation.php');
+        $coursesMigration = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
 
-        $migration->down();
+        $coursesMigration->down();
+        $onboardingMigration->down();
         $this->assertFalse(Schema::hasTable('onboarding_progress'));
         $this->assertFalse(Schema::hasTable('user_profiles'));
 
-        $migration->up();
+        $onboardingMigration->up();
+        $coursesMigration->up();
         $this->assertTrue(Schema::hasTable('onboarding_progress'));
         $this->assertTrue(Schema::hasTable('user_profiles'));
 
@@ -290,7 +293,7 @@ final class OnboardingDataIntegrityTest extends TestCase
         ]);
 
         try {
-            $migration->down();
+            $onboardingMigration->down();
             self::fail('The onboarding migration erased private profile state.');
         } catch (\RuntimeException $exception) {
             $this->assertStringContainsString('private profile data exists', $exception->getMessage());
@@ -310,10 +313,10 @@ final class OnboardingDataIntegrityTest extends TestCase
                 'onboarding_course_drafts',
                 'onboarding_intents',
             ])
-            ->whereIn('column_name', ['created_at', 'updated_at', 'completed_at'])
+            ->whereIn('column_name', ['created_at', 'updated_at', 'completed_at', 'academic_materialized_at'])
             ->get(['table_name', 'column_name', 'data_type']);
 
-        $this->assertCount(9, $columns);
+        $this->assertCount(10, $columns);
 
         foreach ($columns as $column) {
             $this->assertSame(

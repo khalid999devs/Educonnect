@@ -9,6 +9,7 @@ EduConnect is a Laravel modular monolith. Concrete business capabilities own top
 | `Audit` | Append-only evidence for sensitive authorization changes. |
 | `Auth` | Registration and authentication application actions already used by the API. |
 | `Authorization` | Role/capability catalogs, protected mutations, policy contracts, and admin access decisions. |
+| `Courses` | User-owned academic terms, independent course workspaces, archive lifecycle, and onboarding materialization. |
 | `Onboarding` | Private academic profile collection, resumable onboarding state, and bounded starter-context drafts. |
 | `Users` | The current persisted user model. |
 

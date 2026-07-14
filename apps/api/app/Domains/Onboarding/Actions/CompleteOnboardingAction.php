@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Onboarding\Actions;
 
 use App\Domains\Authorization\Enums\CapabilityKey;
+use App\Domains\Courses\Actions\MaterializeOnboardingWorkspaceAction;
 use App\Domains\Onboarding\Data\OnboardingSnapshot;
 use App\Domains\Onboarding\Exceptions\OnboardingPersistenceFailure;
 use App\Domains\Onboarding\Exceptions\OnboardingVersionConflict;
@@ -18,7 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class CompleteOnboardingAction
 {
-    public function __construct(private GetOnboardingSnapshot $snapshots) {}
+    public function __construct(
+        private GetOnboardingSnapshot $snapshots,
+        private MaterializeOnboardingWorkspaceAction $materializeWorkspace,
+    ) {}
 
     public function execute(User $user, int $expectedVersion): OnboardingSnapshot
     {
@@ -37,6 +41,8 @@ final readonly class CompleteOnboardingAction
                 Gate::forUser($user)->authorize('complete', $progress);
 
                 if ($progress->completed_at !== null) {
+                    $this->materializeWorkspace->execute($user);
+
                     return $this->snapshots->forUser($user);
                 }
 
@@ -61,6 +67,8 @@ final readonly class CompleteOnboardingAction
                         'version' => $progress->version + 1,
                         'updated_at' => now(),
                     ]);
+
+                $this->materializeWorkspace->execute($user);
 
                 return $this->snapshots->forUser($user);
             }, 3);

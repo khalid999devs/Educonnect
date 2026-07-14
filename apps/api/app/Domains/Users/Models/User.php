@@ -9,6 +9,8 @@ use App\Domains\Auth\Notifications\VerifyEmailNotification;
 use App\Domains\Authorization\Enums\CapabilityKey;
 use App\Domains\Authorization\Enums\RoleKey;
 use App\Domains\Authorization\Models\Role;
+use App\Domains\Courses\Models\AcademicTerm;
+use App\Domains\Courses\Models\Course;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Models\UserProfile;
 use App\Support\StoresUtcDateTimes;
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -64,6 +67,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function onboardingProgress(): HasOne
     {
         return $this->hasOne(OnboardingProgress::class);
+    }
+
+    /** @return HasMany<AcademicTerm, $this> */
+    public function academicTerms(): HasMany
+    {
+        return $this->hasMany(AcademicTerm::class);
+    }
+
+    /** @return HasMany<Course, $this> */
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Course::class);
     }
 
     public function hasRole(RoleKey|string $role): bool

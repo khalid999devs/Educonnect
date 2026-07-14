@@ -22,6 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
+        $courses = $this->lowerPhaseEightAcademicFoundation();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -50,6 +51,7 @@ final class DataFoundationMigrationTest extends TestCase
         $identity->up();
         $timestamps->up();
         $sessions->up();
+        $courses->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -67,6 +69,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_identity_migration_stops_on_normalized_email_duplicates(): void
     {
+        $this->lowerPhaseEightAcademicFoundation();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $identity->down();
 
@@ -115,6 +118,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_full_phase_four_migration_stops_before_any_write_when_timestamp_provenance_is_unknown(): void
     {
+        $this->lowerPhaseEightAcademicFoundation();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -151,6 +155,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_entrypoint_stops_on_orphaned_sessions_before_any_write(): void
     {
+        $this->lowerPhaseEightAcademicFoundation();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
 
@@ -182,6 +187,14 @@ final class DataFoundationMigrationTest extends TestCase
         $migration = require database_path('migrations/'.$file);
 
         $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function lowerPhaseEightAcademicFoundation(): Migration
+    {
+        $migration = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $migration->down();
 
         return $migration;
     }

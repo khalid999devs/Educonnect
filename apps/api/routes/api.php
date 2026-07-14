@@ -12,6 +12,18 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\Courses\ArchiveCourseController;
+use App\Http\Controllers\Api\V1\Courses\CreateAcademicTermController;
+use App\Http\Controllers\Api\V1\Courses\CreateCourseController;
+use App\Http\Controllers\Api\V1\Courses\DeleteAcademicTermController;
+use App\Http\Controllers\Api\V1\Courses\DeleteCourseController;
+use App\Http\Controllers\Api\V1\Courses\ListAcademicTermsController;
+use App\Http\Controllers\Api\V1\Courses\ListCoursesController;
+use App\Http\Controllers\Api\V1\Courses\RestoreCourseController;
+use App\Http\Controllers\Api\V1\Courses\ShowAcademicTermController;
+use App\Http\Controllers\Api\V1\Courses\ShowCourseController;
+use App\Http\Controllers\Api\V1\Courses\UpdateAcademicTermController;
+use App\Http\Controllers\Api\V1\Courses\UpdateCourseController;
 use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
@@ -84,6 +96,65 @@ Route::middleware([
                     ->middleware(['throttle:onboarding.complete', 'can:academic.manage-own'])
                     ->name('completion.update');
             });
+
+        Route::middleware([
+            'auth:sanctum',
+            RequireVerifiedEmail::class,
+        ])->group(function (): void {
+            Route::prefix('academic-terms')
+                ->name('academic-terms.')
+                ->group(function (): void {
+                    Route::get('/', ListAcademicTermsController::class)
+                        ->middleware(['throttle:academic.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateAcademicTermController::class)
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{term}', ShowAcademicTermController::class)
+                        ->where('term', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{term}', UpdateAcademicTermController::class)
+                        ->where('term', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{term}', DeleteAcademicTermController::class)
+                        ->where('term', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                });
+
+            Route::prefix('courses')
+                ->name('courses.')
+                ->group(function (): void {
+                    Route::get('/', ListCoursesController::class)
+                        ->middleware(['throttle:academic.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateCourseController::class)
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{course}', ShowCourseController::class)
+                        ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{course}', UpdateCourseController::class)
+                        ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{course}', DeleteCourseController::class)
+                        ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::put('/{course}/archive', ArchiveCourseController::class)
+                        ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('archive');
+                    Route::delete('/{course}/archive', RestoreCourseController::class)
+                        ->where('course', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:academic.write', 'can:academic.manage-own'])
+                        ->name('restore');
+                });
+        });
     });
 
 Route::prefix('admin')

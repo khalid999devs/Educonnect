@@ -47,6 +47,7 @@ final class OnboardingProgress extends Model
         return [
             'version' => 'integer',
             'completed_at' => 'datetime',
+            'academic_materialized_at' => 'datetime',
         ];
     }
 }

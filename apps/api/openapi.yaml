@@ -15,6 +15,8 @@ tags:
     description: Isolated first-party administration session and access-shell flows.
   - name: Onboarding
     description: Verified, current-user academic profile and resumable onboarding flows.
+  - name: Courses
+    description: Verified, current-user academic terms and independent course workspaces.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -417,6 +419,403 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/academic-terms:
+    get:
+      tags:
+        - Courses
+      operationId: listAcademicTerms
+      summary: List the current user's academic terms
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AcademicTermSearch'
+        - $ref: '#/components/parameters/AcademicSort'
+        - $ref: '#/components/parameters/AcademicPerPage'
+        - $ref: '#/components/parameters/AcademicCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/AcademicTermCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Courses
+      operationId: createAcademicTerm
+      summary: Create a current-user academic term
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicTermWriteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/AcademicTermCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/academic-terms/{term}:
+    parameters:
+      - $ref: '#/components/parameters/AcademicTermPublicId'
+    get:
+      tags:
+        - Courses
+      operationId: getAcademicTerm
+      summary: Return one current-user academic term
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AcademicTermSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Courses
+      operationId: updateAcademicTerm
+      summary: Replace one current-user academic term
+      description: An exact canonical retry is a no-op even when expected_version is stale.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicTermUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AcademicTermSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Courses
+      operationId: deleteAcademicTerm
+      summary: Permanently delete an unused current-user academic term
+      description: Terms referenced by any active or archived course return 409.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/courses:
+    get:
+      tags:
+        - Courses
+      operationId: listCourses
+      summary: List and summarize the current user's courses
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CourseSearch'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: active
+            enum:
+              - active
+              - archived
+              - all
+        - name: term_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AcademicPublicId'
+        - $ref: '#/components/parameters/AcademicSort'
+        - $ref: '#/components/parameters/AcademicPerPage'
+        - $ref: '#/components/parameters/AcademicCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CourseCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Courses
+      operationId: createCourse
+      summary: Create a current-user course workspace
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseWriteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CourseCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/courses/{course}:
+    parameters:
+      - $ref: '#/components/parameters/CoursePublicId'
+    get:
+      tags:
+        - Courses
+      operationId: getCourse
+      summary: Return one current-user course workspace
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CourseSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Courses
+      operationId: updateCourse
+      summary: Replace one current-user course workspace
+      description: An exact canonical retry is a no-op even when expected_version is stale.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CourseSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Courses
+      operationId: deleteCourse
+      summary: Permanently delete one current-user course workspace
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/courses/{course}/archive:
+    parameters:
+      - $ref: '#/components/parameters/CoursePublicId'
+    put:
+      tags:
+        - Courses
+      operationId: archiveCourse
+      summary: Archive one current-user course
+      description: Repeating the archive action is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CourseSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Courses
+      operationId: restoreCourse
+      summary: Restore one archived current-user course
+      description: Repeating the restore action is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CourseSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -544,6 +943,67 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/OnboardingStepKey'
+    AcademicTermPublicId:
+      name: term
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/AcademicPublicId'
+    CoursePublicId:
+      name: course
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/AcademicPublicId'
+    AcademicTermSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive label-prefix search scoped to the current user.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 80
+    CourseSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive title-or-code prefix search scoped to the current user.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    AcademicSort:
+      name: sort
+      in: query
+      required: false
+      description: Private academic text is intentionally excluded from cursor sort values.
+      schema:
+        type: string
+        default: '-updated_at'
+        enum:
+          - created_at
+          - '-created_at'
+          - updated_at
+          - '-updated_at'
+    AcademicPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    AcademicCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor containing only a timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -578,6 +1038,65 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/OnboardingSuccess'
+    AcademicTermCreated:
+      description: The user-owned academic term was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AcademicTermSuccess'
+    AcademicTermSuccess:
+      description: The operation returned one user-owned academic term.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AcademicTermSuccess'
+    AcademicTermCollectionSuccess:
+      description: The operation returned a cursor-paginated current-user term collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AcademicTermCollectionSuccess'
+    CourseCreated:
+      description: The user-owned course workspace was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CourseSuccess'
+    CourseSuccess:
+      description: The operation returned one user-owned course workspace.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CourseSuccess'
+    CourseCollectionSuccess:
+      description: The operation returned a cursor-paginated current-user course collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CourseCollectionSuccess'
+    NoContent:
+      description: The owned resource was permanently deleted.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
     AdminSessionSuccess:
       description: The operation returned the authorized administration identity.
       headers:
@@ -702,6 +1221,366 @@ components:
       type: string
       pattern: '^[0-9abcdefghjkmnpqrstvwxyz]{26}$'
       example: 01jz6m5g0b7h2q3r4s5t6v7w8x
+    AcademicPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz6m5g0b7h2q3r4s5t6v7w8x
+    AcademicVersion:
+      type: integer
+      minimum: 1
+    CourseStatus:
+      type: string
+      enum:
+        - active
+        - archived
+    CourseCounts:
+      type: object
+      required:
+        - active
+        - archived
+      additionalProperties: false
+      properties:
+        active:
+          type: integer
+          minimum: 0
+        archived:
+          type: integer
+          minimum: 0
+    AcademicTerm:
+      type: object
+      required:
+        - id
+        - version
+        - label
+        - starts_on
+        - ends_on
+        - course_counts
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        version:
+          $ref: '#/components/schemas/AcademicVersion'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+        course_counts:
+          $ref: '#/components/schemas/CourseCounts'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CourseTerm:
+      type: object
+      required:
+        - id
+        - version
+        - label
+        - starts_on
+        - ends_on
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        version:
+          $ref: '#/components/schemas/AcademicVersion'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+    Course:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - code
+        - description
+        - term
+        - status
+        - archived_at
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        version:
+          $ref: '#/components/schemas/AcademicVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        term:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CourseTerm'
+        status:
+          $ref: '#/components/schemas/CourseStatus'
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CursorPagination:
+      type: object
+      required:
+        - next_cursor
+        - previous_cursor
+        - per_page
+      additionalProperties: false
+      properties:
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 50
+    CollectionLinks:
+      type: object
+      required:
+        - next
+        - previous
+      additionalProperties: false
+      properties:
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+    AcademicCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    CourseSummary:
+      type: object
+      required:
+        - total
+        - active
+        - archived
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        active:
+          type: integer
+          minimum: 0
+        archived:
+          type: integer
+          minimum: 0
+    CourseCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/CourseSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    AcademicTermSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AcademicTerm'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AcademicTermCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AcademicTerm'
+        meta:
+          $ref: '#/components/schemas/AcademicCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    CourseSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Course'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CourseCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Course'
+        meta:
+          $ref: '#/components/schemas/CourseCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AcademicTermWriteRequest:
+      type: object
+      required:
+        - label
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+    AcademicTermUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - label
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/AcademicVersion'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+    CourseWriteRequest:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        term_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+    CourseUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - title
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/AcademicVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        term_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+    VersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/AcademicVersion'
     RoleKey:
       type: string
       enum:

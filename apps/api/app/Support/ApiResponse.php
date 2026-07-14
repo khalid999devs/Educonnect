@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 final class ApiResponse
 {
@@ -21,6 +23,49 @@ final class ApiResponse
         ];
 
         $response = response()->json($payload, $status);
+        RequestId::attach($response, $requestId);
+
+        return $response;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $data
+     * @param  CursorPaginator<int, mixed>  $paginator
+     * @param  array<string, mixed>  $meta
+     */
+    public static function collection(
+        array $data,
+        CursorPaginator $paginator,
+        array $meta = [],
+    ): JsonResponse {
+        $requestId = RequestId::getOrCreate(request());
+        $payload = [
+            'data' => $data,
+            'meta' => [
+                ...$meta,
+                'pagination' => [
+                    'next_cursor' => $paginator->nextCursor()?->encode(),
+                    'previous_cursor' => $paginator->previousCursor()?->encode(),
+                    'per_page' => $paginator->perPage(),
+                ],
+                'request_id' => $requestId,
+            ],
+            'links' => [
+                'next' => $paginator->nextPageUrl(),
+                'previous' => $paginator->previousPageUrl(),
+            ],
+        ];
+
+        $response = response()->json($payload);
+        RequestId::attach($response, $requestId);
+
+        return $response;
+    }
+
+    public static function noContent(): Response
+    {
+        $requestId = RequestId::getOrCreate(request());
+        $response = response()->noContent();
         RequestId::attach($response, $requestId);
 
         return $response;

@@ -18,6 +18,7 @@ final class UserResource extends JsonResource
             'id' => (string) $this->public_id,
             'name' => $this->name,
             'email' => $this->email,
+            'email_verified' => $this->hasVerifiedEmail(),
             'primary_role' => null,
         ];
     }

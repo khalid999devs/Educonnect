@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+declare(strict_types=1);
 
+namespace App\Http\Requests\Api\V1\Auth;
+
+use App\Domains\Auth\Support\PasswordRules;
 use App\Domains\Users\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 final class RegisterRequest extends FormRequest
 {
@@ -28,15 +31,18 @@ final class RegisterRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class),
             ],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => PasswordRules::newPassword(),
         ];
     }
 
     protected function prepareForValidation(): void
     {
+        $name = $this->input('name');
+        $email = $this->input('email');
+
         $this->merge([
-            'name' => is_string($this->input('name')) ? trim($this->input('name')) : $this->input('name'),
-            'email' => is_string($this->input('email')) ? strtolower(trim($this->input('email'))) : $this->input('email'),
+            'name' => is_string($name) ? trim($name) : $name,
+            'email' => is_string($email) ? Str::lower(trim($email)) : $email,
         ]);
     }
 }

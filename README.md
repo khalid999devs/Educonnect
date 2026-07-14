@@ -57,7 +57,7 @@ The backend is a Laravel modular monolith. Business capabilities remain separate
 
 ## Current Status
 
-EduConnect is under active MVP development. The Laravel 13 API and PostgreSQL data foundations are reconciled, and partial first-party authentication exists; authentication still requires reconciliation against the final contracts. The student web and administration applications are not scaffolded yet.
+EduConnect is under active MVP development. The Laravel 13 REST API, PostgreSQL data foundation, and first-party cookie/session authentication are reconciled. Authorization and product domains remain future phases, and the student web and administration applications are not scaffolded yet.
 
 ## Requirements
 
@@ -151,6 +151,8 @@ composer --working-dir=apps/api check-platform-reqs
 EduConnect follows deny-by-default authorization and least-privilege access. Student-owned records are isolated by backend policies, administration operations use a separate security boundary, private files require controlled access, and sensitive actions are designed for auditability.
 
 All runtime secrets and provider credentials must be supplied through environment configuration. They must never be embedded in source code or exposed to browser bundles.
+
+The student browser uses a same-origin gateway that proxies API and Sanctum requests to Laravel. Host-only encrypted session cookies, CSRF validation, exact origin allowlists, session rotation/revocation, queued verification/reset notifications, and layered account/IP throttles form the authentication boundary. The administration surface receives its separate session boundary in its owning phase.
 
 ## Development Workflow
 

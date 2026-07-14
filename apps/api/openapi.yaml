@@ -1,15 +1,26 @@
 openapi: 3.0.4
 info:
-  title: EduConnect API Foundation
+  title: EduConnect API
   version: 1.0.0
   description: >-
-    Canonical Phase 03 liveness, readiness, request-ID, and response-envelope
-    contracts. Authentication endpoints are intentionally excluded until their
-    Phase 05 reconciliation.
+    Canonical liveness, readiness, request-ID, response-envelope, and
+    first-party cookie-authentication contracts. Browser clients initialize
+    Sanctum CSRF cookies before sending state-changing requests.
 tags:
   - name: Health
     description: Process liveness and dependency readiness probes.
+  - name: Authentication
+    description: First-party browser session, credential, and email-ownership flows.
 paths:
+  /sanctum/csrf-cookie:
+    get:
+      tags:
+        - Authentication
+      operationId: initializeCsrfCookie
+      summary: Initialize the first-party browser CSRF cookie
+      responses:
+        '204':
+          description: CSRF and session cookies were initialized.
   /api/v1/health:
     get:
       tags:
@@ -68,13 +79,371 @@ paths:
                   code: SERVICE_UNAVAILABLE
                   message: The service is not ready to receive traffic.
                   request_id: req_22222222222222222222222222222222
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      operationId: registerUser
+      summary: Register a user and establish an unverified session
+      security:
+        - xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/UserCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: loginUser
+      summary: Authenticate a user and rotate the browser session
+      security:
+        - xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      operationId: requestPasswordReset
+      summary: Queue a password-reset notification when the account exists
+      description: The response is identical for known and unknown canonical email addresses.
+      security:
+        - xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '202':
+          $ref: '#/components/responses/Accepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      operationId: resetPassword
+      summary: Consume a reset token and revoke every existing session
+      security:
+        - xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/verify-email/{user}/{hash}:
+    get:
+      tags:
+        - Authentication
+      operationId: verifyEmail
+      summary: Verify the authenticated user's email with a temporary signed URL
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/UserPublicId'
+        - $ref: '#/components/parameters/VerificationHash'
+        - $ref: '#/components/parameters/Expires'
+        - $ref: '#/components/parameters/Signature'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/email/verification-notification:
+    post:
+      tags:
+        - Authentication
+      operationId: resendEmailVerification
+      summary: Queue a fresh verification notification when still unverified
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '202':
+          $ref: '#/components/responses/Accepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Authentication
+      operationId: logoutCurrentSession
+      summary: Revoke the current browser session
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/NullSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+  /api/v1/auth/logout-all:
+    post:
+      tags:
+        - Authentication
+      operationId: logoutAllSessions
+      summary: Revoke all browser sessions for the authenticated user
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrentPasswordRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/NullSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /api/v1/me:
+    get:
+      tags:
+        - Authentication
+      operationId: getCurrentUser
+      summary: Return the authenticated user
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/UserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+  /api/v1/auth/me:
+    get:
+      deprecated: true
+      tags:
+        - Authentication
+      operationId: getCurrentUserCompatibilityAlias
+      summary: Return the authenticated user through the compatibility alias
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/UserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-educonnect-session
+      description: Host-only first-party session cookie issued by Laravel.
+    xsrfHeader:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: Decoded value of the XSRF-TOKEN cookie.
+  parameters:
+    XsrfToken:
+      name: X-XSRF-TOKEN
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    UserPublicId:
+      name: user
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserPublicId'
+    VerificationHash:
+      name: hash
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{40}$'
+    Expires:
+      name: expires
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Signature:
+      name: signature
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
       required: true
       schema:
         $ref: '#/components/schemas/RequestId'
+  responses:
+    UserCreated:
+      description: The account and unverified browser session were created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserSuccess'
+    UserSuccess:
+      description: The operation returned the current public user representation.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserSuccess'
+    NullSuccess:
+      description: The operation completed successfully.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NullSuccess'
+    Accepted:
+      description: The request was accepted without disclosing account existence or state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageSuccess'
+    MessageSuccess:
+      description: The operation completed and returned safe user-facing status copy.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageSuccess'
+    BadRequest:
+      description: The request was not recognized as a stateful first-party browser request.
+      $ref: '#/components/responses/GenericError'
+    AuthenticationRequired:
+      description: An authenticated browser session is required.
+      $ref: '#/components/responses/GenericError'
+    AuthorizationDenied:
+      description: The signed URL or authenticated user is not authorized.
+      $ref: '#/components/responses/GenericError'
+    NotFound:
+      description: The requested public identifier was not found.
+      $ref: '#/components/responses/GenericError'
+    CsrfMismatch:
+      description: The CSRF token is invalid or expired.
+      $ref: '#/components/responses/GenericError'
+    ValidationFailed:
+      description: One or more request fields failed validation.
+      $ref: '#/components/responses/GenericError'
+    RateLimited:
+      description: The account or source IP has temporarily exhausted its request allowance.
+      $ref: '#/components/responses/GenericError'
+    GenericError:
+      description: A stable API error envelope.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
   schemas:
     RequestId:
       type: string
@@ -126,6 +495,177 @@ components:
       properties:
         error:
           $ref: '#/components/schemas/ErrorBody'
+    UserPublicId:
+      type: string
+      pattern: '^[0-9abcdefghjkmnpqrstvwxyz]{26}$'
+      example: 01jz6m5g0b7h2q3r4s5t6v7w8x
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - email_verified
+        - primary_role
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UserPublicId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        email_verified:
+          type: boolean
+        primary_role:
+          type: string
+          nullable: true
+    UserData:
+      type: object
+      required:
+        - user
+      additionalProperties: false
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+    UserSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/UserData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    NullSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          nullable: true
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    MessageData:
+      type: object
+      required:
+        - message
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+          minLength: 1
+    MessageSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/MessageData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+        password_confirmation:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          format: password
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - email
+        - password
+        - password_confirmation
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+        password_confirmation:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+    CurrentPasswordRequest:
+      type: object
+      required:
+        - password
+      additionalProperties: false
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          format: password
     LivenessData:
       type: object
       required:

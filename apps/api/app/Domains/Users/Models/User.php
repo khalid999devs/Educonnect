@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domains\Users\Models;
 
+use App\Domains\Auth\Notifications\ResetPasswordNotification;
+use App\Domains\Auth\Notifications\VerifyEmailNotification;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -14,14 +17,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Laravel\Sanctum\HasApiTokens;
+use SensitiveParameter;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['id', 'password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUlids, Notifiable, StoresUtcDateTimes;
+    use HasFactory, HasUlids, Notifiable, StoresUtcDateTimes;
 
     /**
      * @return list<string>
@@ -34,6 +37,16 @@ class User extends Authenticatable
     public function getRouteKeyName(): string
     {
         return 'public_id';
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
+
+    public function sendPasswordResetNotification(#[SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     protected static function newFactory(): UserFactory

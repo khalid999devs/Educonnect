@@ -15,6 +15,8 @@ final class LogoutController
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        Auth::forgetGuards();
+        Auth::shouldUse('web');
 
         return ApiResponse::success(null);
     }

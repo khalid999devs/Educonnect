@@ -18,6 +18,8 @@ final readonly class ProductionConfiguration
         $key = $this->config->get('app.key');
         $cipher = $this->config->get('app.cipher');
         $url = $this->config->get('app.url');
+        $origin = $this->httpsOrigin($url);
+        $frontendOrigin = $this->httpsOrigin($this->config->get('app.frontend_url'));
 
         if (! $this->hasValidKey($key, $cipher)) {
             $violations[] = 'APP_KEY must be a valid encryption key';
@@ -27,12 +29,108 @@ final readonly class ProductionConfiguration
             $violations[] = 'APP_DEBUG must be false';
         }
 
-        if (! $this->hasValidHttpsUrl($url)) {
-            $violations[] = 'APP_URL must use HTTPS';
+        if ($origin === null) {
+            $violations[] = 'APP_URL must be an HTTPS origin without a path, query, or fragment';
+        }
+
+        if ($frontendOrigin === null) {
+            $violations[] = 'FRONTEND_URL must be an HTTPS origin without a path, query, or fragment';
+        } elseif ($origin !== null && $frontendOrigin !== $origin) {
+            $violations[] = 'APP_URL and FRONTEND_URL must use the same public origin';
         }
 
         if ($this->config->get('database.default') !== 'pgsql') {
             $violations[] = 'DB_CONNECTION must be pgsql';
+        }
+
+        if (! $this->isPositiveBoundedInteger($this->config->get('auth.passwords.users.expire'), 1440)) {
+            $violations[] = 'AUTH_PASSWORD_RESET_EXPIRE must be between 1 and 1440 minutes';
+        }
+
+        if (! $this->isPositiveBoundedInteger($this->config->get('auth.passwords.users.throttle'), 3600)) {
+            $violations[] = 'AUTH_PASSWORD_RESET_THROTTLE must be between 1 and 3600 seconds';
+        }
+
+        if (! $this->isPositiveBoundedInteger($this->config->get('auth.verification.expire'), 1440)) {
+            $violations[] = 'AUTH_VERIFICATION_EXPIRE must be between 1 and 1440 minutes';
+        }
+
+        if ($frontendOrigin !== null) {
+            if ($this->config->get('cors.allowed_origins') !== [$frontendOrigin]
+                || $this->config->get('cors.allowed_origins_patterns') !== []
+                || $this->config->get('cors.supports_credentials') !== true) {
+                $violations[] = 'CORS_ALLOWED_ORIGINS must contain only the exact FRONTEND_URL origin with credentials enabled';
+            }
+
+            if ($this->config->get('sanctum.stateful') !== [$this->statefulDomain($frontendOrigin)]) {
+                $violations[] = 'SANCTUM_STATEFUL_DOMAINS must contain only the FRONTEND_URL host';
+            }
+        }
+
+        if ($this->config->get('session.driver') !== 'database') {
+            $violations[] = 'SESSION_DRIVER must be database';
+        }
+
+        if (! in_array($this->config->get('session.connection'), [null, 'pgsql'], true)
+            || $this->config->get('session.table') !== 'sessions') {
+            $violations[] = 'database sessions must use the PostgreSQL sessions table';
+        }
+
+        if ($this->config->get('session.domain') !== null) {
+            $violations[] = 'SESSION_DOMAIN must be null for a host-only cookie';
+        }
+
+        if ($this->config->get('session.cookie') !== '__Host-educonnect-session') {
+            $violations[] = 'SESSION_COOKIE must be __Host-educonnect-session';
+        }
+
+        if ($this->config->get('session.secure') !== true) {
+            $violations[] = 'SESSION_SECURE_COOKIE must be true';
+        }
+
+        if ($this->config->get('session.http_only') !== true) {
+            $violations[] = 'SESSION_HTTP_ONLY must be true';
+        }
+
+        if ($this->config->get('session.same_site') !== 'lax') {
+            $violations[] = 'SESSION_SAME_SITE must be lax';
+        }
+
+        if ($this->config->get('session.path') !== '/') {
+            $violations[] = 'SESSION_PATH must be /';
+        }
+
+        if ($this->config->get('session.partitioned') !== false) {
+            $violations[] = 'SESSION_PARTITIONED_COOKIE must be false';
+        }
+
+        if ($this->config->get('session.encrypt') !== true) {
+            $violations[] = 'SESSION_ENCRYPT must be true';
+        }
+
+        if ($this->config->get('mail.default') !== 'smtp'
+            || $this->config->get('mail.mailers.smtp.transport') !== 'smtp') {
+            $violations[] = 'MAIL_MAILER must use the smtp transport';
+        }
+
+        if (! is_int($this->config->get('mail.mailers.smtp.timeout'))
+            || $this->config->get('mail.mailers.smtp.timeout') < 1) {
+            $violations[] = 'MAIL_TIMEOUT must be a positive number of seconds';
+        }
+
+        if (! is_string($this->config->get('mail.from.address'))
+            || filter_var($this->config->get('mail.from.address'), FILTER_VALIDATE_EMAIL) === false) {
+            $violations[] = 'MAIL_FROM_ADDRESS must be a valid email address';
+        }
+
+        if (! $this->usesPersistentDriver('queue.default', 'queue.connections', ['database', 'redis'])) {
+            $violations[] = 'QUEUE_CONNECTION must be database or redis';
+        } elseif ($this->config->get('queue.connections.'.$this->config->get('queue.default').'.after_commit') !== true) {
+            $violations[] = 'QUEUE_AFTER_COMMIT must be true';
+        }
+
+        if (! $this->usesPersistentDriver('cache.default', 'cache.stores', ['database', 'redis'])) {
+            $violations[] = 'CACHE_STORE must be database or redis';
         }
 
         if ($violations !== []) {
@@ -53,12 +151,59 @@ final readonly class ProductionConfiguration
         return is_string($decodedKey) && Encrypter::supported($decodedKey, $cipher);
     }
 
-    private function hasValidHttpsUrl(mixed $url): bool
+    private function httpsOrigin(mixed $url): ?string
     {
-        return is_string($url)
-            && filter_var($url, FILTER_VALIDATE_URL) !== false
-            && parse_url($url, PHP_URL_SCHEME) === 'https'
-            && is_string(parse_url($url, PHP_URL_HOST))
-            && parse_url($url, PHP_URL_HOST) !== '';
+        if (! is_string($url) || filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+
+        if (! is_array($parts)
+            || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || ! isset($parts['host'])
+            || isset($parts['user'])
+            || isset($parts['pass'])
+            || isset($parts['query'])
+            || isset($parts['fragment'])
+            || (isset($parts['path']) && $parts['path'] !== '' && $parts['path'] !== '/')) {
+            return null;
+        }
+
+        $origin = 'https://'.strtolower($parts['host']);
+
+        if (isset($parts['port'])) {
+            $origin .= ':'.$parts['port'];
+        }
+
+        return $origin;
+    }
+
+    private function statefulDomain(string $origin): string
+    {
+        $host = parse_url($origin, PHP_URL_HOST);
+        $port = parse_url($origin, PHP_URL_PORT);
+
+        return (string) $host.($port === null ? '' : ':'.$port);
+    }
+
+    private function isPositiveBoundedInteger(mixed $value, int $maximum): bool
+    {
+        return is_int($value) && $value >= 1 && $value <= $maximum;
+    }
+
+    /**
+     * @param  list<string>  $supportedDrivers
+     */
+    private function usesPersistentDriver(
+        string $defaultKey,
+        string $connectionsKey,
+        array $supportedDrivers,
+    ): bool {
+        $default = $this->config->get($defaultKey);
+
+        return is_string($default)
+            && in_array($default, $supportedDrivers, true)
+            && $this->config->get("{$connectionsKey}.{$default}.driver") === $default;
     }
 }

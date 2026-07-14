@@ -100,6 +100,22 @@ final class AuthenticationTest extends TestCase
         $this->assertDatabaseCount('users', 1);
     }
 
+    public function test_password_inputs_reject_values_beyond_the_bcrypt_byte_limit(): void
+    {
+        $overlongPassword = str_repeat('é', 37);
+
+        $response = $this->withHeaders($this->statefulHeaders())->postJson('/api/v1/auth/register', [
+            'name' => 'Student',
+            'email' => 'student@example.com',
+            'password' => $overlongPassword,
+            'password_confirmation' => $overlongPassword,
+        ]);
+
+        $this->assertApiError($response, 422, ApiErrorCode::ValidationFailed);
+        $response->assertJsonStructure(['error' => ['details' => ['fields' => ['password']]]]);
+        $this->assertDatabaseCount('users', 0);
+    }
+
     public function test_student_can_login_and_last_login_time_is_recorded(): void
     {
         $user = User::factory()->create([

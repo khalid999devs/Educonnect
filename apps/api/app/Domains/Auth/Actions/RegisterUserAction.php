@@ -2,7 +2,9 @@
 
 namespace App\Domains\Auth\Actions;
 
+use App\Domains\Auth\Exceptions\EmailAlreadyRegistered;
 use App\Domains\Users\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 final class RegisterUserAction
 {
@@ -11,6 +13,18 @@ final class RegisterUserAction
      */
     public function execute(array $attributes): User
     {
-        return User::query()->create($attributes);
+        try {
+            $user = User::query()->create($attributes);
+        } catch (UniqueConstraintViolationException $exception) {
+            if ($exception->index === 'users_email_unique' || in_array('email', $exception->columns, true)) {
+                throw new EmailAlreadyRegistered;
+            }
+
+            throw $exception;
+        }
+
+        $user->sendEmailVerificationNotification();
+
+        return $user;
     }
 }

@@ -46,12 +46,102 @@ class AppServiceProvider extends ServiceProvider
             $productionConfiguration->assertValid();
         }
 
-        RateLimiter::for('auth', function (Request $request): Limit {
-            $email = Str::lower((string) $request->input('email'));
-            $key = hash('sha256', $email.'|'.$request->ip());
+        $this->registerAuthenticationRateLimiters();
+    }
 
-            return Limit::perMinute(5)->by($key);
-        });
+    private function registerAuthenticationRateLimiters(): void
+    {
+        RateLimiter::for('auth.login', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'login',
+            emailAttempts: 5,
+            ipAttempts: 30,
+        ));
+        RateLimiter::for('auth.register', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'register',
+            emailAttempts: 3,
+            ipAttempts: 10,
+        ));
+        RateLimiter::for('auth.password-email', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'password-email',
+            emailAttempts: 3,
+            ipAttempts: 15,
+        ));
+        RateLimiter::for('auth.password-reset', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'password-reset',
+            emailAttempts: 5,
+            ipAttempts: 15,
+        ));
+        RateLimiter::for('auth.verification-send', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'verification-send',
+            actorAttempts: 3,
+            ipAttempts: 15,
+        ));
+        RateLimiter::for('auth.verification-verify', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'verification-verify',
+            actorAttempts: 10,
+            ipAttempts: 30,
+        ));
+        RateLimiter::for('auth.logout-all', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'logout-all',
+            actorAttempts: 5,
+            ipAttempts: 30,
+        ));
+    }
+
+    /**
+     * @return array{Limit, Limit}
+     */
+    private function emailAndIpLimits(
+        Request $request,
+        string $scope,
+        int $emailAttempts,
+        int $ipAttempts,
+    ): array {
+        $email = Str::lower(trim((string) $request->input('email')));
+
+        return [
+            Limit::perMinute($emailAttempts)->by($this->rateLimitKey($scope, 'email', $email)),
+            Limit::perMinute($ipAttempts)->by($this->rateLimitKey($scope, 'ip', $request->ip() ?? 'unknown')),
+        ];
+    }
+
+    /**
+     * @return array{Limit, Limit}
+     */
+    private function actorAndIpLimits(
+        Request $request,
+        string $scope,
+        int $actorAttempts,
+        int $ipAttempts,
+    ): array {
+        $actor = $request->user()?->getAuthIdentifier();
+
+        if ($actor === null) {
+            $routeActor = $request->route('user') ?? $request->route('id');
+
+            if (is_object($routeActor) && method_exists($routeActor, 'getRouteKey')) {
+                $routeActor = $routeActor->getRouteKey();
+            }
+
+            $actor = is_scalar($routeActor) ? (string) $routeActor : 'guest';
+        }
+
+        return [
+            Limit::perMinute($actorAttempts)->by($this->rateLimitKey($scope, 'actor', (string) $actor)),
+            Limit::perMinute($ipAttempts)->by($this->rateLimitKey($scope, 'ip', $request->ip() ?? 'unknown')),
+        ];
+    }
+
+    private function rateLimitKey(string $scope, string $dimension, string $value): string
+    {
+        return $scope.':'.$dimension.':'.hash('sha256', $value);
     }
 
     private function isPackageDiscovery(): bool

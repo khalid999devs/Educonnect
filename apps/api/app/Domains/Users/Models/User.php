@@ -9,6 +9,8 @@ use App\Domains\Auth\Notifications\VerifyEmailNotification;
 use App\Domains\Authorization\Enums\CapabilityKey;
 use App\Domains\Authorization\Enums\RoleKey;
 use App\Domains\Authorization\Models\Role;
+use App\Domains\Onboarding\Models\OnboardingProgress;
+use App\Domains\Onboarding\Models\UserProfile;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -49,6 +52,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user')->withPivot('assigned_at');
+    }
+
+    /** @return HasOne<UserProfile, $this> */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+    /** @return HasOne<OnboardingProgress, $this> */
+    public function onboardingProgress(): HasOne
+    {
+        return $this->hasOne(OnboardingProgress::class);
     }
 
     public function hasRole(RoleKey|string $role): bool

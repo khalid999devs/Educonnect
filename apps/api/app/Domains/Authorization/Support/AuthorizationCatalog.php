@@ -59,6 +59,7 @@ final class AuthorizationCatalog
                 CapabilityKey::AcademicManageOwn,
             ],
             RoleKey::Moderator->value => [
+                CapabilityKey::AcademicManageOwn,
                 CapabilityKey::AdminAccess,
                 CapabilityKey::ModerationScoped,
                 CapabilityKey::AuditViewScoped,

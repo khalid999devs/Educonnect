@@ -47,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->registerAuthenticationRateLimiters();
+        $this->registerOnboardingRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -98,6 +99,28 @@ class AppServiceProvider extends ServiceProvider
             scope: 'logout-all',
             actorAttempts: 5,
             ipAttempts: 30,
+        ));
+    }
+
+    private function registerOnboardingRateLimiters(): void
+    {
+        RateLimiter::for('onboarding.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'onboarding-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('onboarding.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'onboarding-write',
+            actorAttempts: 30,
+            ipAttempts: 30,
+        ));
+        RateLimiter::for('onboarding.complete', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'onboarding-complete',
+            actorAttempts: 5,
+            ipAttempts: 5,
         ));
     }
 

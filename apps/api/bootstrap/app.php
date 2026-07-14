@@ -3,12 +3,14 @@
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\RequireBrowserSurface;
 use App\Http\Middleware\RequireStatefulSpaSession;
+use App\Http\Middleware\RequireVerifiedEmail;
 use App\Support\ApiExceptionRenderer;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -25,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->prependToPriorityList(AuthenticatesRequests::class, RequireBrowserSurface::class);
         $middleware->prependToPriorityList(RequireBrowserSurface::class, RequireStatefulSpaSession::class);
+        $middleware->prependToPriorityList(ThrottleRequests::class, RequireVerifiedEmail::class);
         $middleware->preventRequestsDuringMaintenance(except: [
             'api/health',
             'api/v1/health',

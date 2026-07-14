@@ -12,10 +12,14 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
+use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
+use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
 use App\Http\Middleware\RequireStatefulSpaSession;
+use App\Http\Middleware\RequireVerifiedEmail;
 use Illuminate\Support\Facades\Route;
 
 // Routes in this file are automatically prefixed with /api/v1.
@@ -61,6 +65,25 @@ Route::middleware([
         Route::get('/me', CurrentUserController::class)
             ->middleware('auth:sanctum')
             ->name('me');
+
+        Route::prefix('onboarding')
+            ->middleware([
+                'auth:sanctum',
+                RequireVerifiedEmail::class,
+            ])
+            ->name('onboarding.')
+            ->group(function (): void {
+                Route::get('/', ShowOnboardingController::class)
+                    ->middleware(['throttle:onboarding.read', 'can:academic.manage-own'])
+                    ->name('show');
+                Route::put('/steps/{step}', UpdateOnboardingStepController::class)
+                    ->whereIn('step', ['institution', 'program', 'study_stage', 'courses', 'goals', 'first_source'])
+                    ->middleware(['throttle:onboarding.write', 'can:academic.manage-own'])
+                    ->name('steps.update');
+                Route::put('/completion', CompleteOnboardingController::class)
+                    ->middleware(['throttle:onboarding.complete', 'can:academic.manage-own'])
+                    ->name('completion.update');
+            });
     });
 
 Route::prefix('admin')

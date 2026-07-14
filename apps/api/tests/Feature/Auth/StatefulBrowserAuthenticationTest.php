@@ -113,6 +113,33 @@ final class StatefulBrowserAuthenticationTest extends TestCase
         )
             ->assertOk()
             ->assertJsonPath('data.user.id', $user->public_id);
+
+        $onboardingPayload = [
+            'expected_version' => 0,
+            'state' => 'completed',
+            'data' => [
+                'institution_name' => 'KUET',
+                'institution_country_code' => 'BD',
+            ],
+        ];
+        $missingOnboardingToken = $this->browserRequest(
+            'PUT',
+            '/api/v1/onboarding/steps/institution',
+            $onboardingPayload,
+            captureCookies: false,
+        );
+
+        $this->assertApiError($missingOnboardingToken, 419, ApiErrorCode::CsrfTokenMismatch);
+
+        $this->browserRequest(
+            'PUT',
+            '/api/v1/onboarding/steps/institution',
+            $onboardingPayload,
+            xsrfToken: $this->xsrfToken(),
+        )
+            ->assertOk()
+            ->assertJsonPath('data.onboarding.version', 1)
+            ->assertJsonPath('data.onboarding.profile.institution_name', 'KUET');
     }
 
     public function test_login_rotates_the_database_session_and_the_old_cookie_remains_unauthenticated(): void

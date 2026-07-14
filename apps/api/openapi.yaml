@@ -13,6 +13,8 @@ tags:
     description: First-party browser session, credential, and email-ownership flows.
   - name: Administration
     description: Isolated first-party administration session and access-shell flows.
+  - name: Onboarding
+    description: Verified, current-user academic profile and resumable onboarding flows.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -317,6 +319,104 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/AuthenticationRequired'
+  /api/v1/onboarding:
+    get:
+      tags:
+        - Onboarding
+      operationId: getOnboarding
+      summary: Return the current user's resumable onboarding snapshot
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/OnboardingSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/onboarding/steps/{step}:
+    put:
+      tags:
+        - Onboarding
+      operationId: updateOnboardingStep
+      summary: Idempotently replace one current-user onboarding step
+      description: >-
+        The request variant must correspond to the step path value. Repeating
+        identical canonical content is a no-op even when expected_version is
+        stale; stale requests containing different content receive 409.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/OnboardingStep'
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingStepUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OnboardingSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/onboarding/completion:
+    put:
+      tags:
+        - Onboarding
+      operationId: completeOnboarding
+      summary: Idempotently complete the current user's onboarding
+      description: >-
+        Completion requires an institution, terminal step choices, and at
+        least one course draft, goal, or problem. Replays retain the original
+        completion timestamp.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteOnboardingRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OnboardingSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -438,6 +538,12 @@ components:
       schema:
         type: string
         minLength: 1
+    OnboardingStep:
+      name: step
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/OnboardingStepKey'
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -463,6 +569,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UserSuccess'
+    OnboardingSuccess:
+      description: The operation returned the current user's complete onboarding snapshot.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OnboardingSuccess'
     AdminSessionSuccess:
       description: The operation returned the authorized administration identity.
       headers:
@@ -519,6 +634,9 @@ components:
       $ref: '#/components/responses/GenericError'
     RateLimited:
       description: The account or source IP has temporarily exhausted its request allowance.
+      $ref: '#/components/responses/GenericError'
+    Conflict:
+      description: The submitted version is stale and the requested content differs from current state.
       $ref: '#/components/responses/GenericError'
     GenericError:
       description: A stable API error envelope.
@@ -652,6 +770,576 @@ components:
           $ref: '#/components/schemas/UserData'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
+    OnboardingStepKey:
+      type: string
+      enum:
+        - institution
+        - program
+        - study_stage
+        - courses
+        - goals
+        - first_source
+    OnboardingStepState:
+      type: string
+      enum:
+        - pending
+        - completed
+        - skipped
+    OnboardingStatus:
+      type: string
+      enum:
+        - not_started
+        - in_progress
+        - completed
+    OnboardingSteps:
+      type: object
+      required:
+        - institution
+        - program
+        - study_stage
+        - courses
+        - goals
+        - first_source
+      additionalProperties: false
+      properties:
+        institution:
+          $ref: '#/components/schemas/OnboardingStepState'
+        program:
+          $ref: '#/components/schemas/OnboardingStepState'
+        study_stage:
+          $ref: '#/components/schemas/OnboardingStepState'
+        courses:
+          $ref: '#/components/schemas/OnboardingStepState'
+        goals:
+          $ref: '#/components/schemas/OnboardingStepState'
+        first_source:
+          $ref: '#/components/schemas/OnboardingStepState'
+    OnboardingProfile:
+      type: object
+      required:
+        - institution_name
+        - institution_country_code
+        - department
+        - degree
+        - major
+        - year_label
+        - term_label
+      additionalProperties: false
+      properties:
+        institution_name:
+          type: string
+          nullable: true
+          maxLength: 200
+        institution_country_code:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+          description: ISO 3166-1 alpha-2 code for the institution country, not nationality.
+        department:
+          type: string
+          nullable: true
+          maxLength: 160
+        degree:
+          type: string
+          nullable: true
+          maxLength: 160
+        major:
+          type: string
+          nullable: true
+          maxLength: 160
+        year_label:
+          type: string
+          nullable: true
+          maxLength: 80
+        term_label:
+          type: string
+          nullable: true
+          maxLength: 80
+    CourseDraft:
+      type: object
+      required:
+        - title
+        - code
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+    FirstSourceDraft:
+      type: object
+      required:
+        - url
+        - title
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          pattern: '^[Hh][Tt][Tt][Pp][Ss]?://'
+          minLength: 1
+          maxLength: 2048
+          description: Stored HTTP(S) link draft; the API does not fetch it during onboarding.
+        title:
+          type: string
+          nullable: true
+          maxLength: 255
+    StarterInstitution:
+      type: object
+      required:
+        - name
+        - country_code
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+    StarterProgram:
+      type: object
+      required:
+        - department
+        - degree
+        - major
+      additionalProperties: false
+      properties:
+        department:
+          type: string
+          nullable: true
+          maxLength: 160
+        degree:
+          type: string
+          nullable: true
+          maxLength: 160
+        major:
+          type: string
+          nullable: true
+          maxLength: 160
+    StarterStudyStage:
+      type: object
+      required:
+        - year_label
+        - term_label
+      additionalProperties: false
+      properties:
+        year_label:
+          type: string
+          nullable: true
+          maxLength: 80
+        term_label:
+          type: string
+          nullable: true
+          maxLength: 80
+    StarterContext:
+      type: object
+      required:
+        - institution
+        - program
+        - study_stage
+        - course_drafts
+        - goals
+        - problems
+        - first_source_draft
+      additionalProperties: false
+      properties:
+        institution:
+          $ref: '#/components/schemas/StarterInstitution'
+        program:
+          $ref: '#/components/schemas/StarterProgram'
+        study_stage:
+          $ref: '#/components/schemas/StarterStudyStage'
+        course_drafts:
+          type: array
+          maxItems: 12
+          items:
+            $ref: '#/components/schemas/CourseDraft'
+        goals:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        problems:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        first_source_draft:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/FirstSourceDraft'
+    Onboarding:
+      type: object
+      required:
+        - version
+        - status
+        - current_step
+        - can_complete
+        - completed_at
+        - steps
+        - profile
+        - course_drafts
+        - goals
+        - problems
+        - first_source_draft
+        - starter_context
+      additionalProperties: false
+      properties:
+        version:
+          type: integer
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/OnboardingStatus'
+        current_step:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/OnboardingStepKey'
+        can_complete:
+          type: boolean
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        steps:
+          $ref: '#/components/schemas/OnboardingSteps'
+        profile:
+          $ref: '#/components/schemas/OnboardingProfile'
+        course_drafts:
+          type: array
+          maxItems: 12
+          items:
+            $ref: '#/components/schemas/CourseDraft'
+        goals:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        problems:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        first_source_draft:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/FirstSourceDraft'
+        starter_context:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/StarterContext'
+    OnboardingData:
+      type: object
+      required:
+        - onboarding
+      additionalProperties: false
+      properties:
+        onboarding:
+          $ref: '#/components/schemas/Onboarding'
+    OnboardingSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OnboardingData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ExpectedOnboardingVersion:
+      type: integer
+      minimum: 0
+    InstitutionStepData:
+      type: object
+      required:
+        - institution_name
+        - institution_country_code
+      additionalProperties: false
+      properties:
+        institution_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        institution_country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          pattern: '^[A-Za-z]{2}$'
+    ProgramStepData:
+      type: object
+      additionalProperties: false
+      anyOf:
+        - required:
+            - department
+          properties:
+            department:
+              type: string
+              minLength: 1
+        - required:
+            - degree
+          properties:
+            degree:
+              type: string
+              minLength: 1
+        - required:
+            - major
+          properties:
+            major:
+              type: string
+              minLength: 1
+      properties:
+        department:
+          type: string
+          nullable: true
+          maxLength: 160
+        degree:
+          type: string
+          nullable: true
+          maxLength: 160
+        major:
+          type: string
+          nullable: true
+          maxLength: 160
+    StudyStageStepData:
+      type: object
+      additionalProperties: false
+      anyOf:
+        - required:
+            - year_label
+          properties:
+            year_label:
+              type: string
+              minLength: 1
+        - required:
+            - term_label
+          properties:
+            term_label:
+              type: string
+              minLength: 1
+      properties:
+        year_label:
+          type: string
+          nullable: true
+          maxLength: 80
+        term_label:
+          type: string
+          nullable: true
+          maxLength: 80
+    CourseDraftInput:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+    CoursesStepData:
+      type: object
+      required:
+        - courses
+      additionalProperties: false
+      properties:
+        courses:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items:
+            $ref: '#/components/schemas/CourseDraftInput'
+    GoalsStepData:
+      type: object
+      required:
+        - goals
+        - problems
+      additionalProperties: false
+      anyOf:
+        - properties:
+            goals:
+              minItems: 1
+        - properties:
+            problems:
+              minItems: 1
+      properties:
+        goals:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        problems:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    FirstSourceStepData:
+      type: object
+      required:
+        - url
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          pattern: '^[Hh][Tt][Tt][Pp][Ss]?://'
+          minLength: 1
+          maxLength: 2048
+          description: Stored HTTP(S) link draft; the API does not fetch it during onboarding.
+        title:
+          type: string
+          nullable: true
+          maxLength: 255
+    InstitutionStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/InstitutionStepData'
+    ProgramStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/ProgramStepData'
+    StudyStageStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/StudyStageStepData'
+    CoursesStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/CoursesStepData'
+    GoalsStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/GoalsStepData'
+    FirstSourceStepUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+        - data
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - completed
+        data:
+          $ref: '#/components/schemas/FirstSourceStepData'
+    SkippedOnboardingStepRequest:
+      type: object
+      required:
+        - expected_version
+        - state
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
+        state:
+          type: string
+          enum:
+            - skipped
+    OnboardingStepUpdateRequest:
+      oneOf:
+        - $ref: '#/components/schemas/InstitutionStepUpdateRequest'
+        - $ref: '#/components/schemas/ProgramStepUpdateRequest'
+        - $ref: '#/components/schemas/StudyStageStepUpdateRequest'
+        - $ref: '#/components/schemas/CoursesStepUpdateRequest'
+        - $ref: '#/components/schemas/GoalsStepUpdateRequest'
+        - $ref: '#/components/schemas/FirstSourceStepUpdateRequest'
+        - $ref: '#/components/schemas/SkippedOnboardingStepRequest'
+    CompleteOnboardingRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ExpectedOnboardingVersion'
     AdminAuthorization:
       type: object
       required:

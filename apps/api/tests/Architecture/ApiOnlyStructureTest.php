@@ -35,8 +35,12 @@ final class ApiOnlyStructureTest extends TestCase
         $disks = config('filesystems.disks');
 
         $this->assertIsArray($disks);
+        $this->assertSame(['local', 's3'], array_keys($disks));
         $this->assertFalse((bool) data_get($disks, 'local.serve', false));
         $this->assertFalse((bool) data_get($disks, 'public.serve', false));
+        $this->assertSame('private', data_get($disks, 's3.visibility'));
+        $this->assertFalse((bool) data_get($disks, 's3.serve', false));
+        $this->assertTrue((bool) data_get($disks, 's3.throw', false));
         $this->assertSame([], config('filesystems.links'));
     }
 
@@ -45,15 +49,18 @@ final class ApiOnlyStructureTest extends TestCase
         $mailers = config('mail.mailers');
         $cacheStores = config('cache.stores');
         $queueConnections = config('queue.connections');
+        $filesystemDisks = config('filesystems.disks');
         $logChannels = config('logging.channels');
 
         $this->assertIsArray($mailers);
         $this->assertIsArray($cacheStores);
         $this->assertIsArray($queueConnections);
+        $this->assertIsArray($filesystemDisks);
         $this->assertIsArray($logChannels);
         $this->assertSame(['smtp', 'log', 'array'], array_keys($mailers));
         $this->assertSame(['array', 'database', 'redis'], array_keys($cacheStores));
         $this->assertSame(['sync', 'database', 'redis'], array_keys($queueConnections));
+        $this->assertSame(['local', 's3'], array_keys($filesystemDisks));
         $this->assertSame(['stack', 'single', 'stderr', 'null', 'emergency'], array_keys($logChannels));
         $this->assertSame([], config('services'));
     }

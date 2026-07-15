@@ -192,6 +192,7 @@ trait HandlesPlannerInput
     private function parseOffsetDateTime(mixed $value): ?CarbonImmutable
     {
         if (! is_string($value)
+            || str_ends_with($value, '-00:00')
             || preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/D', $value) !== 1) {
             return null;
         }

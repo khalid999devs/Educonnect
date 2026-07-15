@@ -12,6 +12,7 @@ EduConnect is a Laravel modular monolith. Concrete business capabilities own top
 | `Courses` | User-owned academic terms, independent course workspaces, archive lifecycle, and onboarding materialization. |
 | `Onboarding` | Private academic profile collection, resumable onboarding state, and bounded starter-context drafts. |
 | `Planner` | User-owned tasks, scheduled focus sessions, and timezone-safe agenda and weekly projections. |
+| `Resources` | Private links, direct object-storage uploads, signed downloads, and recoverable file cleanup. |
 | `Users` | The current persisted user model. |
 
 This table records implemented code, not a reservation of future domain names. A phase creates a domain only when it introduces concrete behavior owned by that domain. Do not add empty directories or `.gitkeep` placeholders to anticipate later phases.

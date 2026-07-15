@@ -275,7 +275,9 @@ final class OnboardingDataIntegrityTest extends TestCase
         $onboardingMigration = $this->migration('2026_07_14_000006_create_onboarding_foundation.php');
         $coursesMigration = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
         $plannerMigration = $this->migration('2026_07_14_000008_create_planner_foundation.php');
+        $resourceMigration = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
 
+        $resourceMigration->down();
         $plannerMigration->down();
         $coursesMigration->down();
         $onboardingMigration->down();
@@ -285,6 +287,7 @@ final class OnboardingDataIntegrityTest extends TestCase
         $onboardingMigration->up();
         $coursesMigration->up();
         $plannerMigration->up();
+        $resourceMigration->up();
         $this->assertTrue(Schema::hasTable('onboarding_progress'));
         $this->assertTrue(Schema::hasTable('user_profiles'));
 

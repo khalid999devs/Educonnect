@@ -8,7 +8,8 @@
     "require": {
         "php": "^8.5",
         "laravel/framework": "^13.0",
-        "laravel/sanctum": "^4.3"
+        "laravel/sanctum": "^4.3",
+        "league/flysystem-aws-s3-v3": "^3.25"
     },
     "require-dev": {
         "devizzent/cebe-php-openapi": "^1.1.5",

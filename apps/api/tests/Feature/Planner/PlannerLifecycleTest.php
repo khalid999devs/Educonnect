@@ -313,6 +313,14 @@ final class PlannerLifecycleTest extends TestCase
             ->assertJsonStructure(['error' => ['details' => ['fields' => ['title', 'due_at', 'owner_id']]]]);
 
         $this->withHeaders($this->headers())
+            ->postJson('/api/v1/tasks', [
+                'title' => 'Unknown offset is not an instant',
+                'due_at' => '2026-07-15T12:00:00-00:00',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonStructure(['error' => ['details' => ['fields' => ['due_at']]]]);
+
+        $this->withHeaders($this->headers())
             ->postJson('/api/v1/focus-sessions', [
                 'task_id' => $task->public_id,
                 'course_id' => $course->public_id,

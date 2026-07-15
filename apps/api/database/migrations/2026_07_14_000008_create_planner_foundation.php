@@ -154,21 +154,33 @@ return new class extends Migration
 
     public function down(): void
     {
-        $hasPlannerRows = (Schema::hasTable('focus_sessions') && DB::table('focus_sessions')->exists())
-            || (Schema::hasTable('tasks') && DB::table('tasks')->exists());
+        DB::transaction(function (): void {
+            if (Schema::hasTable('tasks')) {
+                DB::statement('LOCK TABLE tasks IN ACCESS EXCLUSIVE MODE');
+            }
 
-        if ($hasPlannerRows) {
-            throw new RuntimeException('Cannot roll back the planner foundation while task or focus-session data exists.');
-        }
+            if (Schema::hasTable('focus_sessions')) {
+                DB::statement('LOCK TABLE focus_sessions IN ACCESS EXCLUSIVE MODE');
+            }
 
-        Schema::dropIfExists('focus_sessions');
-        Schema::dropIfExists('tasks');
+            $hasPlannerRows = (Schema::hasTable('focus_sessions') && DB::table('focus_sessions')->exists())
+                || (Schema::hasTable('tasks') && DB::table('tasks')->exists());
 
-        if (Schema::hasTable('courses')) {
-            DB::statement('ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_owner_id_unique');
-        }
+            if ($hasPlannerRows) {
+                throw new RuntimeException(
+                    'Cannot roll back the planner foundation while task or focus-session data exists.',
+                );
+            }
 
-        DB::statement('DROP FUNCTION IF EXISTS educonnect_reject_planner_identity_update()');
+            Schema::dropIfExists('focus_sessions');
+            Schema::dropIfExists('tasks');
+
+            if (Schema::hasTable('courses')) {
+                DB::statement('ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_owner_id_unique');
+            }
+
+            DB::statement('DROP FUNCTION IF EXISTS educonnect_reject_planner_identity_update()');
+        }, 3);
     }
 
     private function createIdentityImmutabilityTriggers(): void

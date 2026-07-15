@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domains\Resources\Contracts\ResourceUploadSigner;
+use App\Domains\Resources\Support\S3StrictPutUploadSigner;
 use App\Support\ProductionConfiguration;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -14,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(ResourceUploadSigner::class, S3StrictPutUploadSigner::class);
+
         $postgresConnection = config('database.connections.pgsql');
 
         if (! is_array($postgresConnection)) {
@@ -23,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $mailers = $this->supportedConfiguration('mail.mailers', ['smtp', 'log', 'array']);
         $cacheStores = $this->supportedConfiguration('cache.stores', ['array', 'database', 'redis']);
         $queueConnections = $this->supportedConfiguration('queue.connections', ['sync', 'database', 'redis']);
+        $filesystemDisks = $this->supportedConfiguration('filesystems.disks', ['local', 's3']);
         $logChannels = $this->supportedConfiguration(
             'logging.channels',
             ['stack', 'single', 'stderr', 'null', 'emergency'],
@@ -33,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         config()->set('mail.mailers', $mailers);
         config()->set('cache.stores', $cacheStores);
         config()->set('queue.connections', $queueConnections);
+        config()->set('filesystems.disks', $filesystemDisks);
         config()->set('logging.channels', $logChannels);
         config()->set('services', []);
     }
@@ -50,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerOnboardingRateLimiters();
         $this->registerAcademicRateLimiters();
         $this->registerPlannerRateLimiters();
+        $this->registerResourceRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -165,6 +172,40 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('planner.destructive', fn (Request $request): array => $this->actorAndIpLimits(
             request: $request,
             scope: 'planner-destructive',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
+    }
+
+    private function registerResourceRateLimiters(): void
+    {
+        RateLimiter::for('resources.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'resources-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('resources.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'resources-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('resources.upload', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'resources-upload',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
+        RateLimiter::for('resources.download', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'resources-download',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('resources.destructive', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'resources-destructive',
             actorAttempts: 20,
             ipAttempts: 20,
         ));

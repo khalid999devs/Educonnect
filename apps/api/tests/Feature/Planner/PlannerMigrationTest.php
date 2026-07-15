@@ -10,6 +10,7 @@ use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
 use App\Domains\Users\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -237,18 +238,39 @@ final class PlannerMigrationTest extends TestCase
             '(user_id, starts_at, public_id)',
             (string) $indexes['focus_sessions_owner_starts_cursor_idx'],
         );
+        $this->assertStringContainsString(
+            '(user_id, starts_at, ends_at)',
+            (string) $indexes['focus_sessions_owner_time_range_idx'],
+        );
+        $this->assertStringContainsString(
+            '(user_id, task_id, starts_at, public_id)',
+            (string) $indexes['focus_sessions_owner_task_lookup_idx'],
+        );
+        $this->assertStringContainsString(
+            '(user_id, course_id, starts_at, public_id)',
+            (string) $indexes['focus_sessions_owner_course_lookup_idx'],
+        );
     }
 
     public function test_migration_rolls_back_when_empty_and_refuses_private_planner_rows(): void
     {
         $migration = $this->migration();
+        $resourceMigration = $this->resourceMigration();
+        $statements = [];
+        DB::listen(static function (QueryExecuted $query) use (&$statements): void {
+            $statements[] = $query->sql;
+        });
 
+        $resourceMigration->down();
         $migration->down();
+        $this->assertContains('LOCK TABLE tasks IN ACCESS EXCLUSIVE MODE', $statements);
+        $this->assertContains('LOCK TABLE focus_sessions IN ACCESS EXCLUSIVE MODE', $statements);
         $this->assertFalse(Schema::hasTable('focus_sessions'));
         $this->assertFalse(Schema::hasTable('tasks'));
         $this->assertFalse($this->constraintExists('courses_owner_id_unique'));
 
         $migration->up();
+        $resourceMigration->up();
         $this->assertTrue(Schema::hasTable('tasks'));
         $this->assertTrue(Schema::hasTable('focus_sessions'));
         $this->assertTrue($this->constraintExists('courses_owner_id_unique'));
@@ -269,6 +291,14 @@ final class PlannerMigrationTest extends TestCase
     private function migration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000008_create_planner_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function resourceMigration(): Migration
+    {
+        $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

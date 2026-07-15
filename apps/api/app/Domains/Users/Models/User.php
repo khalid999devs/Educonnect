@@ -15,6 +15,8 @@ use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Models\UserProfile;
 use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
+use App\Domains\Resources\Models\Resource;
+use App\Domains\Resources\Models\StoredFile;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -93,6 +95,18 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function focusSessions(): HasMany
     {
         return $this->hasMany(FocusSession::class);
+    }
+
+    /** @return HasMany<\App\Domains\Resources\Models\Resource, $this> */
+    public function resources(): HasMany
+    {
+        return $this->hasMany(Resource::class);
+    }
+
+    /** @return HasMany<StoredFile, $this> */
+    public function storedFiles(): HasMany
+    {
+        return $this->hasMany(StoredFile::class);
     }
 
     public function hasRole(RoleKey|string $role): bool

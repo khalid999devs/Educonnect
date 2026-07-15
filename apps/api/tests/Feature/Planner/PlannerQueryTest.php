@@ -9,8 +9,10 @@ use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
 use App\Domains\Users\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\Cursor;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class PlannerQueryTest extends TestCase
@@ -62,6 +64,12 @@ final class PlannerQueryTest extends TestCase
             CarbonImmutable::parse('2026-03-08T04:00:00Z'),
             CarbonImmutable::parse('2026-03-08T05:00:00Z'),
         )->create(['note' => 'Ends exactly at the start']);
+        $focusQueries = [];
+        DB::listen(static function (QueryExecuted $query) use (&$focusQueries): void {
+            if (str_contains($query->sql, 'from "focus_sessions"')) {
+                $focusQueries[] = $query->sql;
+            }
+        });
 
         $this->actingAs($owner, 'web');
         $response = $this->withHeaders($this->headers())
@@ -83,6 +91,12 @@ final class PlannerQueryTest extends TestCase
         self::assertStringNotContainsString('Archived private task', $payload);
         self::assertStringNotContainsString('Foreign private task', $payload);
         self::assertStringNotContainsString('Ends exactly at the start', $payload);
+        self::assertNotEmpty($focusQueries);
+        self::assertTrue(collect($focusQueries)->contains(
+            static fn (string $query): bool => str_contains($query, '"starts_at" > ?')
+                && str_contains($query, '"starts_at" < ?')
+                && str_contains($query, '"ends_at" > ?'),
+        ));
     }
 
     public function test_weekly_window_spans_seven_local_days_across_a_twenty_five_hour_day(): void

@@ -6,6 +6,7 @@ namespace App\Domains\Courses\Models;
 
 use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
+use App\Domains\Resources\Models\Resource;
 use App\Domains\Users\Models\User;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\CourseFactory;
@@ -64,6 +65,12 @@ final class Course extends Model
     public function focusSessions(): HasMany
     {
         return $this->hasMany(FocusSession::class);
+    }
+
+    /** @return HasMany<\App\Domains\Resources\Models\Resource, $this> */
+    public function resources(): HasMany
+    {
+        return $this->hasMany(Resource::class);
     }
 
     protected static function newFactory(): CourseFactory

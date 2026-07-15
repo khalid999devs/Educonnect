@@ -19,6 +19,8 @@ tags:
     description: Verified, current-user academic terms and independent course workspaces.
   - name: Planner
     description: Verified, current-user tasks, focus sessions, agenda, and weekly planning.
+  - name: Resources
+    description: Verified, current-user links, private file metadata, and short-lived object-storage grants.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -1374,6 +1376,397 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/resources:
+    get:
+      tags:
+        - Resources
+      operationId: listResources
+      summary: List the current user's private resources
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceSearch'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            default: all
+            enum:
+              - all
+              - link
+              - file
+        - name: course_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ResourcePublicId'
+        - name: topic
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+        - name: file_status
+          in: query
+          required: false
+          description: File-state filter; links are omitted when a concrete file state is selected.
+          schema:
+            type: string
+            default: all
+            enum:
+              - all
+              - pending
+              - ready
+              - deletion_pending
+        - $ref: '#/components/parameters/ResourceSort'
+        - $ref: '#/components/parameters/ResourcePerPage'
+        - $ref: '#/components/parameters/ResourceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/resources/links:
+    post:
+      tags:
+        - Resources
+      operationId: createLinkResource
+      summary: Save a private HTTPS link resource
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkResourceWriteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/resources/files:
+    post:
+      tags:
+        - Resources
+      operationId: initiateFileResource
+      summary: Create private file metadata and a short-lived upload grant
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileResourceInitiateRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceUploadCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/{resource}:
+    parameters:
+      - $ref: '#/components/parameters/ResourcePublicId'
+    get:
+      tags:
+        - Resources
+      operationId: getResource
+      summary: Return one current-user resource
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Resources
+      operationId: updateResource
+      summary: Replace mutable metadata for one current-user resource
+      description: Link resources may replace their HTTPS URL; file resources reject URL mutation and retain their private object identity.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Resources
+      operationId: deleteResource
+      summary: Delete a link or begin private-file deletion
+      description: Links are removed immediately with 204; files enter deletion_pending and return 202 until object cleanup completes.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceVersionedMutationRequest'
+      responses:
+        '202':
+          $ref: '#/components/responses/ResourceDeletionPending'
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/{resource}/upload-url:
+    parameters:
+      - $ref: '#/components/parameters/ResourcePublicId'
+    post:
+      tags:
+        - Resources
+      operationId: retryResourceUpload
+      summary: Renew the upload grant for a pending private file
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceUploadSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/{resource}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/ResourcePublicId'
+    post:
+      tags:
+        - Resources
+      operationId: confirmResourceUpload
+      summary: Verify a pending object and mark the private file ready
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/{resource}/download:
+    parameters:
+      - $ref: '#/components/parameters/ResourcePublicId'
+    post:
+      tags:
+        - Resources
+      operationId: createResourceDownload
+      summary: Create a short-lived private download grant for a ready file
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceDownloadSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/{resource}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/ResourcePublicId'
+    post:
+      tags:
+        - Resources
+      operationId: cancelResourceUpload
+      summary: Cancel a pending private upload and begin object cleanup
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceVersionedMutationRequest'
+      responses:
+        '202':
+          $ref: '#/components/responses/ResourceDeletionPending'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -1643,6 +2036,50 @@ components:
         minimum: 1
         maximum: 100
         default: 50
+    ResourcePublicId:
+      name: resource
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ResourcePublicId'
+    ResourceSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive literal title-prefix search scoped to the current user.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    ResourceSort:
+      name: sort
+      in: query
+      required: false
+      description: Resource cursors contain only an update timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        default: '-updated_at'
+        enum:
+          - updated_at
+          - '-updated_at'
+    ResourcePerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    ResourceCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor containing only an update timestamp, public ULID, and direction flag.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -1794,6 +2231,69 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PlannerWindowSuccess'
+    ResourceCreated:
+      description: The private link resource was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceSuccess'
+    ResourceSuccess:
+      description: The operation returned one current-user resource without private storage internals.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceSuccess'
+    ResourceCollectionSuccess:
+      description: The operation returned a cursor-paginated current-user resource collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceCollectionSuccess'
+    ResourceUploadCreated:
+      description: Private file metadata and its short-lived upload grant were created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceUploadSuccess'
+    ResourceUploadSuccess:
+      description: A pending private file and its renewed short-lived upload grant were returned.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceUploadSuccess'
+    ResourceDownloadSuccess:
+      description: A short-lived private download grant was created; its opaque provider URL may contain a key path and must never be logged.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceDownloadSuccess'
+    ResourceDeletionPending:
+      description: Private-object deletion was scheduled and the resource remains deletion-pending.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceSuccess'
     NoContent:
       description: The owned resource was permanently deleted.
       headers:
@@ -1855,6 +2355,9 @@ components:
       $ref: '#/components/responses/GenericError'
     RateLimited:
       description: The account or source IP has temporarily exhausted its request allowance.
+      $ref: '#/components/responses/GenericError'
+    ServiceUnavailable:
+      description: Private object storage is temporarily unavailable; no provider detail or signed URL is exposed.
       $ref: '#/components/responses/GenericError'
     Conflict:
       description: The submitted version is stale, a relationship target is unavailable, or dependent state blocks the requested change.
@@ -2295,8 +2798,8 @@ components:
       format: date-time
       minLength: 20
       maxLength: 25
-      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$'
-      description: A second-precision RFC3339 instant with Z or an explicit numeric offset.
+      pattern: '^(?!.*-00:00$)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$'
+      description: A second-precision RFC3339 instant with Z or a known numeric offset; the unknown-offset marker -00:00 is rejected.
     TaskStatus:
       type: string
       enum:
@@ -2782,6 +3285,419 @@ components:
       properties:
         expected_version:
           $ref: '#/components/schemas/PlannerVersion'
+    ResourcePublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8x9y
+    ResourceVersion:
+      type: integer
+      minimum: 1
+    ResourceKind:
+      type: string
+      enum:
+        - link
+        - file
+    StoredFileStatus:
+      type: string
+      enum:
+        - pending
+        - ready
+        - deletion_pending
+    ResourceCourseReference:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - code
+        - archive_status
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        version:
+          $ref: '#/components/schemas/AcademicVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        code:
+          type: string
+          nullable: true
+          maxLength: 32
+        archive_status:
+          $ref: '#/components/schemas/PlannerArchiveStatus'
+    StoredFile:
+      type: object
+      required:
+        - public_id
+        - original_name
+        - declared_mime_type
+        - verified_mime_type
+        - expected_size
+        - verified_size
+        - status
+        - ready_at
+      additionalProperties: false
+      description: Public file state only; checksums, object keys, disk names, and provider metadata are never returned.
+      properties:
+        public_id:
+          $ref: '#/components/schemas/ResourcePublicId'
+        original_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        declared_mime_type:
+          $ref: '#/components/schemas/AllowedResourceMimeType'
+        verified_mime_type:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AllowedResourceMimeType'
+        expected_size:
+          type: integer
+          minimum: 1
+          maximum: 26214400
+        verified_size:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 26214400
+        status:
+          $ref: '#/components/schemas/StoredFileStatus'
+        ready_at:
+          type: string
+          format: date-time
+          nullable: true
+    Resource:
+      type: object
+      required:
+        - id
+        - kind
+        - title
+        - description
+        - topic
+        - url
+        - course
+        - version
+        - file
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourcePublicId'
+        kind:
+          $ref: '#/components/schemas/ResourceKind'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          maxLength: 120
+        url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+          description: Present only for saved HTTPS links; never contains a private object URL.
+        course:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ResourceCourseReference'
+        version:
+          $ref: '#/components/schemas/ResourceVersion'
+        file:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/StoredFile'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ResourceCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    ResourceSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Resource'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ResourceCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Resource'
+        meta:
+          $ref: '#/components/schemas/ResourceCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    UploadHeaders:
+      type: object
+      description: Exact script-settable headers for the bounded private-object PUT; Content-Length is browser-managed but included in the signature.
+      required:
+        - Content-Type
+      additionalProperties: false
+      properties:
+        Content-Type:
+          $ref: '#/components/schemas/AllowedResourceMimeType'
+    ResourceUploadGrant:
+      type: object
+      description: Upload the exact declared File or Blob as the raw PUT body with the supplied Content-Type; the browser-generated Content-Length is also signature-bound.
+      required:
+        - method
+        - url
+        - headers
+        - expires_at
+      additionalProperties: false
+      properties:
+        method:
+          type: string
+          enum:
+            - PUT
+        url:
+          type: string
+          format: uri
+          maxLength: 4096
+          description: Short-lived provider URL; it must never be logged.
+        headers:
+          $ref: '#/components/schemas/UploadHeaders'
+        expires_at:
+          type: string
+          format: date-time
+    ResourceUploadData:
+      type: object
+      required:
+        - resource
+        - upload
+      additionalProperties: false
+      properties:
+        resource:
+          $ref: '#/components/schemas/Resource'
+        upload:
+          $ref: '#/components/schemas/ResourceUploadGrant'
+    ResourceUploadSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceUploadData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ResourceDownloadData:
+      type: object
+      required:
+        - url
+        - expires_at
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 4096
+          description: Short-lived provider URL; it must never be logged.
+        expires_at:
+          type: string
+          format: date-time
+    ResourceDownloadSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceDownloadData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ResourceHttpsUrl:
+      type: string
+      format: uri
+      minLength: 9
+      maxLength: 2048
+      pattern: '^https://(?![^/?#]*@)[^\s]+$'
+      description: HTTPS only; embedded username or password credentials are rejected.
+    AllowedResourceMimeType:
+      type: string
+      enum:
+        - application/pdf
+        - image/jpeg
+        - image/png
+        - image/webp
+        - text/plain
+        - text/markdown
+    LinkResourceWriteRequest:
+      type: object
+      required:
+        - title
+        - url
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          maxLength: 120
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        url:
+          $ref: '#/components/schemas/ResourceHttpsUrl'
+    FileResourceInitiateRequest:
+      type: object
+      required:
+        - title
+        - original_name
+        - mime_type
+        - size
+        - sha256
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          maxLength: 120
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        original_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Display-only filename; path separators and control characters are rejected.
+        mime_type:
+          $ref: '#/components/schemas/AllowedResourceMimeType'
+        size:
+          type: integer
+          minimum: 1
+          maximum: 26214400
+        sha256:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+    ResourceUpdateRequest:
+      oneOf:
+        - $ref: '#/components/schemas/LinkResourceUpdateRequest'
+        - $ref: '#/components/schemas/FileResourceUpdateRequest'
+    LinkResourceUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - kind
+        - title
+        - url
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ResourceVersion'
+        kind:
+          type: string
+          enum:
+            - link
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          maxLength: 120
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+        url:
+          $ref: '#/components/schemas/ResourceHttpsUrl'
+    FileResourceUpdateRequest:
+      type: object
+      required:
+        - expected_version
+        - kind
+        - title
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ResourceVersion'
+        kind:
+          type: string
+          enum:
+            - file
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          maxLength: 120
+        course_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+    ResourceVersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/ResourceVersion'
     RoleKey:
       type: string
       enum:

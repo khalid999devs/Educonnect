@@ -5,6 +5,7 @@ use App\Http\Middleware\RequireBrowserSurface;
 use App\Http\Middleware\RequireStatefulSpaSession;
 use App\Http\Middleware\RequireVerifiedEmail;
 use App\Support\ApiExceptionRenderer;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('api')->group(base_path('routes/health.php'));
         },
     )
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('resources:reconcile-storage --limit=10')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(120);
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->statefulApi();

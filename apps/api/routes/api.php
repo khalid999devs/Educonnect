@@ -42,6 +42,16 @@ use App\Http\Controllers\Api\V1\Planner\ShowWeeklyPlannerController;
 use App\Http\Controllers\Api\V1\Planner\UpdateFocusSessionController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskStatusController;
+use App\Http\Controllers\Api\V1\Resources\CancelResourceUploadController;
+use App\Http\Controllers\Api\V1\Resources\ConfirmResourceUploadController;
+use App\Http\Controllers\Api\V1\Resources\CreateLinkResourceController;
+use App\Http\Controllers\Api\V1\Resources\CreateResourceDownloadController;
+use App\Http\Controllers\Api\V1\Resources\DeleteResourceController;
+use App\Http\Controllers\Api\V1\Resources\InitiateFileResourceController;
+use App\Http\Controllers\Api\V1\Resources\ListResourcesController;
+use App\Http\Controllers\Api\V1\Resources\RetryResourceUploadController;
+use App\Http\Controllers\Api\V1\Resources\ShowResourceController;
+use App\Http\Controllers\Api\V1\Resources\UpdateResourceController;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -237,6 +247,48 @@ Route::middleware([
                     Route::get('/weekly', ShowWeeklyPlannerController::class)
                         ->middleware(['throttle:planner.read', 'can:academic.manage-own'])
                         ->name('weekly');
+                });
+
+            Route::prefix('resources')
+                ->name('resources.')
+                ->group(function (): void {
+                    Route::get('/', ListResourcesController::class)
+                        ->middleware(['throttle:resources.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/links', CreateLinkResourceController::class)
+                        ->middleware(['throttle:resources.write', 'can:academic.manage-own'])
+                        ->name('links.store');
+                    Route::post('/files', InitiateFileResourceController::class)
+                        ->middleware(['throttle:resources.upload', 'can:academic.manage-own'])
+                        ->name('files.store');
+                    Route::get('/{resource}', ShowResourceController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{resource}', UpdateResourceController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{resource}', DeleteResourceController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::post('/{resource}/upload-url', RetryResourceUploadController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.upload', 'can:academic.manage-own'])
+                        ->name('upload.retry');
+                    Route::post('/{resource}/confirm', ConfirmResourceUploadController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.upload', 'can:academic.manage-own'])
+                        ->name('upload.confirm');
+                    Route::post('/{resource}/download', CreateResourceDownloadController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.download', 'can:academic.manage-own'])
+                        ->name('download');
+                    Route::post('/{resource}/cancel', CancelResourceUploadController::class)
+                        ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:resources.destructive', 'can:academic.manage-own'])
+                        ->name('upload.cancel');
                 });
         });
     });

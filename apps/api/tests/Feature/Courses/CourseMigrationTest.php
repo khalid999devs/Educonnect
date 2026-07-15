@@ -143,7 +143,9 @@ final class CourseMigrationTest extends TestCase
     {
         $migration = $this->migration();
         $plannerMigration = $this->plannerMigration();
+        $resourceMigration = $this->resourceMigration();
 
+        $resourceMigration->down();
         $plannerMigration->down();
         $migration->down();
         $this->assertFalse(Schema::hasTable('courses'));
@@ -152,6 +154,7 @@ final class CourseMigrationTest extends TestCase
 
         $migration->up();
         $plannerMigration->up();
+        $resourceMigration->up();
         $this->assertTrue(Schema::hasTable('courses'));
         $this->assertTrue(Schema::hasTable('academic_terms'));
         $this->assertTrue(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));
@@ -222,6 +225,14 @@ final class CourseMigrationTest extends TestCase
     private function plannerMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000008_create_planner_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function resourceMigration(): Migration
+    {
+        $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

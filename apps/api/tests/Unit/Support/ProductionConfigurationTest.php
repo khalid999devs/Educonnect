@@ -21,6 +21,16 @@ final class ProductionConfigurationTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    public function test_standard_aws_s3_without_a_custom_endpoint_passes(): void
+    {
+        $this->setValidProductionConfiguration();
+        Config::set('filesystems.disks.s3.endpoint', '');
+
+        $this->app->make(ProductionConfiguration::class)->assertValid();
+
+        $this->addToAssertionCount(1);
+    }
+
     #[DataProvider('invalidConfigurationProvider')]
     public function test_invalid_production_configuration_fails_clearly(
         string $key,
@@ -183,6 +193,61 @@ final class ProductionConfigurationTest extends TestCase
             'QUEUE_AFTER_COMMIT must be true',
         ];
         yield 'in-memory cache' => ['cache.default', 'array', 'CACHE_STORE must be database or redis'];
+        yield 'local resource storage' => [
+            'resources.disk',
+            'local',
+            'RESOURCE_STORAGE_DISK must select a configured S3 disk',
+        ];
+        yield 'public resource objects' => [
+            'filesystems.disks.s3.visibility',
+            'public',
+            'resource object storage must be private, non-serving, and exception-enabled',
+        ];
+        yield 'missing object bucket' => [
+            'filesystems.disks.s3.bucket',
+            '',
+            'resource object storage requires a bucket and region',
+        ];
+        yield 'unsafe object prefix' => [
+            'filesystems.disks.s3.root',
+            '../production',
+            'AWS_ROOT must be an explicit non-local environment-specific object prefix',
+        ];
+        yield 'default local object prefix in production' => [
+            'filesystems.disks.s3.root',
+            'educonnect/local',
+            'AWS_ROOT must be an explicit non-local environment-specific object prefix',
+        ];
+        yield 'insecure object endpoint' => [
+            'filesystems.disks.s3.endpoint',
+            'http://objects.example',
+            'AWS_ENDPOINT must be an HTTPS origin when configured',
+        ];
+        yield 'unbounded object storage connect timeout' => [
+            'filesystems.disks.s3.http.connect_timeout',
+            0,
+            'AWS_CONNECT_TIMEOUT must be between 1 and 10 seconds',
+        ];
+        yield 'non-finite object storage connect timeout' => [
+            'filesystems.disks.s3.http.connect_timeout',
+            INF,
+            'AWS_CONNECT_TIMEOUT must be between 1 and 10 seconds',
+        ];
+        yield 'too-short object storage request timeout' => [
+            'filesystems.disks.s3.http.timeout',
+            10,
+            'AWS_REQUEST_TIMEOUT must be between 60 and 120 seconds',
+        ];
+        yield 'unbounded object storage request timeout' => [
+            'filesystems.disks.s3.http.timeout',
+            121,
+            'AWS_REQUEST_TIMEOUT must be between 60 and 120 seconds',
+        ];
+        yield 'unreviewed upload limit' => [
+            'resources.max_upload_bytes',
+            50 * 1024 * 1024,
+            'resource upload limits and signed-access lifetimes must match the reviewed policy',
+        ];
     }
 
     private function setValidProductionConfiguration(): void
@@ -229,6 +294,25 @@ final class ProductionConfigurationTest extends TestCase
             'queue.connections.database.after_commit' => true,
             'cache.default' => 'database',
             'cache.stores.database.driver' => 'database',
+            'resources.disk' => 's3',
+            'resources.max_upload_bytes' => 25 * 1024 * 1024,
+            'resources.upload_ttl_seconds' => 600,
+            'resources.download_ttl_seconds' => 300,
+            'resources.cleanup_grace_seconds' => 60,
+            'resources.late_upload_reap_seconds' => 86_400,
+            'resources.staging_lifecycle_max_days' => 1,
+            'filesystems.disks.s3.driver' => 's3',
+            'filesystems.disks.s3.visibility' => 'private',
+            'filesystems.disks.s3.serve' => false,
+            'filesystems.disks.s3.throw' => true,
+            'filesystems.disks.s3.bucket' => 'educonnect-production',
+            'filesystems.disks.s3.region' => 'auto',
+            'filesystems.disks.s3.root' => 'educonnect/production',
+            'filesystems.disks.s3.endpoint' => 'https://objects.example',
+            'filesystems.disks.s3.http' => [
+                'connect_timeout' => 5.0,
+                'timeout' => 60.0,
+            ],
         ]);
     }
 }

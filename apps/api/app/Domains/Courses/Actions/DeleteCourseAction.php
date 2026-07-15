@@ -28,7 +28,9 @@ final readonly class DeleteCourseAction
                     throw new AcademicVersionConflict;
                 }
 
-                if ($course->tasks()->exists() || $course->focusSessions()->exists()) {
+                if ($course->tasks()->exists()
+                    || $course->focusSessions()->exists()
+                    || $course->resources()->exists()) {
                     throw new AcademicStateConflict;
                 }
 

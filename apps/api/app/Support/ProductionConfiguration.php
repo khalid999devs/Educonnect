@@ -154,6 +154,56 @@ final readonly class ProductionConfiguration
             $violations[] = 'CACHE_STORE must be database or redis';
         }
 
+        $resourceDisk = $this->config->get('resources.disk');
+
+        if (! is_string($resourceDisk)
+            || $resourceDisk === ''
+            || $this->config->get("filesystems.disks.{$resourceDisk}.driver") !== 's3') {
+            $violations[] = 'RESOURCE_STORAGE_DISK must select a configured S3 disk';
+        } elseif ($this->config->get("filesystems.disks.{$resourceDisk}.visibility") !== 'private'
+            || $this->config->get("filesystems.disks.{$resourceDisk}.serve") !== false
+            || $this->config->get("filesystems.disks.{$resourceDisk}.throw") !== true) {
+            $violations[] = 'resource object storage must be private, non-serving, and exception-enabled';
+        } else {
+            $bucket = $this->config->get("filesystems.disks.{$resourceDisk}.bucket");
+            $region = $this->config->get("filesystems.disks.{$resourceDisk}.region");
+            $root = $this->config->get("filesystems.disks.{$resourceDisk}.root");
+            $endpoint = $this->config->get("filesystems.disks.{$resourceDisk}.endpoint");
+            $http = $this->config->get("filesystems.disks.{$resourceDisk}.http");
+
+            if (! $this->isNonBlankString($bucket) || ! $this->isNonBlankString($region)) {
+                $violations[] = 'resource object storage requires a bucket and region';
+            }
+
+            if (! $this->isSafeObjectPrefix($root) || $root === 'educonnect/local') {
+                $violations[] = 'AWS_ROOT must be an explicit non-local environment-specific object prefix';
+            }
+
+            if ($endpoint !== null && $endpoint !== '' && $this->httpsOrigin($endpoint) === null) {
+                $violations[] = 'AWS_ENDPOINT must be an HTTPS origin when configured';
+            }
+
+            $connectTimeout = is_array($http) ? ($http['connect_timeout'] ?? null) : null;
+            $requestTimeout = is_array($http) ? ($http['timeout'] ?? null) : null;
+
+            if (! $this->isFiniteNumberBetween($connectTimeout, 1, 10)) {
+                $violations[] = 'AWS_CONNECT_TIMEOUT must be between 1 and 10 seconds';
+            }
+
+            if (! $this->isFiniteNumberBetween($requestTimeout, 60, 120)) {
+                $violations[] = 'AWS_REQUEST_TIMEOUT must be between 60 and 120 seconds';
+            }
+        }
+
+        if ($this->config->get('resources.max_upload_bytes') !== 25 * 1024 * 1024
+            || $this->config->get('resources.upload_ttl_seconds') !== 600
+            || $this->config->get('resources.download_ttl_seconds') !== 300
+            || $this->config->get('resources.cleanup_grace_seconds') !== 60
+            || $this->config->get('resources.late_upload_reap_seconds') !== 86_400
+            || $this->config->get('resources.staging_lifecycle_max_days') !== 1) {
+            $violations[] = 'resource upload limits and signed-access lifetimes must match the reviewed policy';
+        }
+
         if ($violations !== []) {
             throw new RuntimeException('Invalid production configuration: '.implode('; ', $violations).'.');
         }
@@ -216,6 +266,28 @@ final readonly class ProductionConfiguration
     private function isPositiveBoundedInteger(mixed $value, int $maximum): bool
     {
         return is_int($value) && $value >= 1 && $value <= $maximum;
+    }
+
+    private function isNonBlankString(mixed $value): bool
+    {
+        return is_string($value) && trim($value) !== '';
+    }
+
+    private function isFiniteNumberBetween(mixed $value, float $minimum, float $maximum): bool
+    {
+        return (is_int($value) || is_float($value))
+            && is_finite((float) $value)
+            && $value >= $minimum
+            && $value <= $maximum;
+    }
+
+    private function isSafeObjectPrefix(mixed $value): bool
+    {
+        return is_string($value)
+            && preg_match('/^[a-z0-9][a-z0-9_\/-]*$/', $value) === 1
+            && ! str_contains($value, '//')
+            && ! str_contains($value, '..')
+            && ! str_ends_with($value, '/');
     }
 
     /**

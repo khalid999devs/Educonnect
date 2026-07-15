@@ -23,6 +23,12 @@ tags:
     description: Verified, current-user links, private file metadata, and short-lived object-storage grants.
   - name: Tools
     description: Reviewed, published tool guidance and current-user save or dismiss preferences.
+  - name: Prompts
+    description: Reviewed, published prompt templates with placeholders, integrity notes, and private save, dismiss, and copy state.
+  - name: Workflows
+    description: Reviewed, published workflow recipes with ordered steps, destination actions, and private save or dismiss state.
+  - name: Guidance
+    description: Transparent goal-category guidance bundles combining published tools, prompts, and workflows.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -1936,6 +1942,397 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/prompts:
+    get:
+      tags:
+        - Prompts
+      operationId: listPrompts
+      summary: List reviewed and published prompt templates
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PromptSearch'
+        - $ref: '#/components/parameters/GuidanceCategory'
+        - $ref: '#/components/parameters/GuidancePreference'
+        - $ref: '#/components/parameters/GuidanceSort'
+        - $ref: '#/components/parameters/GuidancePerPage'
+        - $ref: '#/components/parameters/GuidanceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/prompts/{prompt}:
+    parameters:
+      - $ref: '#/components/parameters/PromptPublicId'
+    get:
+      tags:
+        - Prompts
+      operationId: getPrompt
+      summary: Return one reviewed and published prompt template
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/prompts/{prompt}/saved:
+    parameters:
+      - $ref: '#/components/parameters/PromptPublicId'
+    put:
+      tags:
+        - Prompts
+      operationId: savePrompt
+      summary: Save a published prompt and clear any dismissal
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Prompts
+      operationId: unsavePrompt
+      summary: Clear the current user's saved prompt state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/prompts/{prompt}/dismissed:
+    parameters:
+      - $ref: '#/components/parameters/PromptPublicId'
+    put:
+      tags:
+        - Prompts
+      operationId: dismissPrompt
+      summary: Dismiss a published prompt and clear any saved state
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Prompts
+      operationId: undismissPrompt
+      summary: Clear the current user's dismissed prompt state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/prompts/{prompt}/copies:
+    parameters:
+      - $ref: '#/components/parameters/PromptPublicId'
+    post:
+      tags:
+        - Prompts
+      operationId: recordPromptCopy
+      summary: Record a private copy event for a published prompt
+      description: Increments the current user's private bounded copy counter; retried requests may count more than once.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/PromptSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/workflows:
+    get:
+      tags:
+        - Workflows
+      operationId: listWorkflows
+      summary: List reviewed and published workflow recipes
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowSearch'
+        - $ref: '#/components/parameters/GuidanceCategory'
+        - $ref: '#/components/parameters/GuidancePreference'
+        - $ref: '#/components/parameters/GuidanceSort'
+        - $ref: '#/components/parameters/GuidancePerPage'
+        - $ref: '#/components/parameters/GuidanceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/workflows/{workflow}:
+    parameters:
+      - $ref: '#/components/parameters/WorkflowPublicId'
+    get:
+      tags:
+        - Workflows
+      operationId: getWorkflow
+      summary: Return one reviewed and published workflow recipe with ordered steps
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/workflows/{workflow}/saved:
+    parameters:
+      - $ref: '#/components/parameters/WorkflowPublicId'
+    put:
+      tags:
+        - Workflows
+      operationId: saveWorkflow
+      summary: Save a published workflow and clear any dismissal
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Workflows
+      operationId: unsaveWorkflow
+      summary: Clear the current user's saved workflow state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/workflows/{workflow}/dismissed:
+    parameters:
+      - $ref: '#/components/parameters/WorkflowPublicId'
+    put:
+      tags:
+        - Workflows
+      operationId: dismissWorkflow
+      summary: Dismiss a published workflow and clear any saved state
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Workflows
+      operationId: undismissWorkflow
+      summary: Clear the current user's dismissed workflow state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/guidance:
+    get:
+      tags:
+        - Guidance
+      operationId: getCategoryGuidance
+      summary: Return the transparent published guidance bundle for one goal category
+      description: Combines the published tools, prompt templates, and workflow recipes curated for the requested goal category.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/GuidanceCategoryRequired'
+      responses:
+        '200':
+          $ref: '#/components/responses/GuidanceSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -2313,6 +2710,95 @@ components:
         type: string
         minLength: 1
         maxLength: 2048
+    PromptPublicId:
+      name: prompt
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/PromptPublicId'
+    WorkflowPublicId:
+      name: workflow
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/WorkflowPublicId'
+    PromptSearch:
+      name: search
+      in: query
+      required: false
+      description: Bounded plain-text search over reviewed public prompt guidance.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    WorkflowSearch:
+      name: search
+      in: query
+      required: false
+      description: Bounded plain-text search over reviewed public workflow guidance.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    GuidanceCategory:
+      name: category
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 80
+        pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+    GuidanceCategoryRequired:
+      name: category
+      in: query
+      required: true
+      description: Curated goal category slug the guidance bundle is assembled for.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 80
+        pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+    GuidancePreference:
+      name: preference
+      in: query
+      required: false
+      schema:
+        type: string
+        default: all
+        enum:
+          - all
+          - saved
+          - dismissed
+          - none
+    GuidanceSort:
+      name: sort
+      in: query
+      required: false
+      description: Guidance cursors contain only a safe sort alias, public ULID, and direction flag.
+      schema:
+        type: string
+        default: title
+        enum:
+          - title
+          - '-last_reviewed_at'
+    GuidancePerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    GuidanceCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -2545,6 +3031,51 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ToolCollectionSuccess'
+    PromptSuccess:
+      description: The operation returned one reviewed and published prompt template with current-user state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptSuccess'
+    PromptCollectionSuccess:
+      description: The operation returned a cursor-paginated published prompt collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PromptCollectionSuccess'
+    WorkflowSuccess:
+      description: The operation returned one reviewed and published workflow recipe with current-user state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WorkflowSuccess'
+    WorkflowCollectionSuccess:
+      description: The operation returned a cursor-paginated published workflow collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WorkflowCollectionSuccess'
+    GuidanceSuccess:
+      description: The operation returned the published guidance bundle for one goal category.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GuidanceSuccess'
     NoContent:
       description: The operation completed without a response representation.
       headers:
@@ -3855,6 +4386,363 @@ components:
           $ref: '#/components/schemas/ToolCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'
+    PromptPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa0
+    WorkflowPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa1
+    PromptRelatedTool:
+      type: object
+      required:
+        - id
+        - name
+        - url
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ToolPublicId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        url:
+          type: string
+          format: uri
+          pattern: '^https://'
+          maxLength: 2048
+    PromptViewerState:
+      type: object
+      required:
+        - saved
+        - dismissed
+        - copy_count
+      additionalProperties: false
+      properties:
+        saved:
+          type: boolean
+        dismissed:
+          type: boolean
+        copy_count:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+    Prompt:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - purpose
+        - template_body
+        - placeholders
+        - expected_output
+        - integrity_note
+        - provenance
+        - related_tools
+        - last_reviewed_at
+        - viewer_state
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PromptPublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        category:
+          $ref: '#/components/schemas/ToolCategoryReference'
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        template_body:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        placeholders:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+        expected_output:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        integrity_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        related_tools:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/PromptRelatedTool'
+        last_reviewed_at:
+          type: string
+          format: date-time
+        viewer_state:
+          $ref: '#/components/schemas/PromptViewerState'
+    PromptCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    PromptSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Prompt'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    PromptCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Prompt'
+        meta:
+          $ref: '#/components/schemas/PromptCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    WorkflowStepPromptReference:
+      type: object
+      required:
+        - id
+        - title
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PromptPublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+    WorkflowStep:
+      type: object
+      required:
+        - number
+        - title
+        - instruction
+        - destination_action
+        - tool
+        - prompt
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          minimum: 1
+          maximum: 50
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        instruction:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        destination_action:
+          type: string
+          nullable: true
+          enum:
+            - create_task
+            - save_resource
+            - use_tool
+            - use_prompt
+            - null
+        tool:
+          allOf:
+            - $ref: '#/components/schemas/PromptRelatedTool'
+          nullable: true
+        prompt:
+          allOf:
+            - $ref: '#/components/schemas/WorkflowStepPromptReference'
+          nullable: true
+    WorkflowViewerState:
+      type: object
+      required:
+        - saved
+        - dismissed
+      additionalProperties: false
+      properties:
+        saved:
+          type: boolean
+        dismissed:
+          type: boolean
+    Workflow:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - goal
+        - expected_outcome
+        - integrity_note
+        - provenance
+        - steps
+        - last_reviewed_at
+        - viewer_state
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/WorkflowPublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        category:
+          $ref: '#/components/schemas/ToolCategoryReference'
+        goal:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        expected_outcome:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        integrity_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        steps:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+        last_reviewed_at:
+          type: string
+          format: date-time
+        viewer_state:
+          $ref: '#/components/schemas/WorkflowViewerState'
+    WorkflowCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    WorkflowSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Workflow'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    WorkflowCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Workflow'
+        meta:
+          $ref: '#/components/schemas/WorkflowCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    GuidanceCategory:
+      type: object
+      required:
+        - key
+        - name
+        - description
+      additionalProperties: false
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 1000
+    GuidanceResult:
+      type: object
+      required:
+        - category
+        - tools
+        - prompts
+        - workflows
+      additionalProperties: false
+      properties:
+        category:
+          $ref: '#/components/schemas/GuidanceCategory'
+        tools:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Tool'
+        prompts:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Prompt'
+        workflows:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Workflow'
+    GuidanceSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/GuidanceResult'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     UploadHeaders:
       type: object
       description: Exact script-settable headers for the bounded private-object PUT; Content-Length is browser-managed but included in the signature.

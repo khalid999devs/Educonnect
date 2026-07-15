@@ -9,6 +9,16 @@ use App\Domains\Courses\Models\AcademicTerm;
 use App\Domains\Courses\Models\Course;
 use App\Domains\Courses\Policies\AcademicTermPolicy;
 use App\Domains\Courses\Policies\CoursePolicy;
+use App\Domains\Guidance\Models\PromptTemplate;
+use App\Domains\Guidance\Models\UserPromptCopy;
+use App\Domains\Guidance\Models\UserPromptPreference;
+use App\Domains\Guidance\Models\UserWorkflowPreference;
+use App\Domains\Guidance\Models\WorkflowRecipe;
+use App\Domains\Guidance\Policies\PromptTemplatePolicy;
+use App\Domains\Guidance\Policies\UserPromptCopyPolicy;
+use App\Domains\Guidance\Policies\UserPromptPreferencePolicy;
+use App\Domains\Guidance\Policies\UserWorkflowPreferencePolicy;
+use App\Domains\Guidance\Policies\WorkflowRecipePolicy;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Policies\OnboardingProgressPolicy;
 use App\Domains\Planner\Models\FocusSession;
@@ -42,6 +52,11 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(StoredFile::class, StoredFilePolicy::class);
         Gate::policy(Tool::class, ToolPolicy::class);
         Gate::policy(UserToolPreference::class, UserToolPreferencePolicy::class);
+        Gate::policy(PromptTemplate::class, PromptTemplatePolicy::class);
+        Gate::policy(UserPromptPreference::class, UserPromptPreferencePolicy::class);
+        Gate::policy(UserPromptCopy::class, UserPromptCopyPolicy::class);
+        Gate::policy(WorkflowRecipe::class, WorkflowRecipePolicy::class);
+        Gate::policy(UserWorkflowPreference::class, UserWorkflowPreferencePolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {
             Gate::define(

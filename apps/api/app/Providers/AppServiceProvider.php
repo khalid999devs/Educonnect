@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerPlannerRateLimiters();
         $this->registerResourceRateLimiters();
         $this->registerToolRateLimiters();
+        $this->registerGuidanceRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -225,6 +226,40 @@ class AppServiceProvider extends ServiceProvider
             scope: 'tools-preference',
             actorAttempts: 60,
             ipAttempts: 60,
+        ));
+    }
+
+    private function registerGuidanceRateLimiters(): void
+    {
+        RateLimiter::for('prompts.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'prompts-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('prompts.preference', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'prompts-preference',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('workflows.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'workflows-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('workflows.preference', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'workflows-preference',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('guidance.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'guidance-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
         ));
     }
 

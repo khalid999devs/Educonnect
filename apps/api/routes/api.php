@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Courses\ShowAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\ShowCourseController;
 use App\Http\Controllers\Api\V1\Courses\UpdateAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\UpdateCourseController;
+use App\Http\Controllers\Api\V1\Guidance\ShowGuidanceController;
 use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
@@ -42,6 +43,13 @@ use App\Http\Controllers\Api\V1\Planner\ShowWeeklyPlannerController;
 use App\Http\Controllers\Api\V1\Planner\UpdateFocusSessionController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskStatusController;
+use App\Http\Controllers\Api\V1\Prompts\DismissPromptController;
+use App\Http\Controllers\Api\V1\Prompts\ListPromptsController;
+use App\Http\Controllers\Api\V1\Prompts\RecordPromptCopyController;
+use App\Http\Controllers\Api\V1\Prompts\SavePromptController;
+use App\Http\Controllers\Api\V1\Prompts\ShowPromptController;
+use App\Http\Controllers\Api\V1\Prompts\UndismissPromptController;
+use App\Http\Controllers\Api\V1\Prompts\UnsavePromptController;
 use App\Http\Controllers\Api\V1\Resources\CancelResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\ConfirmResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\CreateLinkResourceController;
@@ -58,6 +66,12 @@ use App\Http\Controllers\Api\V1\Tools\SaveToolController;
 use App\Http\Controllers\Api\V1\Tools\ShowToolController;
 use App\Http\Controllers\Api\V1\Tools\UndismissToolController;
 use App\Http\Controllers\Api\V1\Tools\UnsaveToolController;
+use App\Http\Controllers\Api\V1\Workflows\DismissWorkflowController;
+use App\Http\Controllers\Api\V1\Workflows\ListWorkflowsController;
+use App\Http\Controllers\Api\V1\Workflows\SaveWorkflowController;
+use App\Http\Controllers\Api\V1\Workflows\ShowWorkflowController;
+use App\Http\Controllers\Api\V1\Workflows\UndismissWorkflowController;
+use App\Http\Controllers\Api\V1\Workflows\UnsaveWorkflowController;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -324,6 +338,70 @@ Route::middleware([
                         ->middleware(['throttle:tools.preference', 'can:academic.manage-own'])
                         ->name('dismissed.destroy');
                 });
+
+            Route::prefix('prompts')
+                ->name('prompts.')
+                ->group(function (): void {
+                    Route::get('/', ListPromptsController::class)
+                        ->middleware(['throttle:prompts.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{prompt}', ShowPromptController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{prompt}/saved', SavePromptController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.preference', 'can:academic.manage-own'])
+                        ->name('saved.store');
+                    Route::delete('/{prompt}/saved', UnsavePromptController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.preference', 'can:academic.manage-own'])
+                        ->name('saved.destroy');
+                    Route::put('/{prompt}/dismissed', DismissPromptController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.store');
+                    Route::delete('/{prompt}/dismissed', UndismissPromptController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.destroy');
+                    Route::post('/{prompt}/copies', RecordPromptCopyController::class)
+                        ->where('prompt', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:prompts.preference', 'can:academic.manage-own'])
+                        ->name('copies.store');
+                });
+
+            Route::prefix('workflows')
+                ->name('workflows.')
+                ->group(function (): void {
+                    Route::get('/', ListWorkflowsController::class)
+                        ->middleware(['throttle:workflows.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{workflow}', ShowWorkflowController::class)
+                        ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:workflows.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{workflow}/saved', SaveWorkflowController::class)
+                        ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:workflows.preference', 'can:academic.manage-own'])
+                        ->name('saved.store');
+                    Route::delete('/{workflow}/saved', UnsaveWorkflowController::class)
+                        ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:workflows.preference', 'can:academic.manage-own'])
+                        ->name('saved.destroy');
+                    Route::put('/{workflow}/dismissed', DismissWorkflowController::class)
+                        ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:workflows.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.store');
+                    Route::delete('/{workflow}/dismissed', UndismissWorkflowController::class)
+                        ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:workflows.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.destroy');
+                });
+
+            Route::get('/guidance', ShowGuidanceController::class)
+                ->middleware(['throttle:guidance.read', 'can:academic.manage-own'])
+                ->name('guidance.show');
         });
     });
 

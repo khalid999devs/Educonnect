@@ -22,7 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
-        [$courses, $planner, $resources, $tools] = $this->lowerDependentFoundations();
+        [$courses, $planner, $resources, $tools, $guidance] = $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -55,6 +55,7 @@ final class DataFoundationMigrationTest extends TestCase
         $planner->up();
         $resources->up();
         $tools->up();
+        $guidance->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -194,19 +195,21 @@ final class DataFoundationMigrationTest extends TestCase
         return $migration;
     }
 
-    /** @return array{Migration, Migration, Migration, Migration} */
+    /** @return array{Migration, Migration, Migration, Migration, Migration} */
     private function lowerDependentFoundations(): array
     {
+        $guidance = $this->migration('2026_07_15_000011_create_prompts_and_workflow_recipes.php');
         $tools = $this->migration('2026_07_15_000010_create_tools_catalog.php');
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $guidance->down();
         $tools->down();
         $resources->down();
         $planner->down();
         $courses->down();
 
-        return [$courses, $planner, $resources, $tools];
+        return [$courses, $planner, $resources, $tools, $guidance];
     }
 
     private function insertLegacyUser(string $email, ?string $timestamp = null): int

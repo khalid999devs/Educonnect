@@ -57,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAcademicRateLimiters();
         $this->registerPlannerRateLimiters();
         $this->registerResourceRateLimiters();
+        $this->registerToolRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -208,6 +209,22 @@ class AppServiceProvider extends ServiceProvider
             scope: 'resources-destructive',
             actorAttempts: 20,
             ipAttempts: 20,
+        ));
+    }
+
+    private function registerToolRateLimiters(): void
+    {
+        RateLimiter::for('tools.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'tools-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('tools.preference', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'tools-preference',
+            actorAttempts: 60,
+            ipAttempts: 60,
         ));
     }
 

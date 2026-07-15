@@ -17,6 +17,7 @@ use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
 use App\Domains\Resources\Models\Resource;
 use App\Domains\Resources\Models\StoredFile;
+use App\Domains\Tools\Models\UserToolPreference;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -107,6 +108,12 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function storedFiles(): HasMany
     {
         return $this->hasMany(StoredFile::class);
+    }
+
+    /** @return HasMany<UserToolPreference, $this> */
+    public function toolPreferences(): HasMany
+    {
+        return $this->hasMany(UserToolPreference::class);
     }
 
     public function hasRole(RoleKey|string $role): bool

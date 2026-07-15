@@ -22,7 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
-        [$courses, $planner, $resources] = $this->lowerPhaseEightAcademicFoundation();
+        [$courses, $planner, $resources, $tools] = $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -54,6 +54,7 @@ final class DataFoundationMigrationTest extends TestCase
         $courses->up();
         $planner->up();
         $resources->up();
+        $tools->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -71,7 +72,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_identity_migration_stops_on_normalized_email_duplicates(): void
     {
-        $this->lowerPhaseEightAcademicFoundation();
+        $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $identity->down();
 
@@ -120,7 +121,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_full_phase_four_migration_stops_before_any_write_when_timestamp_provenance_is_unknown(): void
     {
-        $this->lowerPhaseEightAcademicFoundation();
+        $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -157,7 +158,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_entrypoint_stops_on_orphaned_sessions_before_any_write(): void
     {
-        $this->lowerPhaseEightAcademicFoundation();
+        $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
 
@@ -193,17 +194,19 @@ final class DataFoundationMigrationTest extends TestCase
         return $migration;
     }
 
-    /** @return array{Migration, Migration, Migration} */
-    private function lowerPhaseEightAcademicFoundation(): array
+    /** @return array{Migration, Migration, Migration, Migration} */
+    private function lowerDependentFoundations(): array
     {
+        $tools = $this->migration('2026_07_15_000010_create_tools_catalog.php');
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $tools->down();
         $resources->down();
         $planner->down();
         $courses->down();
 
-        return [$courses, $planner, $resources];
+        return [$courses, $planner, $resources, $tools];
     }
 
     private function insertLegacyUser(string $email, ?string $timestamp = null): int

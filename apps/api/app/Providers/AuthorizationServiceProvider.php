@@ -19,6 +19,10 @@ use App\Domains\Resources\Models\Resource;
 use App\Domains\Resources\Models\StoredFile;
 use App\Domains\Resources\Policies\ResourcePolicy;
 use App\Domains\Resources\Policies\StoredFilePolicy;
+use App\Domains\Tools\Models\Tool;
+use App\Domains\Tools\Models\UserToolPreference;
+use App\Domains\Tools\Policies\ToolPolicy;
+use App\Domains\Tools\Policies\UserToolPreferencePolicy;
 use App\Domains\Users\Models\User;
 use App\Domains\Users\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -36,6 +40,8 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(FocusSession::class, FocusSessionPolicy::class);
         Gate::policy(Resource::class, ResourcePolicy::class);
         Gate::policy(StoredFile::class, StoredFilePolicy::class);
+        Gate::policy(Tool::class, ToolPolicy::class);
+        Gate::policy(UserToolPreference::class, UserToolPreferencePolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {
             Gate::define(

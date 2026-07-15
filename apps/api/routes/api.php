@@ -52,6 +52,12 @@ use App\Http\Controllers\Api\V1\Resources\ListResourcesController;
 use App\Http\Controllers\Api\V1\Resources\RetryResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\ShowResourceController;
 use App\Http\Controllers\Api\V1\Resources\UpdateResourceController;
+use App\Http\Controllers\Api\V1\Tools\DismissToolController;
+use App\Http\Controllers\Api\V1\Tools\ListToolsController;
+use App\Http\Controllers\Api\V1\Tools\SaveToolController;
+use App\Http\Controllers\Api\V1\Tools\ShowToolController;
+use App\Http\Controllers\Api\V1\Tools\UndismissToolController;
+use App\Http\Controllers\Api\V1\Tools\UnsaveToolController;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -289,6 +295,34 @@ Route::middleware([
                         ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:resources.destructive', 'can:academic.manage-own'])
                         ->name('upload.cancel');
+                });
+
+            Route::prefix('tools')
+                ->name('tools.')
+                ->group(function (): void {
+                    Route::get('/', ListToolsController::class)
+                        ->middleware(['throttle:tools.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{tool}', ShowToolController::class)
+                        ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:tools.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{tool}/saved', SaveToolController::class)
+                        ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:tools.preference', 'can:academic.manage-own'])
+                        ->name('saved.store');
+                    Route::delete('/{tool}/saved', UnsaveToolController::class)
+                        ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:tools.preference', 'can:academic.manage-own'])
+                        ->name('saved.destroy');
+                    Route::put('/{tool}/dismissed', DismissToolController::class)
+                        ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:tools.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.store');
+                    Route::delete('/{tool}/dismissed', UndismissToolController::class)
+                        ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:tools.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.destroy');
                 });
         });
     });

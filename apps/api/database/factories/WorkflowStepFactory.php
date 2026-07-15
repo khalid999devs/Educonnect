@@ -23,6 +23,7 @@ final class WorkflowStepFactory extends Factory
             'instruction' => 'Gather the course materials this goal depends on and record where each one came from.',
             'tool_id' => null,
             'prompt_template_id' => null,
+            'template_id' => null,
             'destination_action' => null,
         ];
     }

@@ -28,7 +28,11 @@ tags:
   - name: Workflows
     description: Reviewed, published workflow recipes with ordered steps, destination actions, and private save or dismiss state.
   - name: Guidance
-    description: Transparent goal-category guidance bundles combining published tools, prompts, and workflows.
+    description: Transparent goal-category guidance bundles combining published tools, prompts, workflows, and templates.
+  - name: Templates
+    description: Reviewed, published curated templates with immutable source versions, approved free badges, and private save or dismiss state.
+  - name: Template copies
+    description: Independent user-owned editable copies of published template versions with destination, versioning, and archive state.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -2313,7 +2317,7 @@ paths:
         - Guidance
       operationId: getCategoryGuidance
       summary: Return the transparent published guidance bundle for one goal category
-      description: Combines the published tools, prompt templates, and workflow recipes curated for the requested goal category.
+      description: Combines the published tools, prompt templates, workflow recipes, and templates curated for the requested goal category.
       security:
         - sessionCookie: []
       parameters:
@@ -2329,6 +2333,378 @@ paths:
           $ref: '#/components/responses/AuthorizationDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/templates:
+    get:
+      tags:
+        - Templates
+      operationId: listTemplates
+      summary: List reviewed and published curated templates
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TemplateSearch'
+        - $ref: '#/components/parameters/GuidanceCategory'
+        - $ref: '#/components/parameters/GuidancePreference'
+        - $ref: '#/components/parameters/GuidanceSort'
+        - $ref: '#/components/parameters/GuidancePerPage'
+        - $ref: '#/components/parameters/GuidanceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/templates/{template}:
+    parameters:
+      - $ref: '#/components/parameters/TemplatePublicId'
+    get:
+      tags:
+        - Templates
+      operationId: getTemplate
+      summary: Return one reviewed and published template with its latest version preview
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/templates/{template}/saved:
+    parameters:
+      - $ref: '#/components/parameters/TemplatePublicId'
+    put:
+      tags:
+        - Templates
+      operationId: saveTemplate
+      summary: Save a published template and clear any dismissal
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Templates
+      operationId: unsaveTemplate
+      summary: Clear the current user's saved template state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/templates/{template}/dismissed:
+    parameters:
+      - $ref: '#/components/parameters/TemplatePublicId'
+    put:
+      tags:
+        - Templates
+      operationId: dismissTemplate
+      summary: Dismiss a published template and clear any saved state
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Templates
+      operationId: undismissTemplate
+      summary: Clear the current user's dismissed template state when present
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/templates/{template}/copies:
+    parameters:
+      - $ref: '#/components/parameters/TemplatePublicId'
+    post:
+      tags:
+        - Templates
+      operationId: copyTemplate
+      summary: Copy the latest published template version to an allowed destination
+      description: Creates an independent editable copy pinned to the immutable source version; an identical active destination copy is returned unchanged instead of duplicating it.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopyTemplateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopySuccess'
+        '201':
+          $ref: '#/components/responses/TemplateCopyCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/template-copies:
+    get:
+      tags:
+        - Template copies
+      operationId: listTemplateCopies
+      summary: List the current user's template copies
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TemplateCopyDestinationFilter'
+        - $ref: '#/components/parameters/TemplateCopyCourseFilter'
+        - $ref: '#/components/parameters/TemplateCopyIncludeArchived'
+        - $ref: '#/components/parameters/TemplateCopySort'
+        - $ref: '#/components/parameters/GuidancePerPage'
+        - $ref: '#/components/parameters/GuidanceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopyCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/template-copies/{copy}:
+    parameters:
+      - $ref: '#/components/parameters/TemplateCopyPublicId'
+    get:
+      tags:
+        - Template copies
+      operationId: getTemplateCopy
+      summary: Return one current-user template copy
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Template copies
+      operationId: updateTemplateCopy
+      summary: Edit the title and body of one active current-user template copy
+      description: The source template and pinned version never change; edits require the current expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateCopyRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/template-copies/{copy}/archive:
+    parameters:
+      - $ref: '#/components/parameters/TemplateCopyPublicId'
+    put:
+      tags:
+        - Template copies
+      operationId: archiveTemplateCopy
+      summary: Archive one current-user template copy
+      description: Repeating the archive action is a no-op even with a stale expected_version.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCopyVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Template copies
+      operationId: restoreTemplateCopy
+      summary: Restore one archived current-user template copy
+      description: Restoration conflicts when another active copy already occupies the same destination.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCopyVersionedMutationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateCopySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
         '422':
           $ref: '#/components/responses/ValidationFailed'
         '429':
@@ -2799,6 +3175,61 @@ components:
         type: string
         minLength: 1
         maxLength: 2048
+    TemplatePublicId:
+      name: template
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/TemplatePublicId'
+    TemplateCopyPublicId:
+      name: copy
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/TemplateCopyPublicId'
+    TemplateSearch:
+      name: search
+      in: query
+      required: false
+      description: Bounded plain-text search over reviewed public template metadata.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    TemplateCopyDestinationFilter:
+      name: destination
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - dashboard
+          - course
+    TemplateCopyCourseFilter:
+      name: course
+      in: query
+      required: false
+      description: Restrict template copies to one owned course by its public identifier.
+      schema:
+        $ref: '#/components/schemas/AcademicPublicId'
+    TemplateCopyIncludeArchived:
+      name: include_archived
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+    TemplateCopySort:
+      name: sort
+      in: query
+      required: false
+      description: Template copy cursors contain only a safe sort alias, public ULID, and direction flag.
+      schema:
+        type: string
+        default: '-created_at'
+        enum:
+          - '-created_at'
+          - title
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -3076,6 +3507,51 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GuidanceSuccess'
+    TemplateSuccess:
+      description: The operation returned one reviewed and published template with current-user state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemplateSuccess'
+    TemplateCollectionSuccess:
+      description: The operation returned a cursor-paginated published template collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemplateCollectionSuccess'
+    TemplateCopySuccess:
+      description: The operation returned one current-user template copy.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemplateCopySuccess'
+    TemplateCopyCreated:
+      description: A new independent editable template copy was created for the current user.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemplateCopySuccess'
+    TemplateCopyCollectionSuccess:
+      description: The operation returned a cursor-paginated collection of the current user's template copies.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemplateCopyCollectionSuccess'
     NoContent:
       description: The operation completed without a response representation.
       headers:
@@ -4553,6 +5029,7 @@ components:
         - destination_action
         - tool
         - prompt
+        - template
       additionalProperties: false
       properties:
         number:
@@ -4575,6 +5052,7 @@ components:
             - save_resource
             - use_tool
             - use_prompt
+            - use_template
             - null
         tool:
           allOf:
@@ -4584,6 +5062,23 @@ components:
           allOf:
             - $ref: '#/components/schemas/WorkflowStepPromptReference'
           nullable: true
+        template:
+          allOf:
+            - $ref: '#/components/schemas/WorkflowStepTemplateReference'
+          nullable: true
+    WorkflowStepTemplateReference:
+      type: object
+      required:
+        - id
+        - title
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/TemplatePublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
     WorkflowViewerState:
       type: object
       required:
@@ -4713,6 +5208,7 @@ components:
         - tools
         - prompts
         - workflows
+        - templates
       additionalProperties: false
       properties:
         category:
@@ -4732,6 +5228,11 @@ components:
           maxItems: 10
           items:
             $ref: '#/components/schemas/Workflow'
+        templates:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Template'
     GuidanceSuccess:
       type: object
       required:
@@ -4743,6 +5244,308 @@ components:
           $ref: '#/components/schemas/GuidanceResult'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
+    TemplatePublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa2
+    TemplateCopyPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa3
+    TemplateFormat:
+      type: string
+      enum:
+        - markdown
+        - plain
+    TemplateLatestVersion:
+      type: object
+      required:
+        - number
+        - format
+        - body
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          minimum: 1
+          maximum: 100
+        format:
+          $ref: '#/components/schemas/TemplateFormat'
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+    TemplateViewerState:
+      type: object
+      required:
+        - saved
+        - dismissed
+        - active_copy_count
+      additionalProperties: false
+      properties:
+        saved:
+          type: boolean
+        dismissed:
+          type: boolean
+        active_copy_count:
+          type: integer
+          minimum: 0
+    Template:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - summary
+        - badge
+        - integrity_note
+        - provenance
+        - latest_version
+        - last_reviewed_at
+        - viewer_state
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/TemplatePublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        category:
+          $ref: '#/components/schemas/ToolCategoryReference'
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        badge:
+          type: string
+          enum:
+            - approved_free
+        integrity_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        latest_version:
+          allOf:
+            - $ref: '#/components/schemas/TemplateLatestVersion'
+          nullable: true
+        last_reviewed_at:
+          type: string
+          format: date-time
+        viewer_state:
+          $ref: '#/components/schemas/TemplateViewerState'
+    TemplateCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    TemplateSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Template'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    TemplateCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Template'
+        meta:
+          $ref: '#/components/schemas/TemplateCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    CopyTemplateRequest:
+      type: object
+      required:
+        - destination
+      additionalProperties: false
+      properties:
+        destination:
+          type: string
+          enum:
+            - dashboard
+            - course
+        course_id:
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+          nullable: true
+    UpdateTemplateCopyRequest:
+      type: object
+      required:
+        - expected_version
+        - title
+        - body
+      additionalProperties: false
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+    TemplateCopyVersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+    TemplateCopySource:
+      type: object
+      required:
+        - template_id
+        - template_title
+        - version_number
+      additionalProperties: false
+      properties:
+        template_id:
+          allOf:
+            - $ref: '#/components/schemas/TemplatePublicId'
+          nullable: true
+        template_title:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 160
+        version_number:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 100
+    TemplateCopyCourseReference:
+      type: object
+      required:
+        - id
+        - title
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/AcademicPublicId'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+    TemplateCopy:
+      type: object
+      required:
+        - id
+        - destination
+        - course
+        - source
+        - title
+        - format
+        - body
+        - version
+        - archived_at
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/TemplateCopyPublicId'
+        destination:
+          type: string
+          enum:
+            - dashboard
+            - course
+        course:
+          allOf:
+            - $ref: '#/components/schemas/TemplateCopyCourseReference'
+          nullable: true
+        source:
+          $ref: '#/components/schemas/TemplateCopySource'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        format:
+          $ref: '#/components/schemas/TemplateFormat'
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+        version:
+          type: integer
+          minimum: 1
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TemplateCopyCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    TemplateCopySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/TemplateCopy'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    TemplateCopyCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/TemplateCopy'
+        meta:
+          $ref: '#/components/schemas/TemplateCopyCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
     UploadHeaders:
       type: object
       description: Exact script-settable headers for the bounded private-object PUT; Content-Length is browser-managed but included in the signature.

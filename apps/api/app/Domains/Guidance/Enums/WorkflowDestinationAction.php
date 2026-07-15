@@ -10,4 +10,5 @@ enum WorkflowDestinationAction: string
     case SaveResource = 'save_resource';
     case UseTool = 'use_tool';
     case UsePrompt = 'use_prompt';
+    case UseTemplate = 'use_template';
 }

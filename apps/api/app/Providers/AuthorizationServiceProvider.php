@@ -29,6 +29,12 @@ use App\Domains\Resources\Models\Resource;
 use App\Domains\Resources\Models\StoredFile;
 use App\Domains\Resources\Policies\ResourcePolicy;
 use App\Domains\Resources\Policies\StoredFilePolicy;
+use App\Domains\Templates\Models\Template;
+use App\Domains\Templates\Models\UserTemplateCopy;
+use App\Domains\Templates\Models\UserTemplatePreference;
+use App\Domains\Templates\Policies\TemplatePolicy;
+use App\Domains\Templates\Policies\UserTemplateCopyPolicy;
+use App\Domains\Templates\Policies\UserTemplatePreferencePolicy;
 use App\Domains\Tools\Models\Tool;
 use App\Domains\Tools\Models\UserToolPreference;
 use App\Domains\Tools\Policies\ToolPolicy;
@@ -56,6 +62,9 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(UserPromptPreference::class, UserPromptPreferencePolicy::class);
         Gate::policy(UserPromptCopy::class, UserPromptCopyPolicy::class);
         Gate::policy(WorkflowRecipe::class, WorkflowRecipePolicy::class);
+        Gate::policy(Template::class, TemplatePolicy::class);
+        Gate::policy(UserTemplatePreference::class, UserTemplatePreferencePolicy::class);
+        Gate::policy(UserTemplateCopy::class, UserTemplateCopyPolicy::class);
         Gate::policy(UserWorkflowPreference::class, UserWorkflowPreferencePolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Guidance;
 use App\Domains\Guidance\Queries\BuildCategoryGuidance;
 use App\Http\Requests\Api\V1\Guidance\ShowGuidanceRequest;
 use App\Http\Resources\PromptTemplateResource;
+use App\Http\Resources\TemplateResource;
 use App\Http\Resources\ToolResource;
 use App\Http\Resources\WorkflowRecipeResource;
 use App\Support\ApiResponse;
@@ -28,6 +29,7 @@ final class ShowGuidanceController
             'tools' => ToolResource::collection($result['tools'])->resolve($request),
             'prompts' => PromptTemplateResource::collection($result['prompts'])->resolve($request),
             'workflows' => WorkflowRecipeResource::collection($result['workflows'])->resolve($request),
+            'templates' => TemplateResource::collection($result['templates'])->resolve($request),
         ]);
     }
 }

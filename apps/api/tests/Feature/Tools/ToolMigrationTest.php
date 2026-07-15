@@ -253,7 +253,13 @@ final class ToolMigrationTest extends TestCase
 
     public function test_migration_rolls_back_atomically_when_empty_and_refuses_catalog_rows(): void
     {
-        // Phase 12 guidance tables reference tools, so they must lower first.
+        // Phase 12/13 guidance and template tables reference tools and
+        // tool_categories, so they must lower first.
+        $templates = require database_path(
+            'migrations/2026_07_15_000012_create_templates_and_editable_copies.php',
+        );
+        self::assertInstanceOf(Migration::class, $templates);
+        $templates->down();
         $guidance = require database_path(
             'migrations/2026_07_15_000011_create_prompts_and_workflow_recipes.php',
         );

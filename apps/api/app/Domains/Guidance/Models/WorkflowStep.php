@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Guidance\Models;
 
 use App\Domains\Guidance\Enums\WorkflowDestinationAction;
+use App\Domains\Templates\Models\Template;
 use App\Domains\Tools\Models\Tool;
 use App\Support\StoresUtcDateTimes;
 use Carbon\CarbonImmutable;
@@ -21,12 +22,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $instruction
  * @property int|null $tool_id
  * @property int|null $prompt_template_id
+ * @property int|null $template_id
  * @property WorkflowDestinationAction|null $destination_action
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read WorkflowRecipe $recipe
  * @property-read Tool|null $tool
  * @property-read PromptTemplate|null $promptTemplate
+ * @property-read Template|null $template
  */
 final class WorkflowStep extends Model
 {
@@ -43,6 +46,7 @@ final class WorkflowStep extends Model
         'workflow_recipe_id',
         'tool_id',
         'prompt_template_id',
+        'template_id',
     ];
 
     /** @return BelongsTo<WorkflowRecipe, $this> */
@@ -61,6 +65,12 @@ final class WorkflowStep extends Model
     public function promptTemplate(): BelongsTo
     {
         return $this->belongsTo(PromptTemplate::class);
+    }
+
+    /** @return BelongsTo<Template, $this> */
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(Template::class);
     }
 
     protected static function newFactory(): WorkflowStepFactory

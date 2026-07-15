@@ -31,7 +31,7 @@ final class FindPublishedWorkflow
                         ->limit(1),
                 ])
                 ->where('workflow_recipes.public_id', $publicId)
-                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate']);
+                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate', 'steps.template']);
 
             PublishedWorkflowVisibility::apply($query);
 

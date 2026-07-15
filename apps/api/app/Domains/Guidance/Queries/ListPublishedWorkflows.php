@@ -48,7 +48,7 @@ final class ListPublishedWorkflows
                         ->where('user_workflow_preferences.user_id', $user->getKey())
                         ->limit(1),
                 ])
-                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate']);
+                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate', 'steps.template']);
 
             PublishedWorkflowVisibility::apply($query);
 

@@ -59,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerResourceRateLimiters();
         $this->registerToolRateLimiters();
         $this->registerGuidanceRateLimiters();
+        $this->registerTemplateRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -260,6 +261,34 @@ class AppServiceProvider extends ServiceProvider
             scope: 'guidance-read',
             actorAttempts: 120,
             ipAttempts: 120,
+        ));
+    }
+
+    private function registerTemplateRateLimiters(): void
+    {
+        RateLimiter::for('templates.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'templates-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('templates.preference', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'templates-preference',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('template-copies.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'template-copies-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('template-copies.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'template-copies-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
         ));
     }
 

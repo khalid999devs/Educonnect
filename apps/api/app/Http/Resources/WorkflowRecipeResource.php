@@ -9,6 +9,8 @@ use App\Domains\Guidance\Models\PromptTemplate;
 use App\Domains\Guidance\Models\WorkflowRecipe;
 use App\Domains\Guidance\Models\WorkflowStep;
 use App\Domains\Guidance\Support\PublishedPromptVisibility;
+use App\Domains\Templates\Models\Template;
+use App\Domains\Templates\Support\PublishedTemplateVisibility;
 use App\Domains\Tools\Models\Tool;
 use App\Domains\Tools\Models\ToolCategory;
 use App\Domains\Tools\Support\PublishedToolVisibility;
@@ -56,6 +58,7 @@ final class WorkflowRecipeResource extends JsonResource
      *     destination_action: string|null,
      *     tool: array{id: string, name: string, url: string}|null,
      *     prompt: array{id: string, title: string}|null,
+     *     template: array{id: string, title: string}|null,
      * }>
      */
     private function stepSummaries(): array
@@ -73,6 +76,7 @@ final class WorkflowRecipeResource extends JsonResource
 
             $tool = $step->relationLoaded('tool') ? $step->getRelation('tool') : null;
             $prompt = $step->relationLoaded('promptTemplate') ? $step->getRelation('promptTemplate') : null;
+            $template = $step->relationLoaded('template') ? $step->getRelation('template') : null;
 
             $summaries[] = [
                 'number' => (int) $step->step_number,
@@ -87,6 +91,10 @@ final class WorkflowRecipeResource extends JsonResource
                 'prompt' => $prompt instanceof PromptTemplate && PublishedPromptVisibility::allows($prompt) ? [
                     'id' => (string) $prompt->public_id,
                     'title' => (string) $prompt->title,
+                ] : null,
+                'template' => $template instanceof Template && PublishedTemplateVisibility::allows($template) ? [
+                    'id' => (string) $template->public_id,
+                    'title' => (string) $template->title,
                 ] : null,
             ];
         }

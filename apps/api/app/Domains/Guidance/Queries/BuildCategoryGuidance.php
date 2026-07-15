@@ -13,6 +13,10 @@ use App\Domains\Guidance\Models\UserWorkflowPreference;
 use App\Domains\Guidance\Models\WorkflowRecipe;
 use App\Domains\Guidance\Support\PublishedPromptVisibility;
 use App\Domains\Guidance\Support\PublishedWorkflowVisibility;
+use App\Domains\Templates\Models\Template;
+use App\Domains\Templates\Models\UserTemplateCopy;
+use App\Domains\Templates\Models\UserTemplatePreference;
+use App\Domains\Templates\Support\PublishedTemplateVisibility;
 use App\Domains\Tools\Models\Tool;
 use App\Domains\Tools\Models\ToolCategory;
 use App\Domains\Tools\Models\UserToolPreference;
@@ -36,6 +40,7 @@ final class BuildCategoryGuidance
      *     tools: Collection<int, Tool>,
      *     prompts: Collection<int, PromptTemplate>,
      *     workflows: Collection<int, WorkflowRecipe>,
+     *     templates: Collection<int, Template>,
      * }
      */
     public function execute(User $user, string $categorySlug): array
@@ -112,10 +117,33 @@ final class BuildCategoryGuidance
                         ->limit(1),
                 ])
                 ->where('workflow_recipes.tool_category_id', $category->getKey())
-                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate']);
+                ->with(['category', 'steps', 'steps.tool', 'steps.promptTemplate', 'steps.template']);
             PublishedWorkflowVisibility::apply($workflowQuery);
             $workflows = $workflowQuery
                 ->orderByRaw('LOWER(workflow_recipes.title)')
+                ->orderBy('public_id')
+                ->limit(self::MAX_ITEMS_PER_COLLECTION)
+                ->get();
+
+            $templateQuery = Template::query()
+                ->select('templates.*')
+                ->addSelect([
+                    'viewer_preference_state' => UserTemplatePreference::query()
+                        ->select('state')
+                        ->whereColumn('user_template_preferences.template_id', 'templates.id')
+                        ->where('user_template_preferences.user_id', $user->getKey())
+                        ->limit(1),
+                    'viewer_active_copy_count' => UserTemplateCopy::query()
+                        ->selectRaw('COUNT(*)')
+                        ->whereColumn('user_template_copies.template_id', 'templates.id')
+                        ->where('user_template_copies.user_id', $user->getKey())
+                        ->whereNull('user_template_copies.archived_at'),
+                ])
+                ->where('templates.tool_category_id', $category->getKey())
+                ->with(['category', 'latestVersion']);
+            PublishedTemplateVisibility::apply($templateQuery);
+            $templates = $templateQuery
+                ->orderByRaw('LOWER(templates.title)')
                 ->orderBy('public_id')
                 ->limit(self::MAX_ITEMS_PER_COLLECTION)
                 ->get();
@@ -125,6 +153,7 @@ final class BuildCategoryGuidance
                 'tools' => $tools,
                 'prompts' => $prompts,
                 'workflows' => $workflows,
+                'templates' => $templates,
             ];
         } catch (QueryException $exception) {
             throw GuidancePersistenceFailure::fromQueryException($exception, 'guidance.read');

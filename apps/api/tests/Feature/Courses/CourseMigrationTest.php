@@ -144,7 +144,9 @@ final class CourseMigrationTest extends TestCase
         $migration = $this->migration();
         $plannerMigration = $this->plannerMigration();
         $resourceMigration = $this->resourceMigration();
+        $templateMigration = $this->templateMigration();
 
+        $templateMigration->down();
         $resourceMigration->down();
         $plannerMigration->down();
         $migration->down();
@@ -155,6 +157,7 @@ final class CourseMigrationTest extends TestCase
         $migration->up();
         $plannerMigration->up();
         $resourceMigration->up();
+        $templateMigration->up();
         $this->assertTrue(Schema::hasTable('courses'));
         $this->assertTrue(Schema::hasTable('academic_terms'));
         $this->assertTrue(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));
@@ -233,6 +236,16 @@ final class CourseMigrationTest extends TestCase
     private function resourceMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function templateMigration(): Migration
+    {
+        // Phase 13 template copies hold a composite foreign key onto
+        // courses(user_id, id), so they must lower before courses can.
+        $migration = require database_path('migrations/2026_07_15_000012_create_templates_and_editable_copies.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

@@ -60,6 +60,18 @@ use App\Http\Controllers\Api\V1\Resources\ListResourcesController;
 use App\Http\Controllers\Api\V1\Resources\RetryResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\ShowResourceController;
 use App\Http\Controllers\Api\V1\Resources\UpdateResourceController;
+use App\Http\Controllers\Api\V1\TemplateCopies\ArchiveTemplateCopyController;
+use App\Http\Controllers\Api\V1\TemplateCopies\ListTemplateCopiesController;
+use App\Http\Controllers\Api\V1\TemplateCopies\RestoreTemplateCopyController;
+use App\Http\Controllers\Api\V1\TemplateCopies\ShowTemplateCopyController;
+use App\Http\Controllers\Api\V1\TemplateCopies\UpdateTemplateCopyController;
+use App\Http\Controllers\Api\V1\Templates\CopyTemplateController;
+use App\Http\Controllers\Api\V1\Templates\DismissTemplateController;
+use App\Http\Controllers\Api\V1\Templates\ListTemplatesController;
+use App\Http\Controllers\Api\V1\Templates\SaveTemplateController;
+use App\Http\Controllers\Api\V1\Templates\ShowTemplateController;
+use App\Http\Controllers\Api\V1\Templates\UndismissTemplateController;
+use App\Http\Controllers\Api\V1\Templates\UnsaveTemplateController;
 use App\Http\Controllers\Api\V1\Tools\DismissToolController;
 use App\Http\Controllers\Api\V1\Tools\ListToolsController;
 use App\Http\Controllers\Api\V1\Tools\SaveToolController;
@@ -397,6 +409,62 @@ Route::middleware([
                         ->where('workflow', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:workflows.preference', 'can:academic.manage-own'])
                         ->name('dismissed.destroy');
+                });
+
+            Route::prefix('templates')
+                ->name('templates.')
+                ->group(function (): void {
+                    Route::get('/', ListTemplatesController::class)
+                        ->middleware(['throttle:templates.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{template}', ShowTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:templates.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{template}/saved', SaveTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:templates.preference', 'can:academic.manage-own'])
+                        ->name('saved.store');
+                    Route::delete('/{template}/saved', UnsaveTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:templates.preference', 'can:academic.manage-own'])
+                        ->name('saved.destroy');
+                    Route::put('/{template}/dismissed', DismissTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:templates.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.store');
+                    Route::delete('/{template}/dismissed', UndismissTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:templates.preference', 'can:academic.manage-own'])
+                        ->name('dismissed.destroy');
+                    Route::post('/{template}/copies', CopyTemplateController::class)
+                        ->where('template', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:template-copies.write', 'can:academic.manage-own'])
+                        ->name('copies.store');
+                });
+
+            Route::prefix('template-copies')
+                ->name('template-copies.')
+                ->group(function (): void {
+                    Route::get('/', ListTemplateCopiesController::class)
+                        ->middleware(['throttle:template-copies.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{copy}', ShowTemplateCopyController::class)
+                        ->where('copy', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:template-copies.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{copy}', UpdateTemplateCopyController::class)
+                        ->where('copy', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:template-copies.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::put('/{copy}/archive', ArchiveTemplateCopyController::class)
+                        ->where('copy', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:template-copies.write', 'can:academic.manage-own'])
+                        ->name('archive');
+                    Route::delete('/{copy}/archive', RestoreTemplateCopyController::class)
+                        ->where('copy', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:template-copies.write', 'can:academic.manage-own'])
+                        ->name('restore');
                 });
 
             Route::get('/guidance', ShowGuidanceController::class)

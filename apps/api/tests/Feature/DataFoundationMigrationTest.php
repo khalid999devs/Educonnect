@@ -22,7 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
-        [$courses, $planner, $resources, $tools, $guidance] = $this->lowerDependentFoundations();
+        [$courses, $planner, $resources, $tools, $guidance, $templates] = $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -56,6 +56,7 @@ final class DataFoundationMigrationTest extends TestCase
         $resources->up();
         $tools->up();
         $guidance->up();
+        $templates->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -198,18 +199,20 @@ final class DataFoundationMigrationTest extends TestCase
     /** @return array{Migration, Migration, Migration, Migration, Migration} */
     private function lowerDependentFoundations(): array
     {
+        $templates = $this->migration('2026_07_15_000012_create_templates_and_editable_copies.php');
         $guidance = $this->migration('2026_07_15_000011_create_prompts_and_workflow_recipes.php');
         $tools = $this->migration('2026_07_15_000010_create_tools_catalog.php');
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $templates->down();
         $guidance->down();
         $tools->down();
         $resources->down();
         $planner->down();
         $courses->down();
 
-        return [$courses, $planner, $resources, $tools, $guidance];
+        return [$courses, $planner, $resources, $tools, $guidance, $templates];
     }
 
     private function insertLegacyUser(string $email, ?string $timestamp = null): int

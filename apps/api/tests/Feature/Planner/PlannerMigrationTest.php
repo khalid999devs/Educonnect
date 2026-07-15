@@ -256,11 +256,13 @@ final class PlannerMigrationTest extends TestCase
     {
         $migration = $this->migration();
         $resourceMigration = $this->resourceMigration();
+        $templateMigration = $this->templateMigration();
         $statements = [];
         DB::listen(static function (QueryExecuted $query) use (&$statements): void {
             $statements[] = $query->sql;
         });
 
+        $templateMigration->down();
         $resourceMigration->down();
         $migration->down();
         $this->assertContains('LOCK TABLE tasks IN ACCESS EXCLUSIVE MODE', $statements);
@@ -271,6 +273,7 @@ final class PlannerMigrationTest extends TestCase
 
         $migration->up();
         $resourceMigration->up();
+        $templateMigration->up();
         $this->assertTrue(Schema::hasTable('tasks'));
         $this->assertTrue(Schema::hasTable('focus_sessions'));
         $this->assertTrue($this->constraintExists('courses_owner_id_unique'));
@@ -299,6 +302,16 @@ final class PlannerMigrationTest extends TestCase
     private function resourceMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function templateMigration(): Migration
+    {
+        // Phase 13 template copies hold a composite foreign key that depends
+        // on the courses_owner_id_unique constraint this migration manages.
+        $migration = require database_path('migrations/2026_07_15_000012_create_templates_and_editable_copies.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

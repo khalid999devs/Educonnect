@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@educonnect/ui/styles.css";
+
+/* The shared UI package ships source; include it in utility detection. */
+@source "../../../../packages/ui/src";

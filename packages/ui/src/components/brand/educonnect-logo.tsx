@@ -10,10 +10,7 @@ import iconLogo from "../../assets/brand/icon_logo.png";
 export type EduConnectLogoTheme = "dark" | "light";
 
 export type EduConnectLogoVariant =
-  | "horizontal"
-  | "vertical"
-  | "icon"
-  | "monochrome";
+  "horizontal" | "vertical" | "icon" | "monochrome";
 
 type LogoAssetMap = Record<
   Exclude<EduConnectLogoVariant, "icon" | "monochrome">,

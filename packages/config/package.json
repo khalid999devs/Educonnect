@@ -1,0 +1,26 @@
+{
+  "name": "@educonnect/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript, ESLint, and Prettier configuration for EduConnect workspaces.",
+  "type": "module",
+  "exports": {
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/nextjs": "./typescript/nextjs.json",
+    "./typescript/react-library": "./typescript/react-library.json",
+    "./eslint/base": "./eslint/base.mjs",
+    "./prettier": "./prettier/index.json"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "prettier": "./prettier/index.json",
+  "dependencies": {
+    "eslint-plugin-react-hooks": "7.1.1",
+    "typescript-eslint": "8.64.0"
+  },
+  "devDependencies": {
+    "prettier": "3.9.5"
+  }
+}

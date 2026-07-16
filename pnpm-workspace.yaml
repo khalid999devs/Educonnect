@@ -6,3 +6,7 @@ engineStrict: true
 ignoreScripts: true
 saveExact: true
 sharedWorkspaceLockfile: true
+
+# Security floor for Next.js's transitive postcss (GHSA advisory below 8.5.10).
+overrides:
+  "postcss@<8.5.10": "8.5.10"

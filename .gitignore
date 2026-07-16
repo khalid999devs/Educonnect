@@ -35,3 +35,4 @@ PACK_MANIFEST.md
 FILE_INDEX.txt
 
 
+*.tsbuildinfo

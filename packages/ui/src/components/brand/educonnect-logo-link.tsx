@@ -24,9 +24,9 @@ export function EduConnectLogoLink({
         "inline-flex items-center rounded-md",
         "focus-visible:outline-none",
         "focus-visible:ring-2",
-        "focus-visible:ring-[var(--brand-focus)]",
+        "focus-visible:ring-brand-focus",
         "focus-visible:ring-offset-2",
-        "focus-visible:ring-offset-[var(--bg-canvas)]",
+        "focus-visible:ring-offset-bg-canvas",
         className,
       ]
         .filter(Boolean)

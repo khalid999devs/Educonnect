@@ -5,15 +5,17 @@ export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 /**
- * Inline pre-hydration script that applies the persisted theme (or the system
- * preference) before first paint so no route ever flashes the wrong theme.
+ * Inline pre-hydration script that applies the persisted theme before first
+ * paint so no route ever flashes the wrong theme. EduConnect is dark-first
+ * (brand PDF/reference art): with no stored choice the default is dark; the
+ * system preference applies only when the user explicitly selects "system".
  * ThemeProvider renders it as the first element inside <body>.
  */
 export const themeInitScript = [
   "(function(){try{",
   `var s=localStorage.getItem("${THEME_STORAGE_KEY}");`,
   'var m=window.matchMedia("(prefers-color-scheme: dark)").matches;',
-  'var d=s==="dark"||(s!=="light"&&m);',
+  'var d=s==="light"?false:s==="system"?m:true;',
   "var r=document.documentElement;",
   'r.classList.toggle("dark",d);',
   'r.style.colorScheme=d?"dark":"light";',

@@ -44,8 +44,23 @@ describe("ThemeProvider", () => {
     vi.unstubAllGlobals();
   });
 
-  it("defaults to the system theme", () => {
+  it("defaults to the dark brand theme when nothing is stored", () => {
     mockMatchMedia(false);
+
+    render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId("theme")).toHaveTextContent("dark");
+    expect(screen.getByTestId("resolved")).toHaveTextContent("dark");
+    expect(document.documentElement).toHaveClass("dark");
+  });
+
+  it("follows the OS preference when system is explicitly chosen", () => {
+    mockMatchMedia(false);
+    window.localStorage.setItem(THEME_STORAGE_KEY, "system");
 
     render(
       <ThemeProvider>
@@ -56,19 +71,6 @@ describe("ThemeProvider", () => {
     expect(screen.getByTestId("theme")).toHaveTextContent("system");
     expect(screen.getByTestId("resolved")).toHaveTextContent("light");
     expect(document.documentElement).not.toHaveClass("dark");
-  });
-
-  it("resolves system to dark when the OS prefers dark", () => {
-    mockMatchMedia(true);
-
-    render(
-      <ThemeProvider>
-        <Probe />
-      </ThemeProvider>,
-    );
-
-    expect(screen.getByTestId("resolved")).toHaveTextContent("dark");
-    expect(document.documentElement).toHaveClass("dark");
   });
 
   it("applies and persists an explicit choice", async () => {

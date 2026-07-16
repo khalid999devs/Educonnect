@@ -8,18 +8,21 @@ export type CopilotTriggerProps = {
   isOpen?: boolean;
   onToggle?: () => void;
   label?: string;
+  /** "pill" shows the labeled lozenge from the reference art. */
+  variant?: "icon" | "pill";
   className?: string;
 };
 
 /**
- * The single floating Copilot trigger: 56px, lower-right safe area,
- * collapsed by default (doc 04). Each app shell renders exactly one and
- * owns the open state; feature pages never mount their own.
+ * The single floating Copilot trigger: lower-right safe area, collapsed by
+ * default (doc 04). Each app shell renders exactly one and owns the open
+ * state; feature pages never mount their own.
  */
 export function CopilotTrigger({
   isOpen = false,
   onToggle,
   label = "EduConnect Copilot",
+  variant = "icon",
   className,
 }: CopilotTriggerProps) {
   return (
@@ -31,17 +34,25 @@ export function CopilotTrigger({
       onClick={onToggle}
       className={cn(
         "fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6 z-50",
-        "flex size-14 items-center justify-center rounded-full bg-brand-primary text-white shadow-glow",
+        "flex items-center justify-center rounded-full bg-brand-primary text-white shadow-glow",
+        variant === "pill" ? "h-12 gap-2 px-5 text-button" : "size-14",
         "transition-colors hover:bg-brand-primary-hover",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-focus",
         className,
       )}
     >
       {isOpen ? (
-        <X aria-hidden="true" className="size-6" />
+        <X
+          aria-hidden="true"
+          className={variant === "pill" ? "size-5" : "size-6"}
+        />
       ) : (
-        <Sparkles aria-hidden="true" className="size-6" />
+        <Sparkles
+          aria-hidden="true"
+          className={variant === "pill" ? "size-5" : "size-6"}
+        />
       )}
+      {variant === "pill" ? <span aria-hidden="true">Copilot</span> : null}
     </button>
   );
 }

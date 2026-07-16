@@ -28,17 +28,18 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/* Dark-first brand default: "system" applies only when explicitly chosen. */
 function readStoredTheme(): Theme {
   if (typeof window === "undefined") {
-    return "system";
+    return "dark";
   }
 
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
 
-    return isTheme(stored) ? stored : "system";
+    return isTheme(stored) ? stored : "dark";
   } catch {
-    return "system";
+    return "dark";
   }
 }
 

@@ -113,7 +113,7 @@ export function SidebarItem({
           baseClasses,
           "transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-focus",
           isActive
-            ? "bg-bg-interactive text-brand-primary shadow-glow-sm"
+            ? "bg-brand-primary text-white shadow-glow-sm"
             : "text-text-secondary hover:bg-bg-interactive hover:text-text-primary",
         )}
       >

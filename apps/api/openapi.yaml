@@ -33,6 +33,8 @@ tags:
     description: Reviewed, published curated templates with immutable source versions, approved free badges, and private save or dismiss state.
   - name: Template copies
     description: Independent user-owned editable copies of published template versions with destination, versioning, and archive state.
+  - name: Intake
+    description: Private Smart Intake records with durable processing states, SSRF-safe link acquisition, bounded extraction, cancel/retry control, and observable events.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -2709,6 +2711,254 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/intake:
+    get:
+      tags:
+        - Intake
+      operationId: listIntakeItems
+      summary: List the current user's intake items newest first
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IntakeStateFilter'
+        - $ref: '#/components/parameters/GuidancePerPage'
+        - $ref: '#/components/parameters/GuidanceCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeItemCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/links:
+    post:
+      tags:
+        - Intake
+      operationId: createLinkIntake
+      summary: Submit one https link for safe queued intake processing
+      description: The link must pass the SSRF guard (https only, public hosts, no credentials); unsafe links are rejected before any record exists.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkIntakeRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/IntakeItemCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/files:
+    post:
+      tags:
+        - Intake
+      operationId: createFileIntake
+      summary: Submit one owned, ready, extractable file resource for queued intake processing
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFileIntakeRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/IntakeItemCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    get:
+      tags:
+        - Intake
+      operationId: getIntakeItem
+      summary: Return one current-user intake item with its observable status and events
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    post:
+      tags:
+        - Intake
+      operationId: cancelIntakeItem
+      summary: Cancel one current-user intake item
+      description: Repeating the cancellation is a no-op; terminal saved or finally-failed items conflict.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}/retry:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    post:
+      tags:
+        - Intake
+      operationId: retryIntakeItem
+      summary: Requeue one retryably-failed current-user intake item
+      description: Only failed_retryable items within the bounded attempt budget can be requeued; retries never duplicate artifacts.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}/suggestions:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    get:
+      tags:
+        - Intake
+      operationId: listIntakeSuggestions
+      summary: Return the editable suggestions proposed for one current-user intake item
+      description: Every suggestion carries its confidence, plain-language reason, schema version, and review status; nothing is created until the user confirms.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeSuggestionCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}/confirmation:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    post:
+      tags:
+        - Intake
+      operationId: confirmIntake
+      summary: Confirm reviewed suggestions and transactionally create the selected records
+      description: Applied suggestions create tasks and link resources through the owning domain rules; undecided proposals are dismissed, retries never duplicate created records, and a saved item replays idempotently.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmIntakeRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -3230,6 +3480,18 @@ components:
         enum:
           - '-created_at'
           - title
+    IntakeItemPublicId:
+      name: item
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/IntakeItemPublicId'
+    IntakeStateFilter:
+      name: state
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/IntakeState'
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -3552,6 +3814,42 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TemplateCopyCollectionSuccess'
+    IntakeItemSuccess:
+      description: The operation returned one current-user intake item with its observable status.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntakeItemSuccess'
+    IntakeItemCreated:
+      description: A new private intake item was created and queued for bounded processing.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntakeItemSuccess'
+    IntakeItemCollectionSuccess:
+      description: The operation returned a cursor-paginated collection of the current user's intake items.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntakeItemCollectionSuccess'
+    IntakeSuggestionCollectionSuccess:
+      description: The operation returned the reviewable suggestions for one current-user intake item.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntakeSuggestionCollectionSuccess'
     NoContent:
       description: The operation completed without a response representation.
       headers:
@@ -5546,6 +5844,438 @@ components:
           $ref: '#/components/schemas/TemplateCopyCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'
+    IntakeItemPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa4
+    IntakeState:
+      type: string
+      enum:
+        - uploaded_or_linked
+        - queued
+        - extracting
+        - extracted
+        - organizing
+        - awaiting_review
+        - confirmed
+        - saved
+        - failed_retryable
+        - failed_final
+        - cancelled
+    IntakeFailureCode:
+      type: string
+      enum:
+        - unsafe_url
+        - link_fetch_failed
+        - link_http_client_error
+        - link_http_server_error
+        - content_too_large
+        - unsupported_content_type
+        - file_unavailable
+        - extraction_failed
+        - attempts_exhausted
+        - classification_failed
+    IntakeSource:
+      type: object
+      required:
+        - type
+        - url
+        - resource
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+            - file
+            - link
+        url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          pattern: '^https://'
+        resource:
+          type: object
+          nullable: true
+          required:
+            - id
+            - title
+          additionalProperties: false
+          properties:
+            id:
+              $ref: '#/components/schemas/ResourcePublicId'
+            title:
+              type: string
+              minLength: 1
+              maxLength: 160
+    IntakeExtractionSummary:
+      type: object
+      required:
+        - characters
+        - content_type
+      additionalProperties: false
+      properties:
+        characters:
+          type: integer
+          minimum: 0
+        content_type:
+          type: string
+          minLength: 1
+          maxLength: 255
+    IntakeEvent:
+      type: object
+      required:
+        - event
+        - from_state
+        - to_state
+        - detail
+        - occurred_at
+      additionalProperties: false
+      properties:
+        event:
+          type: string
+          minLength: 1
+          maxLength: 64
+        from_state:
+          allOf:
+            - $ref: '#/components/schemas/IntakeState'
+          nullable: true
+        to_state:
+          allOf:
+            - $ref: '#/components/schemas/IntakeState'
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 400
+        occurred_at:
+          type: string
+          nullable: true
+          format: date-time
+    IntakeItem:
+      type: object
+      required:
+        - id
+        - source
+        - context
+        - state
+        - failure_code
+        - attempts
+        - extraction
+        - classification
+        - events
+        - queued_at
+        - started_at
+        - finished_at
+        - cancelled_at
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/IntakeItemPublicId'
+        source:
+          $ref: '#/components/schemas/IntakeSource'
+        context:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        state:
+          $ref: '#/components/schemas/IntakeState'
+        failure_code:
+          allOf:
+            - $ref: '#/components/schemas/IntakeFailureCode'
+          nullable: true
+        attempts:
+          type: integer
+          minimum: 0
+          maximum: 5
+        extraction:
+          allOf:
+            - $ref: '#/components/schemas/IntakeExtractionSummary'
+          nullable: true
+        classification:
+          allOf:
+            - $ref: '#/components/schemas/IntakeClassificationSummary'
+          nullable: true
+        events:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/IntakeEvent'
+        queued_at:
+          type: string
+          nullable: true
+          format: date-time
+        started_at:
+          type: string
+          nullable: true
+          format: date-time
+        finished_at:
+          type: string
+          nullable: true
+          format: date-time
+        cancelled_at:
+          type: string
+          nullable: true
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateLinkIntakeRequest:
+      type: object
+      required:
+        - url
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          minLength: 9
+          maxLength: 2048
+          pattern: '^https://'
+        context:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+    CreateFileIntakeRequest:
+      type: object
+      required:
+        - resource_id
+      additionalProperties: false
+      properties:
+        resource_id:
+          $ref: '#/components/schemas/ResourcePublicId'
+        context:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+    IntakeItemCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    IntakeItemSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/IntakeItem'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    IntakeItemCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/IntakeItem'
+        meta:
+          $ref: '#/components/schemas/IntakeItemCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    IntakeClassificationSummary:
+      type: object
+      required:
+        - provider
+        - model
+        - schema_version
+        - latency_ms
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+          minLength: 1
+          maxLength: 64
+        model:
+          type: string
+          minLength: 1
+          maxLength: 128
+        schema_version:
+          type: string
+          minLength: 1
+          maxLength: 16
+        latency_ms:
+          type: integer
+          minimum: 0
+    IntakeSuggestionPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa5
+    IntakeSuggestionProposal:
+      type: object
+      required:
+        - title
+        - description
+        - due_at
+        - course_id
+        - url
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        due_at:
+          type: string
+          nullable: true
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+        course_id:
+          allOf:
+            - $ref: '#/components/schemas/AcademicPublicId'
+          nullable: true
+        url:
+          type: string
+          nullable: true
+          maxLength: 2048
+          pattern: '^https://'
+    IntakeSuggestion:
+      type: object
+      required:
+        - id
+        - kind
+        - proposal
+        - confidence
+        - reason
+        - schema_version
+        - status
+        - created_task_id
+        - created_resource_id
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/IntakeSuggestionPublicId'
+        kind:
+          type: string
+          enum:
+            - task
+            - resource
+        proposal:
+          $ref: '#/components/schemas/IntakeSuggestionProposal'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        schema_version:
+          type: string
+          minLength: 1
+          maxLength: 16
+        status:
+          type: string
+          enum:
+            - proposed
+            - dismissed
+            - applied
+        created_task_id:
+          allOf:
+            - $ref: '#/components/schemas/PlannerPublicId'
+          nullable: true
+        created_resource_id:
+          allOf:
+            - $ref: '#/components/schemas/ResourcePublicId'
+          nullable: true
+        created_at:
+          type: string
+          nullable: true
+          format: date-time
+    IntakeSuggestionCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/IntakeSuggestion'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ConfirmIntakeDecision:
+      type: object
+      required:
+        - id
+        - action
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/IntakeSuggestionPublicId'
+        action:
+          type: string
+          enum:
+            - apply
+            - dismiss
+        overrides:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            title:
+              type: string
+              nullable: true
+              minLength: 1
+              maxLength: 160
+            description:
+              type: string
+              nullable: true
+              minLength: 1
+              maxLength: 2000
+            due_at:
+              type: string
+              nullable: true
+              pattern: '^\d{4}-\d{2}-\d{2}$'
+            course_id:
+              allOf:
+                - $ref: '#/components/schemas/AcademicPublicId'
+              nullable: true
+            url:
+              type: string
+              nullable: true
+              maxLength: 2048
+              pattern: '^https://'
+    ConfirmIntakeRequest:
+      type: object
+      required:
+        - decisions
+      additionalProperties: false
+      properties:
+        decisions:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/ConfirmIntakeDecision'
     UploadHeaders:
       type: object
       description: Exact script-settable headers for the bounded private-object PUT; Content-Length is browser-managed but included in the signature.

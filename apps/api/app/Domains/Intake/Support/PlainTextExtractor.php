@@ -1,0 +1,58 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domains\Intake\Support;
+
+use App\Domains\Intake\Contracts\IntakeContentExtractor;
+use App\Domains\Intake\Enums\IntakeFailureCode;
+use App\Domains\Intake\Exceptions\IntakeAcquisitionFailure;
+
+final class PlainTextExtractor implements IntakeContentExtractor
+{
+    private const SUPPORTED = [
+        'text/plain',
+        'text/markdown',
+        'text/html',
+        'application/xhtml+xml',
+    ];
+
+    public function supports(string $contentType): bool
+    {
+        return in_array(strtolower($contentType), self::SUPPORTED, true);
+    }
+
+    public function extract(string $rawContent, string $contentType): string
+    {
+        if (! $this->supports($contentType)) {
+            throw new IntakeAcquisitionFailure(
+                IntakeFailureCode::UnsupportedContentType,
+                'no extractor supports this content type',
+            );
+        }
+
+        $text = $rawContent;
+
+        if (in_array(strtolower($contentType), ['text/html', 'application/xhtml+xml'], true)) {
+            $text = preg_replace('/<(script|style|template|noscript)\b[^>]*>.*?<\/\1>/is', ' ', $text) ?? '';
+            $text = strip_tags($text);
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        $text = (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', ' ', $text);
+        $text = (string) preg_replace('/[ \t]+/u', ' ', $text);
+        $text = (string) preg_replace('/\s*\n\s*/u', "\n", $text);
+        $text = trim($text);
+
+        if ($text === '' || ! mb_check_encoding($text, 'UTF-8')) {
+            throw new IntakeAcquisitionFailure(
+                IntakeFailureCode::ExtractionFailed,
+                'the content produced no readable text',
+            );
+        }
+
+        $limit = (int) config('intake.max_extracted_characters');
+
+        return mb_strlen($text) > $limit ? mb_substr($text, 0, $limit) : $text;
+    }
+}

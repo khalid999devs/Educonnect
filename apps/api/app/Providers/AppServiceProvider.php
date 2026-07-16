@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Domains\Intake\AI\RuleBasedClassificationProvider;
+use App\Domains\Intake\Contracts\AIProvider;
+use App\Domains\Intake\Contracts\HostResolver;
+use App\Domains\Intake\Contracts\IntakeContentExtractor;
+use App\Domains\Intake\Support\DnsHostResolver;
+use App\Domains\Intake\Support\PlainTextExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
 use App\Domains\Resources\Support\S3StrictPutUploadSigner;
 use App\Support\ProductionConfiguration;
@@ -17,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ResourceUploadSigner::class, S3StrictPutUploadSigner::class);
+        $this->app->bind(HostResolver::class, DnsHostResolver::class);
+        $this->app->bind(IntakeContentExtractor::class, PlainTextExtractor::class);
+        $this->app->bind(AIProvider::class, RuleBasedClassificationProvider::class);
 
         $postgresConnection = config('database.connections.pgsql');
 
@@ -60,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerToolRateLimiters();
         $this->registerGuidanceRateLimiters();
         $this->registerTemplateRateLimiters();
+        $this->registerIntakeRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -289,6 +299,22 @@ class AppServiceProvider extends ServiceProvider
             scope: 'template-copies-write',
             actorAttempts: 60,
             ipAttempts: 60,
+        ));
+    }
+
+    private function registerIntakeRateLimiters(): void
+    {
+        RateLimiter::for('intake.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'intake-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('intake.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'intake-write',
+            actorAttempts: 30,
+            ipAttempts: 30,
         ));
     }
 

@@ -22,7 +22,7 @@ final class DataFoundationMigrationTest extends TestCase
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
-        [$courses, $planner, $resources, $tools, $guidance, $templates] = $this->lowerDependentFoundations();
+        [$courses, $planner, $resources, $tools, $guidance, $templates, $intake, $suggestions] = $this->lowerDependentFoundations();
         $identity = $this->migration('2026_07_14_000000_add_public_id_and_email_integrity.php');
         $timestamps = $this->migration('2026_07_14_000001_standardize_database_timestamps_to_utc.php');
         $sessions = $this->migration('2026_07_14_000002_add_user_foreign_key_to_sessions.php');
@@ -57,6 +57,8 @@ final class DataFoundationMigrationTest extends TestCase
         $tools->up();
         $guidance->up();
         $templates->up();
+        $intake->up();
+        $suggestions->up();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -199,12 +201,16 @@ final class DataFoundationMigrationTest extends TestCase
     /** @return array{Migration, Migration, Migration, Migration, Migration} */
     private function lowerDependentFoundations(): array
     {
+        $suggestions = $this->migration('2026_07_16_000014_create_intake_suggestions.php');
+        $intake = $this->migration('2026_07_16_000013_create_intake_foundation.php');
         $templates = $this->migration('2026_07_15_000012_create_templates_and_editable_copies.php');
         $guidance = $this->migration('2026_07_15_000011_create_prompts_and_workflow_recipes.php');
         $tools = $this->migration('2026_07_15_000010_create_tools_catalog.php');
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $suggestions->down();
+        $intake->down();
         $templates->down();
         $guidance->down();
         $tools->down();
@@ -212,7 +218,7 @@ final class DataFoundationMigrationTest extends TestCase
         $planner->down();
         $courses->down();
 
-        return [$courses, $planner, $resources, $tools, $guidance, $templates];
+        return [$courses, $planner, $resources, $tools, $guidance, $templates, $intake, $suggestions];
     }
 
     private function insertLegacyUser(string $email, ?string $timestamp = null): int

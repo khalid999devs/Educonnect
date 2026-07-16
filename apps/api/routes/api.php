@@ -25,6 +25,14 @@ use App\Http\Controllers\Api\V1\Courses\ShowCourseController;
 use App\Http\Controllers\Api\V1\Courses\UpdateAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\UpdateCourseController;
 use App\Http\Controllers\Api\V1\Guidance\ShowGuidanceController;
+use App\Http\Controllers\Api\V1\Intake\CancelIntakeItemController;
+use App\Http\Controllers\Api\V1\Intake\ConfirmIntakeController;
+use App\Http\Controllers\Api\V1\Intake\CreateFileIntakeController;
+use App\Http\Controllers\Api\V1\Intake\CreateLinkIntakeController;
+use App\Http\Controllers\Api\V1\Intake\ListIntakeItemsController;
+use App\Http\Controllers\Api\V1\Intake\ListIntakeSuggestionsController;
+use App\Http\Controllers\Api\V1\Intake\RetryIntakeItemController;
+use App\Http\Controllers\Api\V1\Intake\ShowIntakeItemController;
 use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
@@ -470,6 +478,40 @@ Route::middleware([
             Route::get('/guidance', ShowGuidanceController::class)
                 ->middleware(['throttle:guidance.read', 'can:academic.manage-own'])
                 ->name('guidance.show');
+
+            Route::prefix('intake')
+                ->name('intake.')
+                ->group(function (): void {
+                    Route::get('/', ListIntakeItemsController::class)
+                        ->middleware(['throttle:intake.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/links', CreateLinkIntakeController::class)
+                        ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
+                        ->name('links.store');
+                    Route::post('/files', CreateFileIntakeController::class)
+                        ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
+                        ->name('files.store');
+                    Route::get('/{item}', ShowIntakeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::post('/{item}/cancel', CancelIntakeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
+                        ->name('cancel');
+                    Route::post('/{item}/retry', RetryIntakeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
+                        ->name('retry');
+                    Route::get('/{item}/suggestions', ListIntakeSuggestionsController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.read', 'can:academic.manage-own'])
+                        ->name('suggestions.index');
+                    Route::post('/{item}/confirmation', ConfirmIntakeController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
+                        ->name('confirmation.store');
+                });
         });
     });
 

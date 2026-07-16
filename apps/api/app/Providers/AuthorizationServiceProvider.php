@@ -19,6 +19,8 @@ use App\Domains\Guidance\Policies\UserPromptCopyPolicy;
 use App\Domains\Guidance\Policies\UserPromptPreferencePolicy;
 use App\Domains\Guidance\Policies\UserWorkflowPreferencePolicy;
 use App\Domains\Guidance\Policies\WorkflowRecipePolicy;
+use App\Domains\Intake\Models\IntakeItem;
+use App\Domains\Intake\Policies\IntakeItemPolicy;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Policies\OnboardingProgressPolicy;
 use App\Domains\Planner\Models\FocusSession;
@@ -65,6 +67,7 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(Template::class, TemplatePolicy::class);
         Gate::policy(UserTemplatePreference::class, UserTemplatePreferencePolicy::class);
         Gate::policy(UserTemplateCopy::class, UserTemplateCopyPolicy::class);
+        Gate::policy(IntakeItem::class, IntakeItemPolicy::class);
         Gate::policy(UserWorkflowPreference::class, UserWorkflowPreferencePolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {

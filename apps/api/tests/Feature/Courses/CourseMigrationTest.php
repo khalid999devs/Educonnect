@@ -145,7 +145,11 @@ final class CourseMigrationTest extends TestCase
         $plannerMigration = $this->plannerMigration();
         $resourceMigration = $this->resourceMigration();
         $templateMigration = $this->templateMigration();
+        $intakeMigration = $this->intakeMigration();
+        $suggestionMigration = $this->suggestionMigration();
 
+        $suggestionMigration->down();
+        $intakeMigration->down();
         $templateMigration->down();
         $resourceMigration->down();
         $plannerMigration->down();
@@ -158,6 +162,8 @@ final class CourseMigrationTest extends TestCase
         $plannerMigration->up();
         $resourceMigration->up();
         $templateMigration->up();
+        $intakeMigration->up();
+        $suggestionMigration->up();
         $this->assertTrue(Schema::hasTable('courses'));
         $this->assertTrue(Schema::hasTable('academic_terms'));
         $this->assertTrue(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));
@@ -236,6 +242,24 @@ final class CourseMigrationTest extends TestCase
     private function resourceMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function suggestionMigration(): Migration
+    {
+        // Phase 15 suggestions reference intake items, tasks, and resources.
+        $migration = require database_path('migrations/2026_07_16_000014_create_intake_suggestions.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function intakeMigration(): Migration
+    {
+        // Phase 14 intake items reference resources(user_id, id).
+        $migration = require database_path('migrations/2026_07_16_000013_create_intake_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

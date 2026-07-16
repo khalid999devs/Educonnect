@@ -257,11 +257,15 @@ final class PlannerMigrationTest extends TestCase
         $migration = $this->migration();
         $resourceMigration = $this->resourceMigration();
         $templateMigration = $this->templateMigration();
+        $intakeMigration = $this->intakeMigration();
+        $suggestionMigration = $this->suggestionMigration();
         $statements = [];
         DB::listen(static function (QueryExecuted $query) use (&$statements): void {
             $statements[] = $query->sql;
         });
 
+        $suggestionMigration->down();
+        $intakeMigration->down();
         $templateMigration->down();
         $resourceMigration->down();
         $migration->down();
@@ -274,6 +278,8 @@ final class PlannerMigrationTest extends TestCase
         $migration->up();
         $resourceMigration->up();
         $templateMigration->up();
+        $intakeMigration->up();
+        $suggestionMigration->up();
         $this->assertTrue(Schema::hasTable('tasks'));
         $this->assertTrue(Schema::hasTable('focus_sessions'));
         $this->assertTrue($this->constraintExists('courses_owner_id_unique'));
@@ -302,6 +308,24 @@ final class PlannerMigrationTest extends TestCase
     private function resourceMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function suggestionMigration(): Migration
+    {
+        // Phase 15 suggestions reference intake items, tasks, and resources.
+        $migration = require database_path('migrations/2026_07_16_000014_create_intake_suggestions.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function intakeMigration(): Migration
+    {
+        // Phase 14 intake items reference resources(user_id, id).
+        $migration = require database_path('migrations/2026_07_16_000013_create_intake_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

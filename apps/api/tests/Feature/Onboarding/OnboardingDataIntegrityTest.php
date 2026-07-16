@@ -278,7 +278,12 @@ final class OnboardingDataIntegrityTest extends TestCase
         $resourceMigration = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         // Phase 13 template copies reference courses(user_id, id).
         $templateMigration = $this->migration('2026_07_15_000012_create_templates_and_editable_copies.php');
+        // Phase 14 intake items reference resources(user_id, id).
+        $intakeMigration = $this->migration('2026_07_16_000013_create_intake_foundation.php');
+        $suggestionMigration = $this->migration('2026_07_16_000014_create_intake_suggestions.php');
 
+        $suggestionMigration->down();
+        $intakeMigration->down();
         $templateMigration->down();
         $resourceMigration->down();
         $plannerMigration->down();
@@ -292,6 +297,8 @@ final class OnboardingDataIntegrityTest extends TestCase
         $plannerMigration->up();
         $resourceMigration->up();
         $templateMigration->up();
+        $intakeMigration->up();
+        $suggestionMigration->up();
         $this->assertTrue(Schema::hasTable('onboarding_progress'));
         $this->assertTrue(Schema::hasTable('user_profiles'));
 

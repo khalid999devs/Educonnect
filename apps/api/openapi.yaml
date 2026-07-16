@@ -37,6 +37,8 @@ tags:
     description: Private Smart Intake records with durable processing states, SSRF-safe link acquisition, bounded extraction, cancel/retry control, and observable events.
   - name: Second Brain
     description: Private source-centered knowledge organization with collections, notes, tags, item connections, PostgreSQL search, and lightweight research topic tracking.
+  - name: Dashboard
+    description: One bounded truthful aggregate read model for the approved student dashboard hierarchy.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -2961,6 +2963,35 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/dashboard:
+    get:
+      tags:
+        - Dashboard
+      operationId: showDashboard
+      summary: Return the bounded dashboard aggregate for the current user
+      description: 'One response carries the approved hierarchy: cover context, one Quick Intake state, What''s Next, tools, Today, Second Brain recents, one truthful progress model with a specific next action, and the personal rhythm widget. Progress is computed from real records only.'
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: timezone
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        '200':
+          $ref: '#/components/responses/DashboardSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/collections:
     get:
       tags:
@@ -4955,6 +4986,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResearchTopicCollectionSuccess'
+    DashboardSuccess:
+      description: The operation returned the complete bounded dashboard aggregate.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DashboardSuccess'
   schemas:
     RequestId:
       type: string
@@ -9217,3 +9257,396 @@ components:
           $ref: '#/components/schemas/BrainCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'
+    DashboardTaskSummary:
+      type: object
+      required:
+        - id
+        - title
+        - due_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/PlannerPublicId'
+        title:
+          type: string
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+    Dashboard:
+      type: object
+      required:
+        - timeframe
+        - cover
+        - quick_intake
+        - whats_next
+        - tools
+        - today
+        - second_brain
+        - progress
+        - personal_rhythm
+      additionalProperties: false
+      properties:
+        timeframe:
+          type: object
+          required:
+            - timezone
+            - today
+            - week_starts_on
+            - week_ends_on
+          additionalProperties: false
+          properties:
+            timezone:
+              type: string
+            today:
+              type: string
+              format: date
+            week_starts_on:
+              type: string
+              format: date
+            week_ends_on:
+              type: string
+              format: date
+        cover:
+          type: object
+          required:
+            - name
+            - institution
+            - degree
+            - major
+            - study_stage
+            - term
+            - active_course_count
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+            institution:
+              type: string
+              nullable: true
+            degree:
+              type: string
+              nullable: true
+            major:
+              type: string
+              nullable: true
+            study_stage:
+              type: string
+              nullable: true
+            term:
+              nullable: true
+              type: object
+              required:
+                - id
+                - label
+              additionalProperties: false
+              properties:
+                id:
+                  $ref: '#/components/schemas/AcademicPublicId'
+                label:
+                  type: string
+            active_course_count:
+              type: integer
+              minimum: 0
+        quick_intake:
+          type: object
+          required:
+            - active_item
+            - awaiting_review_count
+          additionalProperties: false
+          properties:
+            active_item:
+              nullable: true
+              type: object
+              required:
+                - id
+                - state
+                - failure_code
+                - submitted_at
+              additionalProperties: false
+              properties:
+                id:
+                  $ref: '#/components/schemas/IntakeItemPublicId'
+                state:
+                  $ref: '#/components/schemas/IntakeState'
+                failure_code:
+                  nullable: true
+                  allOf:
+                    - $ref: '#/components/schemas/IntakeFailureCode'
+                submitted_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+            awaiting_review_count:
+              type: integer
+              minimum: 0
+        whats_next:
+          type: object
+          required:
+            - tasks
+            - overdue_count
+            - upcoming_count
+          additionalProperties: false
+          properties:
+            tasks:
+              type: array
+              maxItems: 5
+              items:
+                type: object
+                required:
+                  - id
+                  - title
+                  - status
+                  - due_at
+                  - overdue
+                  - course
+                additionalProperties: false
+                properties:
+                  id:
+                    $ref: '#/components/schemas/PlannerPublicId'
+                  title:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - pending
+                      - in_progress
+                  due_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  overdue:
+                    type: boolean
+                  course:
+                    nullable: true
+                    type: object
+                    required:
+                      - id
+                      - title
+                    additionalProperties: false
+                    properties:
+                      id:
+                        $ref: '#/components/schemas/AcademicPublicId'
+                      title:
+                        type: string
+            overdue_count:
+              type: integer
+              minimum: 0
+            upcoming_count:
+              type: integer
+              minimum: 0
+        tools:
+          type: array
+          maxItems: 4
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - category
+              - saved
+            additionalProperties: false
+            properties:
+              id:
+                $ref: '#/components/schemas/ToolPublicId'
+              name:
+                type: string
+              category:
+                type: string
+                nullable: true
+              saved:
+                type: boolean
+        today:
+          type: object
+          required:
+            - due_task_count
+            - due_tasks
+            - next_focus_session
+          additionalProperties: false
+          properties:
+            due_task_count:
+              type: integer
+              minimum: 0
+            due_tasks:
+              type: array
+              maxItems: 3
+              items:
+                $ref: '#/components/schemas/DashboardTaskSummary'
+            next_focus_session:
+              nullable: true
+              type: object
+              required:
+                - id
+                - starts_at
+                - ends_at
+                - in_progress
+                - task_title
+                - course_title
+              additionalProperties: false
+              properties:
+                id:
+                  $ref: '#/components/schemas/PlannerPublicId'
+                starts_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                ends_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                in_progress:
+                  type: boolean
+                task_title:
+                  type: string
+                  nullable: true
+                course_title:
+                  type: string
+                  nullable: true
+        second_brain:
+          type: object
+          required:
+            - total_item_count
+            - recent_items
+          additionalProperties: false
+          properties:
+            total_item_count:
+              type: integer
+              minimum: 0
+            recent_items:
+              type: array
+              maxItems: 5
+              items:
+                type: object
+                required:
+                  - id
+                  - title
+                  - source_type
+                  - updated_at
+                additionalProperties: false
+                properties:
+                  id:
+                    $ref: '#/components/schemas/KnowledgeItemPublicId'
+                  title:
+                    type: string
+                  source_type:
+                    $ref: '#/components/schemas/KnowledgeSourceType'
+                  updated_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+        progress:
+          type: object
+          required:
+            - timeframe
+            - completed_task_count
+            - due_task_count
+            - focus_minutes
+            - daily_completed
+            - summary
+            - next_action
+          additionalProperties: false
+          properties:
+            timeframe:
+              type: object
+              required:
+                - timezone
+                - starts_on
+                - ends_on
+              additionalProperties: false
+              properties:
+                timezone:
+                  type: string
+                starts_on:
+                  type: string
+                  format: date
+                ends_on:
+                  type: string
+                  format: date
+            completed_task_count:
+              type: integer
+              minimum: 0
+            due_task_count:
+              type: integer
+              minimum: 0
+            focus_minutes:
+              type: integer
+              minimum: 0
+            daily_completed:
+              type: array
+              minItems: 7
+              maxItems: 7
+              items:
+                type: object
+                required:
+                  - date
+                  - completed
+                additionalProperties: false
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  completed:
+                    type: integer
+                    minimum: 0
+            summary:
+              type: string
+            next_action:
+              nullable: true
+              type: object
+              required:
+                - kind
+                - id
+                - title
+                - due_at
+              additionalProperties: false
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - task
+                    - intake_review
+                id:
+                  type: string
+                title:
+                  type: string
+                due_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+        personal_rhythm:
+          type: object
+          required:
+            - has_activity
+            - days
+          additionalProperties: false
+          properties:
+            has_activity:
+              type: boolean
+            days:
+              type: array
+              minItems: 7
+              maxItems: 7
+              items:
+                type: object
+                required:
+                  - date
+                  - focus_minutes
+                additionalProperties: false
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  focus_minutes:
+                    type: integer
+                    minimum: 0
+    DashboardSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Dashboard'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'

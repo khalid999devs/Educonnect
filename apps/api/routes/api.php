@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Courses\ShowAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\ShowCourseController;
 use App\Http\Controllers\Api\V1\Courses\UpdateAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\UpdateCourseController;
+use App\Http\Controllers\Api\V1\Dashboard\ShowDashboardController;
 use App\Http\Controllers\Api\V1\Guidance\ShowGuidanceController;
 use App\Http\Controllers\Api\V1\Intake\CancelIntakeItemController;
 use App\Http\Controllers\Api\V1\Intake\ConfirmIntakeController;
@@ -503,6 +504,10 @@ Route::middleware([
             Route::get('/guidance', ShowGuidanceController::class)
                 ->middleware(['throttle:guidance.read', 'can:academic.manage-own'])
                 ->name('guidance.show');
+
+            Route::get('/dashboard', ShowDashboardController::class)
+                ->middleware(['throttle:dashboard.read', 'can:academic.manage-own'])
+                ->name('dashboard.show');
 
             Route::prefix('intake')
                 ->name('intake.')

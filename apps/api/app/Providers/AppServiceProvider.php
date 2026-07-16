@@ -71,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerTemplateRateLimiters();
         $this->registerIntakeRateLimiters();
         $this->registerSecondBrainRateLimiters();
+        $this->registerDashboardRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -316,6 +317,16 @@ class AppServiceProvider extends ServiceProvider
             scope: 'intake-write',
             actorAttempts: 30,
             ipAttempts: 30,
+        ));
+    }
+
+    private function registerDashboardRateLimiters(): void
+    {
+        RateLimiter::for('dashboard.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'dashboard-read',
+            actorAttempts: 60,
+            ipAttempts: 60,
         ));
     }
 

@@ -35,6 +35,8 @@ tags:
     description: Independent user-owned editable copies of published template versions with destination, versioning, and archive state.
   - name: Intake
     description: Private Smart Intake records with durable processing states, SSRF-safe link acquisition, bounded extraction, cancel/retry control, and observable events.
+  - name: Second Brain
+    description: Private source-centered knowledge organization with collections, notes, tags, item connections, PostgreSQL search, and lightweight research topic tracking.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -2959,6 +2961,849 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/collections:
+    get:
+      tags:
+        - Second Brain
+      operationId: listCollections
+      summary: List and summarize the current user's collections
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/BrainSearch'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/CollectionKind'
+        - $ref: '#/components/parameters/BrainSort'
+        - $ref: '#/components/parameters/BrainPerPage'
+        - $ref: '#/components/parameters/BrainCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CollectionListSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Second Brain
+      operationId: createCollection
+      summary: Create a current-user collection
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCollectionRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CollectionCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/collections/{collection}:
+    parameters:
+      - $ref: '#/components/parameters/CollectionPublicId'
+    get:
+      tags:
+        - Second Brain
+      operationId: showCollection
+      summary: Return one current-user collection
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Second Brain
+      operationId: updateCollection
+      summary: Update one current-user collection with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCollectionRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: deleteCollection
+      summary: Permanently delete one current-user collection without deleting its items
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrainVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge:
+    get:
+      tags:
+        - Second Brain
+      operationId: listKnowledgeItems
+      summary: Search and filter the current user's knowledge items
+      description: Full-text search covers titles, summaries, authors, and venues; title prefixes match as a fallback. Filters narrow by collection, research topic, tag, and source type.
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/BrainSearch'
+        - name: collection_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/CollectionPublicId'
+        - name: topic_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ResearchTopicPublicId'
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 60
+        - name: source_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/KnowledgeSourceType'
+        - $ref: '#/components/parameters/BrainSort'
+        - $ref: '#/components/parameters/BrainPerPage'
+        - $ref: '#/components/parameters/BrainCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Second Brain
+      operationId: createKnowledgeItem
+      summary: Create a current-user knowledge item with immutable source provenance
+      description: 'The source is fixed at creation: an owned resource, an https link, or no source. Citation fields stay editable.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeItemRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/KnowledgeItemCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    get:
+      tags:
+        - Second Brain
+      operationId: showKnowledgeItem
+      summary: Return one current-user knowledge item with notes, tags, collections, connections, and topics
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemDetailSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Second Brain
+      operationId: updateKnowledgeItem
+      summary: Update the editable fields of one current-user knowledge item
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKnowledgeItemRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: deleteKnowledgeItem
+      summary: Permanently delete one current-user knowledge item and its annotations
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrainVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/notes:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    post:
+      tags:
+        - Second Brain
+      operationId: createKnowledgeNote
+      summary: Annotate one current-user knowledge item with a note
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeNoteRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/KnowledgeNoteCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/notes/{note}:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+      - $ref: '#/components/parameters/KnowledgeNotePublicId'
+    put:
+      tags:
+        - Second Brain
+      operationId: updateKnowledgeNote
+      summary: Update one note with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKnowledgeNoteRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeNoteSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: deleteKnowledgeNote
+      summary: Permanently delete one note
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrainVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/tags:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    put:
+      tags:
+        - Second Brain
+      operationId: syncKnowledgeTags
+      summary: Replace the tag set of one current-user knowledge item
+      description: Missing tags are created in the user's private tag vocabulary; removed assignments never delete the tags themselves.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncKnowledgeTagsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/collections:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    put:
+      tags:
+        - Second Brain
+      operationId: syncKnowledgeCollections
+      summary: Replace the collection memberships of one current-user knowledge item
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncKnowledgeCollectionsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/links:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    post:
+      tags:
+        - Second Brain
+      operationId: createKnowledgeLink
+      summary: Connect two current-user knowledge items with a typed relationship
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeLinkRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/KnowledgeLinkCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/links/{link}:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+      - $ref: '#/components/parameters/KnowledgeLinkPublicId'
+    delete:
+      tags:
+        - Second Brain
+      operationId: deleteKnowledgeLink
+      summary: Remove one outgoing connection from a current-user knowledge item
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/research-topics:
+    get:
+      tags:
+        - Second Brain
+      operationId: listResearchTopics
+      summary: List and summarize the current user's research topics
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/BrainSearch'
+        - $ref: '#/components/parameters/BrainSort'
+        - $ref: '#/components/parameters/BrainPerPage'
+        - $ref: '#/components/parameters/BrainCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResearchTopicCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Second Brain
+      operationId: createResearchTopic
+      summary: Create a current-user research topic with keywords
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResearchTopicRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResearchTopicCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/research-topics/{topic}:
+    parameters:
+      - $ref: '#/components/parameters/ResearchTopicPublicId'
+    get:
+      tags:
+        - Second Brain
+      operationId: showResearchTopic
+      summary: Return one current-user research topic with its reading list
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ResearchTopicSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Second Brain
+      operationId: updateResearchTopic
+      summary: Update one current-user research topic with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateResearchTopicRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResearchTopicSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: deleteResearchTopic
+      summary: Permanently delete one current-user research topic without deleting its sources
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrainVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/research-topics/{topic}/sources:
+    parameters:
+      - $ref: '#/components/parameters/ResearchTopicPublicId'
+    post:
+      tags:
+        - Second Brain
+      operationId: attachResearchSource
+      summary: Attach one current-user knowledge item to a research topic reading list
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachResearchSourceRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResearchTopicCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/research-topics/{topic}/sources/{item}:
+    parameters:
+      - $ref: '#/components/parameters/ResearchTopicPublicId'
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    put:
+      tags:
+        - Second Brain
+      operationId: updateResearchSource
+      summary: Update the reading status of one attached source
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateResearchSourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResearchTopicSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: detachResearchSource
+      summary: Detach one source from a research topic without deleting the knowledge item
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -3492,6 +4337,72 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/IntakeState'
+    CollectionPublicId:
+      name: collection
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/CollectionPublicId'
+    KnowledgeItemPublicId:
+      name: item
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/KnowledgeItemPublicId'
+    KnowledgeNotePublicId:
+      name: note
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/KnowledgeNotePublicId'
+    KnowledgeLinkPublicId:
+      name: link
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/KnowledgeLinkPublicId'
+    ResearchTopicPublicId:
+      name: topic
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ResearchTopicPublicId'
+    BrainSearch:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    BrainSort:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        default: '-updated_at'
+        enum:
+          - created_at
+          - '-created_at'
+          - updated_at
+          - '-updated_at'
+    BrainPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    BrainCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -3927,6 +4838,123 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
+    CollectionSuccess:
+      description: The operation returned one current-user collection.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CollectionSuccess'
+    CollectionCreated:
+      description: The user-owned collection was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CollectionSuccess'
+    CollectionListSuccess:
+      description: The operation returned one page of the current user's collections.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CollectionCollectionSuccess'
+    KnowledgeItemSuccess:
+      description: The operation returned one current-user knowledge item.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeItemSuccess'
+    KnowledgeItemCreated:
+      description: The user-owned knowledge item was created with immutable source provenance.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeItemSuccess'
+    KnowledgeItemDetailSuccess:
+      description: The operation returned one current-user knowledge item with notes, tags, collections, connections, and topics.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeItemDetailSuccess'
+    KnowledgeItemCollectionSuccess:
+      description: The operation returned one page of the current user's knowledge items.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeItemCollectionSuccess'
+    KnowledgeNoteSuccess:
+      description: The operation returned one note on a current-user knowledge item.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeNoteSuccess'
+    KnowledgeNoteCreated:
+      description: The note was added to the current-user knowledge item.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeNoteSuccess'
+    KnowledgeLinkCreated:
+      description: The typed connection between the two knowledge items was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnowledgeLinkSuccess'
+    ResearchTopicSuccess:
+      description: The operation returned one current-user research topic.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResearchTopicSuccess'
+    ResearchTopicCreated:
+      description: The research topic operation created the requested record.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResearchTopicSuccess'
+    ResearchTopicCollectionSuccess:
+      description: The operation returned one page of the current user's research topics.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResearchTopicCollectionSuccess'
   schemas:
     RequestId:
       type: string
@@ -7374,3 +8402,818 @@ components:
                       type: string
                       enum:
                         - SERVICE_UNAVAILABLE
+    CollectionPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xb1
+    KnowledgeItemPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xb2
+    KnowledgeNotePublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xb3
+    KnowledgeLinkPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xb4
+    ResearchTopicPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xb5
+    BrainVersion:
+      type: integer
+      minimum: 1
+    CollectionKind:
+      type: string
+      enum:
+        - course
+        - project
+        - research
+        - goal
+        - general
+    KnowledgeSourceType:
+      type: string
+      enum:
+        - resource
+        - link
+        - none
+    KnowledgeLinkRelation:
+      type: string
+      enum:
+        - related
+        - supports
+        - contradicts
+        - builds_on
+    ReadingStatus:
+      type: string
+      enum:
+        - to_read
+        - reading
+        - read
+    BrainVersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/BrainVersion'
+    Collection:
+      type: object
+      required:
+        - id
+        - version
+        - name
+        - description
+        - kind
+        - item_count
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CollectionPublicId'
+        version:
+          $ref: '#/components/schemas/BrainVersion'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+        kind:
+          $ref: '#/components/schemas/CollectionKind'
+        item_count:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateCollectionRequest:
+      type: object
+      required:
+        - name
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+        kind:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CollectionKind'
+    UpdateCollectionRequest:
+      type: object
+      required:
+        - name
+        - kind
+        - expected_version
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+          maxLength: 1000
+        kind:
+          $ref: '#/components/schemas/CollectionKind'
+        expected_version:
+          $ref: '#/components/schemas/BrainVersion'
+    BrainListSummary:
+      type: object
+      required:
+        - total
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+    BrainCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/BrainListSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    CollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CollectionCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/BrainCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    KnowledgeSourceResource:
+      type: object
+      required:
+        - id
+        - title
+        - type
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourcePublicId'
+        title:
+          type: string
+        type:
+          type: string
+    KnowledgeSource:
+      type: object
+      required:
+        - type
+        - url
+        - resource
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/KnowledgeSourceType'
+        url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+        resource:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgeSourceResource'
+    KnowledgeCitation:
+      type: object
+      required:
+        - authors
+        - published_year
+        - venue
+        - doi
+      additionalProperties: false
+      properties:
+        authors:
+          type: string
+          nullable: true
+          maxLength: 500
+        published_year:
+          type: integer
+          nullable: true
+          minimum: 1000
+          maximum: 2100
+        venue:
+          type: string
+          nullable: true
+          maxLength: 200
+        doi:
+          type: string
+          nullable: true
+          maxLength: 255
+    KnowledgeNote:
+      type: object
+      required:
+        - id
+        - version
+        - body
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/KnowledgeNotePublicId'
+        version:
+          $ref: '#/components/schemas/BrainVersion'
+        body:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    KnowledgeCollectionSummary:
+      type: object
+      required:
+        - id
+        - name
+        - kind
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CollectionPublicId'
+        name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/CollectionKind'
+    KnowledgeLinkItemSummary:
+      type: object
+      required:
+        - id
+        - title
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/KnowledgeItemPublicId'
+        title:
+          type: string
+    KnowledgeLink:
+      type: object
+      required:
+        - id
+        - direction
+        - relation_type
+        - item
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/KnowledgeLinkPublicId'
+        direction:
+          type: string
+          enum:
+            - outgoing
+            - incoming
+        relation_type:
+          $ref: '#/components/schemas/KnowledgeLinkRelation'
+        item:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgeLinkItemSummary'
+    KnowledgeTopicSummary:
+      type: object
+      required:
+        - id
+        - title
+        - reading_status
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResearchTopicPublicId'
+        title:
+          type: string
+        reading_status:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ReadingStatus'
+    KnowledgeItem:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - summary
+        - source
+        - citation
+        - tags
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/KnowledgeItemPublicId'
+        version:
+          $ref: '#/components/schemas/BrainVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          nullable: true
+          maxLength: 4000
+        source:
+          $ref: '#/components/schemas/KnowledgeSource'
+        citation:
+          $ref: '#/components/schemas/KnowledgeCitation'
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+        collections:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/KnowledgeCollectionSummary'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    KnowledgeItemDetail:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - summary
+        - source
+        - citation
+        - tags
+        - notes
+        - collections
+        - links
+        - research_topics
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/KnowledgeItemPublicId'
+        version:
+          $ref: '#/components/schemas/BrainVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          nullable: true
+          maxLength: 4000
+        source:
+          $ref: '#/components/schemas/KnowledgeSource'
+        citation:
+          $ref: '#/components/schemas/KnowledgeCitation'
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeNote'
+        collections:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/KnowledgeCollectionSummary'
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeLink'
+        research_topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeTopicSummary'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateKnowledgeItemRequest:
+      type: object
+      required:
+        - title
+        - source_type
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          nullable: true
+          maxLength: 4000
+        source_type:
+          $ref: '#/components/schemas/KnowledgeSourceType'
+        resource_id:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ResourcePublicId'
+        source_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+        authors:
+          type: string
+          nullable: true
+          maxLength: 500
+        published_year:
+          type: integer
+          nullable: true
+          minimum: 1000
+          maximum: 2100
+        venue:
+          type: string
+          nullable: true
+          maxLength: 200
+        doi:
+          type: string
+          nullable: true
+          maxLength: 255
+    UpdateKnowledgeItemRequest:
+      type: object
+      required:
+        - title
+        - expected_version
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          nullable: true
+          maxLength: 4000
+        authors:
+          type: string
+          nullable: true
+          maxLength: 500
+        published_year:
+          type: integer
+          nullable: true
+          minimum: 1000
+          maximum: 2100
+        venue:
+          type: string
+          nullable: true
+          maxLength: 200
+        doi:
+          type: string
+          nullable: true
+          maxLength: 255
+        expected_version:
+          $ref: '#/components/schemas/BrainVersion'
+    CreateKnowledgeNoteRequest:
+      type: object
+      required:
+        - body
+      additionalProperties: false
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 8000
+    UpdateKnowledgeNoteRequest:
+      type: object
+      required:
+        - body
+        - expected_version
+      additionalProperties: false
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        expected_version:
+          $ref: '#/components/schemas/BrainVersion'
+    SyncKnowledgeTagsRequest:
+      type: object
+      required:
+        - tags
+      additionalProperties: false
+      properties:
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+    SyncKnowledgeCollectionsRequest:
+      type: object
+      required:
+        - collection_ids
+      additionalProperties: false
+      properties:
+        collection_ids:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/CollectionPublicId'
+    CreateKnowledgeLinkRequest:
+      type: object
+      required:
+        - target_id
+      additionalProperties: false
+      properties:
+        target_id:
+          $ref: '#/components/schemas/KnowledgeItemPublicId'
+        relation_type:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgeLinkRelation'
+    KnowledgeItemSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeItem'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    KnowledgeItemDetailSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeItemDetail'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    KnowledgeItemCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/KnowledgeItem'
+        meta:
+          $ref: '#/components/schemas/BrainCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    KnowledgeNoteSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeNote'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    KnowledgeLinkSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeLink'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ResearchSource:
+      type: object
+      required:
+        - item
+        - reading_status
+      additionalProperties: false
+      properties:
+        item:
+          type: object
+          required:
+            - id
+            - title
+            - source_type
+            - authors
+            - published_year
+            - venue
+            - doi
+          additionalProperties: false
+          properties:
+            id:
+              $ref: '#/components/schemas/KnowledgeItemPublicId'
+            title:
+              type: string
+            source_type:
+              $ref: '#/components/schemas/KnowledgeSourceType'
+            authors:
+              type: string
+              nullable: true
+            published_year:
+              type: integer
+              nullable: true
+            venue:
+              type: string
+              nullable: true
+            doi:
+              type: string
+              nullable: true
+        reading_status:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ReadingStatus'
+    ResearchTopic:
+      type: object
+      required:
+        - id
+        - version
+        - title
+        - description
+        - keywords
+        - source_count
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ResearchTopicPublicId'
+        version:
+          $ref: '#/components/schemas/BrainVersion'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        keywords:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        source_count:
+          type: integer
+          minimum: 0
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchSource'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateResearchTopicRequest:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        keywords:
+          type: array
+          nullable: true
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+    UpdateResearchTopicRequest:
+      type: object
+      required:
+        - title
+        - keywords
+        - expected_version
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        keywords:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 60
+        expected_version:
+          $ref: '#/components/schemas/BrainVersion'
+    AttachResearchSourceRequest:
+      type: object
+      required:
+        - knowledge_item_id
+      additionalProperties: false
+      properties:
+        knowledge_item_id:
+          $ref: '#/components/schemas/KnowledgeItemPublicId'
+        reading_status:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ReadingStatus'
+    UpdateResearchSourceRequest:
+      type: object
+      required:
+        - reading_status
+      additionalProperties: false
+      properties:
+        reading_status:
+          $ref: '#/components/schemas/ReadingStatus'
+    ResearchTopicSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ResearchTopic'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ResearchTopicCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ResearchTopic'
+        meta:
+          $ref: '#/components/schemas/BrainCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'

@@ -29,6 +29,14 @@ final readonly class DeleteResourceAction
                 $resource = $this->resources->execute($user, $publicId, lockForUpdate: true);
                 Gate::forUser($user)->authorize('delete', $resource);
 
+                $isKnowledgeSource = DB::table('knowledge_items')
+                    ->where('resource_id', $resource->getKey())
+                    ->exists();
+
+                if ($isKnowledgeSource) {
+                    throw new ResourceStateConflict;
+                }
+
                 if ($resource->kind === ResourceKind::Link) {
                     if ($resource->version !== $expectedVersion) {
                         throw new ResourceVersionConflict;

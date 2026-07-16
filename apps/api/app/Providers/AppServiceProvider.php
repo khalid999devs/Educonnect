@@ -70,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerGuidanceRateLimiters();
         $this->registerTemplateRateLimiters();
         $this->registerIntakeRateLimiters();
+        $this->registerSecondBrainRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -313,6 +314,28 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('intake.write', fn (Request $request): array => $this->actorAndIpLimits(
             request: $request,
             scope: 'intake-write',
+            actorAttempts: 30,
+            ipAttempts: 30,
+        ));
+    }
+
+    private function registerSecondBrainRateLimiters(): void
+    {
+        RateLimiter::for('brain.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'brain-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('brain.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'brain-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('brain.destructive', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'brain-destructive',
             actorAttempts: 30,
             ipAttempts: 30,
         ));

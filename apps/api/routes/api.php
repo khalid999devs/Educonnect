@@ -68,6 +68,31 @@ use App\Http\Controllers\Api\V1\Resources\ListResourcesController;
 use App\Http\Controllers\Api\V1\Resources\RetryResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\ShowResourceController;
 use App\Http\Controllers\Api\V1\Resources\UpdateResourceController;
+use App\Http\Controllers\Api\V1\SecondBrain\AttachResearchSourceController;
+use App\Http\Controllers\Api\V1\SecondBrain\CreateCollectionController;
+use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeItemController;
+use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeLinkController;
+use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeNoteController;
+use App\Http\Controllers\Api\V1\SecondBrain\CreateResearchTopicController;
+use App\Http\Controllers\Api\V1\SecondBrain\DeleteCollectionController;
+use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeItemController;
+use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeLinkController;
+use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeNoteController;
+use App\Http\Controllers\Api\V1\SecondBrain\DeleteResearchTopicController;
+use App\Http\Controllers\Api\V1\SecondBrain\DetachResearchSourceController;
+use App\Http\Controllers\Api\V1\SecondBrain\ListCollectionsController;
+use App\Http\Controllers\Api\V1\SecondBrain\ListKnowledgeItemsController;
+use App\Http\Controllers\Api\V1\SecondBrain\ListResearchTopicsController;
+use App\Http\Controllers\Api\V1\SecondBrain\ShowCollectionController;
+use App\Http\Controllers\Api\V1\SecondBrain\ShowKnowledgeItemController;
+use App\Http\Controllers\Api\V1\SecondBrain\ShowResearchTopicController;
+use App\Http\Controllers\Api\V1\SecondBrain\SyncKnowledgeCollectionsController;
+use App\Http\Controllers\Api\V1\SecondBrain\SyncKnowledgeTagsController;
+use App\Http\Controllers\Api\V1\SecondBrain\UpdateCollectionController;
+use App\Http\Controllers\Api\V1\SecondBrain\UpdateKnowledgeItemController;
+use App\Http\Controllers\Api\V1\SecondBrain\UpdateKnowledgeNoteController;
+use App\Http\Controllers\Api\V1\SecondBrain\UpdateResearchSourceController;
+use App\Http\Controllers\Api\V1\SecondBrain\UpdateResearchTopicController;
 use App\Http\Controllers\Api\V1\TemplateCopies\ArchiveTemplateCopyController;
 use App\Http\Controllers\Api\V1\TemplateCopies\ListTemplateCopiesController;
 use App\Http\Controllers\Api\V1\TemplateCopies\RestoreTemplateCopyController;
@@ -511,6 +536,120 @@ Route::middleware([
                         ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
                         ->name('confirmation.store');
+                });
+
+            Route::prefix('collections')
+                ->name('collections.')
+                ->group(function (): void {
+                    Route::get('/', ListCollectionsController::class)
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateCollectionController::class)
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{collection}', ShowCollectionController::class)
+                        ->where('collection', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{collection}', UpdateCollectionController::class)
+                        ->where('collection', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{collection}', DeleteCollectionController::class)
+                        ->where('collection', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                });
+
+            Route::prefix('knowledge')
+                ->name('knowledge.')
+                ->group(function (): void {
+                    Route::get('/', ListKnowledgeItemsController::class)
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateKnowledgeItemController::class)
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{item}', ShowKnowledgeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{item}', UpdateKnowledgeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{item}', DeleteKnowledgeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::post('/{item}/notes', CreateKnowledgeNoteController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('notes.store');
+                    Route::put('/{item}/notes/{note}', UpdateKnowledgeNoteController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->where('note', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('notes.update');
+                    Route::delete('/{item}/notes/{note}', DeleteKnowledgeNoteController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->where('note', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('notes.destroy');
+                    Route::put('/{item}/tags', SyncKnowledgeTagsController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('tags.sync');
+                    Route::put('/{item}/collections', SyncKnowledgeCollectionsController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('collections.sync');
+                    Route::post('/{item}/links', CreateKnowledgeLinkController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('links.store');
+                    Route::delete('/{item}/links/{link}', DeleteKnowledgeLinkController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->where('link', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('links.destroy');
+                });
+
+            Route::prefix('research-topics')
+                ->name('research-topics.')
+                ->group(function (): void {
+                    Route::get('/', ListResearchTopicsController::class)
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::post('/', CreateResearchTopicController::class)
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::get('/{topic}', ShowResearchTopicController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::put('/{topic}', UpdateResearchTopicController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{topic}', DeleteResearchTopicController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::post('/{topic}/sources', AttachResearchSourceController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('sources.store');
+                    Route::put('/{topic}/sources/{item}', UpdateResearchSourceController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('sources.update');
+                    Route::delete('/{topic}/sources/{item}', DetachResearchSourceController::class)
+                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
+                        ->name('sources.destroy');
                 });
         });
     });

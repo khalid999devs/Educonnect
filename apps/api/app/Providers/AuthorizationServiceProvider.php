@@ -31,6 +31,12 @@ use App\Domains\Resources\Models\Resource;
 use App\Domains\Resources\Models\StoredFile;
 use App\Domains\Resources\Policies\ResourcePolicy;
 use App\Domains\Resources\Policies\StoredFilePolicy;
+use App\Domains\SecondBrain\Models\Collection;
+use App\Domains\SecondBrain\Models\KnowledgeItem;
+use App\Domains\SecondBrain\Models\ResearchTopic;
+use App\Domains\SecondBrain\Policies\CollectionPolicy;
+use App\Domains\SecondBrain\Policies\KnowledgeItemPolicy;
+use App\Domains\SecondBrain\Policies\ResearchTopicPolicy;
 use App\Domains\Templates\Models\Template;
 use App\Domains\Templates\Models\UserTemplateCopy;
 use App\Domains\Templates\Models\UserTemplatePreference;
@@ -68,6 +74,9 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(UserTemplatePreference::class, UserTemplatePreferencePolicy::class);
         Gate::policy(UserTemplateCopy::class, UserTemplateCopyPolicy::class);
         Gate::policy(IntakeItem::class, IntakeItemPolicy::class);
+        Gate::policy(Collection::class, CollectionPolicy::class);
+        Gate::policy(KnowledgeItem::class, KnowledgeItemPolicy::class);
+        Gate::policy(ResearchTopic::class, ResearchTopicPolicy::class);
         Gate::policy(UserWorkflowPreference::class, UserWorkflowPreferencePolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {

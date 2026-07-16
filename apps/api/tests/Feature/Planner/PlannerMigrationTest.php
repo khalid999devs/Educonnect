@@ -259,11 +259,13 @@ final class PlannerMigrationTest extends TestCase
         $templateMigration = $this->templateMigration();
         $intakeMigration = $this->intakeMigration();
         $suggestionMigration = $this->suggestionMigration();
+        $secondBrainMigration = $this->secondBrainMigration();
         $statements = [];
         DB::listen(static function (QueryExecuted $query) use (&$statements): void {
             $statements[] = $query->sql;
         });
 
+        $secondBrainMigration->down();
         $suggestionMigration->down();
         $intakeMigration->down();
         $templateMigration->down();
@@ -280,6 +282,7 @@ final class PlannerMigrationTest extends TestCase
         $templateMigration->up();
         $intakeMigration->up();
         $suggestionMigration->up();
+        $secondBrainMigration->up();
         $this->assertTrue(Schema::hasTable('tasks'));
         $this->assertTrue(Schema::hasTable('focus_sessions'));
         $this->assertTrue($this->constraintExists('courses_owner_id_unique'));
@@ -308,6 +311,15 @@ final class PlannerMigrationTest extends TestCase
     private function resourceMigration(): Migration
     {
         $migration = require database_path('migrations/2026_07_14_000009_create_resource_storage_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function secondBrainMigration(): Migration
+    {
+        // Phase 16 knowledge items reference resources(user_id, id).
+        $migration = require database_path('migrations/2026_07_16_000015_create_second_brain_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

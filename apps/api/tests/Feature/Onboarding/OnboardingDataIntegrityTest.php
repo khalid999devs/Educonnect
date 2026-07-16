@@ -281,7 +281,10 @@ final class OnboardingDataIntegrityTest extends TestCase
         // Phase 14 intake items reference resources(user_id, id).
         $intakeMigration = $this->migration('2026_07_16_000013_create_intake_foundation.php');
         $suggestionMigration = $this->migration('2026_07_16_000014_create_intake_suggestions.php');
+        // Phase 16 knowledge items reference resources(user_id, id).
+        $secondBrainMigration = $this->migration('2026_07_16_000015_create_second_brain_foundation.php');
 
+        $secondBrainMigration->down();
         $suggestionMigration->down();
         $intakeMigration->down();
         $templateMigration->down();
@@ -299,6 +302,7 @@ final class OnboardingDataIntegrityTest extends TestCase
         $templateMigration->up();
         $intakeMigration->up();
         $suggestionMigration->up();
+        $secondBrainMigration->up();
         $this->assertTrue(Schema::hasTable('onboarding_progress'));
         $this->assertTrue(Schema::hasTable('user_profiles'));
 

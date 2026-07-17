@@ -62,7 +62,12 @@ function ResetPasswordForm() {
     setError(null);
 
     try {
-      await resetPassword({ token, email, password });
+      await resetPassword({
+        token,
+        email,
+        password,
+        password_confirmation: confirm,
+      });
       setDone(true);
     } catch (caught) {
       setError(

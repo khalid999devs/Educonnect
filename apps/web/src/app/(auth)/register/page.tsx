@@ -39,7 +39,12 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      const user = await register({ name, email, password });
+      const user = await register({
+        name,
+        email,
+        password,
+        password_confirmation: confirm,
+      });
       setUser(user);
       router.replace("/verify-email");
     } catch (caught) {

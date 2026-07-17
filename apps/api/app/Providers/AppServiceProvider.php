@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Domains\Copilot\Contracts\ChatProvider;
+use App\Domains\Copilot\OpenAiChatProvider;
+use App\Domains\Intake\AI\OpenAiClassificationProvider;
 use App\Domains\Intake\AI\RuleBasedClassificationProvider;
 use App\Domains\Intake\Contracts\AIProvider;
 use App\Domains\Intake\Contracts\HostResolver;
@@ -10,6 +13,7 @@ use App\Domains\Intake\Support\DnsHostResolver;
 use App\Domains\Intake\Support\PlainTextExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
 use App\Domains\Resources\Support\S3StrictPutUploadSigner;
+use App\Support\Ai\OpenAiClient;
 use App\Support\ProductionConfiguration;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -25,7 +29,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResourceUploadSigner::class, S3StrictPutUploadSigner::class);
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
         $this->app->bind(IntakeContentExtractor::class, PlainTextExtractor::class);
-        $this->app->bind(AIProvider::class, RuleBasedClassificationProvider::class);
+        /*
+         * The OpenAI provider activates only when a key is configured; the
+         * ClassificationPolicy chain always keeps the deterministic
+         * rule-based fallback behind it.
+         */
+        $this->app->bind(
+            AIProvider::class,
+            OpenAiClient::configured()
+                ? OpenAiClassificationProvider::class
+                : RuleBasedClassificationProvider::class,
+        );
+        $this->app->bind(ChatProvider::class, OpenAiChatProvider::class);
 
         $postgresConnection = config('database.connections.pgsql');
 
@@ -72,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerIntakeRateLimiters();
         $this->registerSecondBrainRateLimiters();
         $this->registerDashboardRateLimiters();
+        $this->registerCopilotRateLimiters();
     }
 
     private function registerAuthenticationRateLimiters(): void
@@ -327,6 +343,23 @@ class AppServiceProvider extends ServiceProvider
             scope: 'dashboard-read',
             actorAttempts: 60,
             ipAttempts: 60,
+        ));
+    }
+
+    private function registerCopilotRateLimiters(): void
+    {
+        RateLimiter::for('copilot.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'copilot-read',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        // Deliberately tight: every message fans out to a paid AI provider.
+        RateLimiter::for('copilot.message', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'copilot-message',
+            actorAttempts: 10,
+            ipAttempts: 10,
         ));
     }
 

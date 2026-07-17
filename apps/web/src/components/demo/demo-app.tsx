@@ -653,8 +653,8 @@ export function DemoApp() {
                 <CardTitle as="h3">Copilot</CardTitle>
               </CardHeader>
               <CardContent>
-                The contextual Copilot ships with the full product. In the demo
-                it stays collapsed — exactly one trigger, owned by the shell.
+                The real Copilot lives in the signed-in app and answers from
+                your actual workspace. The demo keeps this one collapsed.
               </CardContent>
             </Card>
           </div>

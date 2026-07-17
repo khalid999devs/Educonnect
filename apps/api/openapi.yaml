@@ -39,6 +39,8 @@ tags:
     description: Private source-centered knowledge organization with collections, notes, tags, item connections, PostgreSQL search, and lightweight research topic tracking.
   - name: Dashboard
     description: One bounded truthful aggregate read model for the approved student dashboard hierarchy.
+  - name: Copilot
+    description: Bounded contextual assistant over the student's own workspace snapshot; advisory only, never mutating.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -2992,6 +2994,55 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/copilot/availability:
+    get:
+      tags:
+        - Copilot
+      operationId: showCopilotAvailability
+      summary: Report whether the Copilot has a configured AI provider
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CopilotAvailabilitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/copilot/messages:
+    post:
+      tags:
+        - Copilot
+      operationId: createCopilotMessage
+      summary: Send one Copilot turn and receive an advisory reply
+      description: 'The server assembles doc-12 guardrails plus a truthful workspace snapshot, appends the bounded client-held history and the message, and returns plain advisory text. The Copilot never mutates records.'
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopilotMessageRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CopilotReplySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /api/v1/collections:
     get:
       tags:
@@ -4995,6 +5046,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DashboardSuccess'
+    CopilotAvailabilitySuccess:
+      description: Copilot availability for the current server configuration.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CopilotAvailabilitySuccess'
+    CopilotReplySuccess:
+      description: One advisory Copilot reply.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CopilotReplySuccess'
   schemas:
     RequestId:
       type: string
@@ -9273,6 +9336,106 @@ components:
           type: string
           format: date-time
           nullable: true
+    CopilotAvailability:
+      type: object
+      required:
+        - enabled
+        - model
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        model:
+          type: string
+          maxLength: 120
+    CopilotAvailabilityData:
+      type: object
+      required:
+        - copilot
+      additionalProperties: false
+      properties:
+        copilot:
+          $ref: '#/components/schemas/CopilotAvailability'
+    CopilotAvailabilitySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CopilotAvailabilityData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CopilotReply:
+      type: object
+      required:
+        - reply
+        - model
+        - disclaimer
+      additionalProperties: false
+      properties:
+        reply:
+          type: string
+          minLength: 0
+          maxLength: 4000
+        model:
+          type: string
+          maxLength: 120
+        disclaimer:
+          type: string
+          maxLength: 200
+    CopilotReplyData:
+      type: object
+      required:
+        - copilot
+      additionalProperties: false
+      properties:
+        copilot:
+          $ref: '#/components/schemas/CopilotReply'
+    CopilotReplySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CopilotReplyData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CopilotMessageRequest:
+      type: object
+      required:
+        - message
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        timezone:
+          type: string
+          maxLength: 64
+        history:
+          type: array
+          maxItems: 6
+          items:
+            type: object
+            required:
+              - role
+              - content
+            additionalProperties: false
+            properties:
+              role:
+                type: string
+                enum:
+                  - user
+                  - assistant
+              content:
+                type: string
+                minLength: 1
+                maxLength: 1000
     Dashboard:
       type: object
       required:

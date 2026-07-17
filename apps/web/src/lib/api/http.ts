@@ -47,9 +47,19 @@ export class ApiError extends Error {
     ) {
       const raw = payload.error as Record<string, unknown>;
       const details: FieldErrors = {};
+      /* Validation errors nest as error.details.fields; other details are
+         used directly. */
+      const source =
+        typeof raw.details === "object" &&
+        raw.details !== null &&
+        "fields" in raw.details &&
+        typeof (raw.details as { fields: unknown }).fields === "object" &&
+        (raw.details as { fields: unknown }).fields !== null
+          ? ((raw.details as { fields: Record<string, unknown> }).fields)
+          : raw.details;
 
-      if (typeof raw.details === "object" && raw.details !== null) {
-        for (const [key, value] of Object.entries(raw.details)) {
+      if (typeof source === "object" && source !== null) {
+        for (const [key, value] of Object.entries(source)) {
           if (Array.isArray(value)) {
             details[key] = value.filter(
               (item): item is string => typeof item === "string",

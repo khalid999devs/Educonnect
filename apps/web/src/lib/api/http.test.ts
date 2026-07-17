@@ -9,8 +9,10 @@ describe("ApiError", () => {
         code: "VALIDATION_FAILED",
         message: "The given data was invalid.",
         details: {
-          email: ["The email has already been taken."],
-          "data.institution_name": ["This field is required."],
+          fields: {
+            email: ["The email has already been taken."],
+            "data.institution_name": ["This field is required."],
+          },
         },
         request_id: "req-123",
       },

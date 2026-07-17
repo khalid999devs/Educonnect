@@ -83,3 +83,67 @@ export async function mockJson(
     });
   });
 }
+
+export function dashboard(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    timeframe: {
+      timezone: "UTC",
+      today: "2026-07-17",
+      week_starts_on: "2026-07-13",
+      week_ends_on: "2026-07-19",
+    },
+    cover: {
+      name: "Sam Student",
+      institution: "University of Dhaka",
+      degree: "B.Sc.",
+      major: "CSE",
+      study_stage: "Year 2",
+      term: { id: "01JTERM0000000000000000000", label: "Fall 2026" },
+      active_course_count: 2,
+    },
+    quick_intake: { active_item: null, awaiting_review_count: 0 },
+    whats_next: {
+      tasks: [
+        {
+          id: "01jtask000000000000000000t",
+          title: "Problem set 2",
+          status: "pending",
+          due_at: "2026-07-18T18:00:00Z",
+          overdue: false,
+          course: {
+            id: "01jcourse00000000000000000",
+            title: "Data Structures",
+          },
+        },
+      ],
+      overdue_count: 0,
+      upcoming_count: 1,
+    },
+    tools: [],
+    today: { due_task_count: 0, due_tasks: [], next_focus_session: null },
+    second_brain: { total_item_count: 0, recent_items: [] },
+    progress: {
+      timeframe: {
+        timezone: "UTC",
+        starts_on: "2026-07-13",
+        ends_on: "2026-07-19",
+      },
+      completed_task_count: 0,
+      due_task_count: 1,
+      focus_minutes: 0,
+      daily_completed: [
+        { date: "2026-07-13", completed: 0 },
+        { date: "2026-07-14", completed: 0 },
+      ],
+      summary: "You completed 0 of 1 tasks due this week.",
+      next_action: {
+        kind: "task",
+        id: "01jtask000000000000000000t",
+        title: "Problem set 2",
+        due_at: "2026-07-18T18:00:00Z",
+      },
+    },
+    personal_rhythm: { has_activity: false, days: [] },
+    ...overrides,
+  };
+}

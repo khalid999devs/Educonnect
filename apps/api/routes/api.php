@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\Copilot\CopilotAvailabilityController;
+use App\Http\Controllers\Api\V1\Copilot\CopilotMessageController;
 use App\Http\Controllers\Api\V1\Courses\ArchiveCourseController;
 use App\Http\Controllers\Api\V1\Courses\CreateAcademicTermController;
 use App\Http\Controllers\Api\V1\Courses\CreateCourseController;
@@ -508,6 +510,17 @@ Route::middleware([
             Route::get('/dashboard', ShowDashboardController::class)
                 ->middleware(['throttle:dashboard.read', 'can:academic.manage-own'])
                 ->name('dashboard.show');
+
+            Route::prefix('copilot')
+                ->name('copilot.')
+                ->group(function (): void {
+                    Route::get('/availability', CopilotAvailabilityController::class)
+                        ->middleware(['throttle:copilot.read', 'can:academic.manage-own'])
+                        ->name('availability');
+                    Route::post('/messages', CopilotMessageController::class)
+                        ->middleware(['throttle:copilot.message', 'can:academic.manage-own'])
+                        ->name('messages.store');
+                });
 
             Route::prefix('intake')
                 ->name('intake.')

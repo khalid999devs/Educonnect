@@ -2,6 +2,7 @@ import { ThemeToggle, TopBar } from "@educonnect/ui";
 import type { ReactNode } from "react";
 
 import { RequireSession } from "@/components/auth/require-session";
+import { TopbarUser } from "@/components/shell/topbar-user";
 import { AppCopilot } from "@/components/shell/app-copilot";
 import { StudentMobileNav } from "@/components/shell/student-mobile-nav";
 import { StudentSidebar } from "@/components/shell/student-sidebar";
@@ -22,7 +23,14 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="lg:pl-60">
-          <TopBar trailing={<ThemeToggle />}>
+          <TopBar
+            trailing={
+              <>
+                <TopbarUser />
+                <ThemeToggle />
+              </>
+            }
+          >
             <p className="truncate text-body text-text-muted">
               Student app shell
             </p>

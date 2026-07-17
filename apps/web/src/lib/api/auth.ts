@@ -15,6 +15,7 @@ export async function register(input: {
   name: string;
   email: string;
   password: string;
+  password_confirmation: string;
 }): Promise<User> {
   return parseUser(
     await apiFetch("/api/v1/auth/register", { method: "POST", body: input }),
@@ -45,6 +46,7 @@ export async function resetPassword(input: {
   token: string;
   email: string;
   password: string;
+  password_confirmation: string;
 }): Promise<void> {
   await apiFetch("/api/v1/auth/reset-password", {
     method: "POST",

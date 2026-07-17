@@ -37,7 +37,7 @@ final class VerifyEmailNotification extends Notification implements ShouldBeEncr
         }
 
         $expiration = (int) config('auth.verification.expire', 60);
-        $verificationUrl = URL::temporarySignedRoute(
+        $signedUrl = URL::temporarySignedRoute(
             'auth.verification.verify',
             now()->addMinutes($expiration),
             [
@@ -45,6 +45,19 @@ final class VerifyEmailNotification extends Notification implements ShouldBeEncr
                 'hash' => hash('sha1', $notifiable->getEmailForVerification()),
             ],
         );
+
+        /*
+         * The signed endpoint only accepts stateful SPA traffic, so the email
+         * links to the frontend verification page, which performs the
+         * authenticated fetch against the signed API URL it carries.
+         */
+        $frontendUrl = config('app.frontend_url', config('app.url'));
+
+        if (! is_string($frontendUrl) || trim($frontendUrl) === '') {
+            throw new LogicException('The frontend URL is not configured.');
+        }
+
+        $verificationUrl = rtrim($frontendUrl, '/').'/verify-email?url='.urlencode($signedUrl);
 
         return (new MailMessage)
             ->subject('Verify your EduConnect email address')

@@ -33,16 +33,25 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           >
             <MarketingNavLinks />
           </nav>
-          <div className="ml-auto flex items-center gap-3 sm:ml-0">
+          <div className="ml-auto flex items-center gap-2 sm:ml-0">
             <ThemeToggle />
             <Link
-              href="/demo"
+              href="/login"
+              className={buttonClasses(
+                { variant: "ghost", size: "md" },
+                "hidden sm:inline-flex",
+              )}
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/register"
               className={buttonClasses(
                 { variant: "primary", size: "md" },
                 "hidden sm:inline-flex",
               )}
             >
-              Try the demo
+              Get started
             </Link>
           </div>
         </div>

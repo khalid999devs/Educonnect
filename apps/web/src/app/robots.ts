@@ -10,7 +10,13 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         /* Product shell and internal component gallery are not marketing
            surface; the admin console is a separate noindex application. */
-        disallow: ["/dashboard", "/design-system"],
+        disallow: [
+          "/dashboard",
+          "/design-system",
+          "/onboarding",
+          "/verify-email",
+          "/reset-password",
+        ],
       },
     ],
     sitemap: `${siteUrl()}/sitemap.xml`,

@@ -372,7 +372,15 @@ final class AuthenticationLifecycleTest extends TestCase
 
     private function verificationUrl(User $user): string
     {
-        $url = (new VerifyEmailNotification)->toMail($user)->actionUrl;
+        $actionUrl = (new VerifyEmailNotification)->toMail($user)->actionUrl;
+        $this->assertIsString($actionUrl);
+        $this->assertStringStartsWith(
+            'http://localhost:3000/verify-email?url=',
+            $actionUrl,
+        );
+
+        parse_str((string) parse_url($actionUrl, PHP_URL_QUERY), $query);
+        $url = $query['url'] ?? null;
         $this->assertIsString($url);
 
         return $url;

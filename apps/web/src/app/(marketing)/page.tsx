@@ -155,17 +155,17 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center gap-3 motion-safe:animate-fade-up motion-safe:[animation-delay:240ms]">
               <Link
-                href="/demo"
+                href="/register"
                 className={buttonClasses({ size: "lg", glow: true })}
+              >
+                Get started
+              </Link>
+              <Link
+                href="/demo"
+                className={buttonClasses({ variant: "secondary", size: "lg" })}
               >
                 <Play aria-hidden="true" className="size-4" />
                 Try the Live Demo
-              </Link>
-              <Link
-                href="/about"
-                className={buttonClasses({ variant: "secondary", size: "lg" })}
-              >
-                Read the story
               </Link>
             </div>
             <ul className="flex flex-wrap gap-x-6 gap-y-2 motion-safe:animate-fade-up motion-safe:[animation-delay:320ms]">
@@ -183,7 +183,8 @@ export default function LandingPage() {
               ))}
             </ul>
             <p className="text-caption text-text-muted">
-              No signup — the demo runs in your browser on labeled sample data.
+              Free account in seconds — or try the demo first, no signup, in
+              your browser on labeled sample data.
             </p>
           </div>
 
@@ -388,17 +389,17 @@ export default function LandingPage() {
             </p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/demo"
+                href="/register"
                 className={buttonClasses({ size: "lg", glow: true })}
+              >
+                Get started
+              </Link>
+              <Link
+                href="/demo"
+                className={buttonClasses({ variant: "secondary", size: "lg" })}
               >
                 <Play aria-hidden="true" className="size-4" />
                 Open the Live Demo
-              </Link>
-              <Link
-                href="/blog"
-                className={buttonClasses({ variant: "secondary", size: "lg" })}
-              >
-                Read the blog
               </Link>
             </div>
           </div>

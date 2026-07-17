@@ -84,6 +84,130 @@ export async function mockJson(
   });
 }
 
+export function collection(data: unknown[]) {
+  return {
+    data,
+    meta: {
+      pagination: { next_cursor: null, previous_cursor: null, per_page: 20 },
+      request_id: "e2e-request",
+    },
+    links: { next: null, previous: null },
+  };
+}
+
+export function course(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jcourse00000000000000000",
+    version: 1,
+    title: "Data Structures",
+    code: "CS201",
+    description: null,
+    term: null,
+    status: "active",
+    archived_at: null,
+    created_at: "2026-07-10T09:00:00Z",
+    updated_at: "2026-07-10T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function task(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jtask000000000000000000t",
+    version: 1,
+    title: "Problem set 2",
+    description: null,
+    course: {
+      id: "01jcourse00000000000000000",
+      version: 1,
+      title: "Data Structures",
+      code: "CS201",
+      archive_status: "active",
+    },
+    due_at: "2026-07-17T09:30:00Z",
+    status: "pending",
+    completed_at: null,
+    archive_status: "active",
+    archived_at: null,
+    created_at: "2026-07-10T09:00:00Z",
+    updated_at: "2026-07-15T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function focusSession(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jsess000000000000000000s",
+    version: 1,
+    task: null,
+    course: {
+      id: "01jcourse00000000000000000",
+      version: 1,
+      title: "Data Structures",
+      code: "CS201",
+      archive_status: "active",
+    },
+    starts_at: "2026-07-17T04:00:00Z",
+    ends_at: "2026-07-17T04:50:00Z",
+    note: null,
+    created_at: "2026-07-16T09:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function plannerWindow(
+  key: "date" | "week_start",
+  value: string,
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    data: {
+      timezone: "UTC",
+      [key]: value,
+      window: {
+        starts_at: `${value}T00:00:00Z`,
+        ends_at: `${value}T23:59:59Z`,
+      },
+      tasks: [task()],
+      focus_sessions: [focusSession()],
+      ...overrides,
+    },
+    meta: {
+      summary: { tasks: 1, focus_sessions: 1 },
+      has_more: { tasks: false, focus_sessions: false },
+      limit: 50,
+      request_id: "e2e-request",
+    },
+  };
+}
+
+export function resource(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jres0000000000000000000r",
+    kind: "file",
+    title: "Operating Systems Notes",
+    description: null,
+    topic: "Operating Systems",
+    url: null,
+    course: null,
+    version: 2,
+    file: {
+      public_id: "01jfile000000000000000000f",
+      original_name: "os-notes.pdf",
+      declared_mime_type: "application/pdf",
+      verified_mime_type: "application/pdf",
+      expected_size: 204800,
+      verified_size: 204800,
+      status: "ready",
+      ready_at: "2026-07-16T09:00:00Z",
+    },
+    created_at: "2026-07-16T08:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
 export function dashboard(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     timeframe: {

@@ -53,7 +53,7 @@ export const STUDENT_NAV: StudentNavSection[] = [
         label: "Planner",
         href: "/planner",
         icon: CalendarDays,
-        available: false,
+        available: true,
       },
       {
         label: "Courses",
@@ -71,7 +71,7 @@ export const STUDENT_NAV: StudentNavSection[] = [
         label: "Resources",
         href: "/resources",
         icon: Library,
-        available: false,
+        available: true,
       },
       {
         label: "Tools & Prompts",
@@ -150,7 +150,7 @@ export const STUDENT_MOBILE_NAV: StudentNavItem[] = [
     available: true,
   },
   { label: "Intake", href: "/intake", icon: Inbox, available: false },
-  { label: "Planner", href: "/planner", icon: CalendarDays, available: false },
+  { label: "Planner", href: "/planner", icon: CalendarDays, available: true },
   { label: "Brain", href: "/second-brain", icon: Brain, available: false },
   { label: "Tools", href: "/tools-prompts", icon: Wrench, available: false },
 ];

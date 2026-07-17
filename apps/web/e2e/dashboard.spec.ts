@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-import { API, dashboard, envelope, mockCsrf, mockJson, user } from "./support";
+import {
+  API,
+  dashboard,
+  envelope,
+  mockCsrf,
+  mockJson,
+  task,
+  user,
+} from "./support";
 
 test("dashboard renders the approved hierarchy from real API data", async ({
   page,
@@ -72,10 +80,11 @@ test("completing a task reads the version, updates status, and refreshes", async
     });
   });
 
+  /* GET show returns the full Task under data (real TaskResource shape). */
   await mockJson(
     page,
     `${API}/api/v1/tasks/01jtask000000000000000000t`,
-    envelope({ task: { id: "01jtask000000000000000000t", version: 3 } }),
+    envelope(task({ version: 3 })),
   );
 
   let statusBody: unknown = null;
@@ -94,7 +103,7 @@ test("completing a task reads the version, updates status, and refreshes", async
           "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
         },
         body: JSON.stringify(
-          envelope({ task: { id: "01jtask000000000000000000t" } }),
+          envelope(task({ status: "completed", version: 4 })),
         ),
       });
     },

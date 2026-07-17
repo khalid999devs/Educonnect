@@ -173,6 +173,23 @@ export async function apiFetch(
   return payload;
 }
 
+/** Serialize defined params only; empty object yields an empty string. */
+export function toQueryString(
+  params: Record<string, string | number | boolean | undefined>,
+): string {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      search.set(key, String(value));
+    }
+  }
+
+  const encoded = search.toString();
+
+  return encoded === "" ? "" : `?${encoded}`;
+}
+
 /** Unwrap the success envelope's `data` member. */
 export function envelopeData(payload: unknown): unknown {
   if (typeof payload === "object" && payload !== null && "data" in payload) {

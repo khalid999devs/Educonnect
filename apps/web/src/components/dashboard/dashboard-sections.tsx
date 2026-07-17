@@ -254,8 +254,14 @@ export function WhatsNextSection({
       <CardContent className="space-y-2.5">
         {whatsNext.tasks.length === 0 ? (
           <p className="text-body text-text-secondary">
-            No open dated tasks. That's real — add work from the planner when it
-            ships, or capture a syllabus above.
+            No open dated tasks. That's real — add work from the{" "}
+            <Link
+              href="/planner"
+              className="text-brand-primary hover:underline"
+            >
+              planner
+            </Link>
+            , or capture a syllabus above.
           </p>
         ) : (
           whatsNext.tasks.map((task) => {
@@ -452,8 +458,14 @@ export function TodaySection({ dashboard }: { dashboard: Dashboard }) {
         <CardContent>
           {session === null ? (
             <p className="text-body text-text-secondary">
-              No focus session planned. Scheduling lives in the planner page
-              when it ships.
+              No focus session planned. Schedule one from the{" "}
+              <Link
+                href="/planner"
+                className="text-brand-primary hover:underline"
+              >
+                planner
+              </Link>
+              .
             </p>
           ) : (
             <div className="space-y-1.5">

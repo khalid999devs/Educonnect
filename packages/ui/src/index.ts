@@ -46,6 +46,11 @@ export {
   type BadgeProps,
   type BadgeVariant,
 } from "./components/primitives/badge";
+export {
+  Dialog,
+  type DialogProps,
+  type DialogSize,
+} from "./components/primitives/dialog";
 
 export {
   Alert,

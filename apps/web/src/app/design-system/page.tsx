@@ -33,6 +33,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { CopilotDemo } from "@/components/design-system/copilot-demo";
+import { DialogDemo } from "@/components/design-system/dialog-demo";
 import { ErrorStateDemo } from "@/components/design-system/error-state-demo";
 import { UploadDemo } from "@/components/design-system/upload-demo";
 
@@ -447,6 +448,14 @@ export default function DesignSystemPage() {
         description="Type and size limits, real progress, cancel/retry, and the privacy note are mandatory. This demo simulates a transfer to walk the states."
       >
         <UploadDemo />
+      </Section>
+
+      <Section
+        id="dialog"
+        title="Dialog"
+        description="Modal with labelled semantics, focus trap and restore, Escape and backdrop close, and page scroll lock. Used for planner and resource create/edit/confirm flows."
+      >
+        <DialogDemo />
       </Section>
 
       <Section

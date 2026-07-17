@@ -55,7 +55,7 @@ export class ApiError extends Error {
         "fields" in raw.details &&
         typeof (raw.details as { fields: unknown }).fields === "object" &&
         (raw.details as { fields: unknown }).fields !== null
-          ? ((raw.details as { fields: Record<string, unknown> }).fields)
+          ? (raw.details as { fields: Record<string, unknown> }).fields
           : raw.details;
 
       if (typeof source === "object" && source !== null) {

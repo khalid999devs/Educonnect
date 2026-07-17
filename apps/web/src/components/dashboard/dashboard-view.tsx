@@ -85,7 +85,7 @@ export function DashboardView() {
   }, [load]);
 
   const runAction = useCallback(
-    async (action: () => Promise<void>): Promise<boolean> => {
+    async (action: () => Promise<unknown>): Promise<boolean> => {
       setActionError(null);
 
       try {

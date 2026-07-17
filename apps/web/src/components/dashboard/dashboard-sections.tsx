@@ -183,7 +183,14 @@ export function QuickIntakeSection({
           ) : (
             <p className="text-caption text-text-muted">
               https links only · processed in the background · you review every
-              suggestion. File uploads arrive with the Smart Intake page.
+              suggestion. For file uploads and full review, open{" "}
+              <Link
+                href="/intake"
+                className="text-brand-primary hover:underline"
+              >
+                Smart Intake
+              </Link>
+              .
             </p>
           )}
         </form>
@@ -211,9 +218,12 @@ export function QuickIntakeSection({
             <Badge variant="deadline">
               {quickIntake.awaiting_review_count} awaiting review
             </Badge>
-            <span className="text-caption text-text-muted">
-              The review screen ships with the Smart Intake page.
-            </span>
+            <Link
+              href="/intake"
+              className="text-caption text-brand-primary hover:underline"
+            >
+              Review in Smart Intake
+            </Link>
           </p>
         ) : null}
       </CardContent>
@@ -519,14 +529,25 @@ export function SecondBrainSection({ dashboard }: { dashboard: Dashboard }) {
       <CardContent className="space-y-2.5">
         {secondBrain.recent_items.length === 0 ? (
           <p className="text-body text-text-secondary">
-            No knowledge items yet. Confirmed intake captures and the Second
-            Brain page (coming next) fill this space with your real notes.
+            No knowledge items yet. Confirm captures in{" "}
+            <Link href="/intake" className="text-brand-primary hover:underline">
+              Smart Intake
+            </Link>{" "}
+            and they'll appear in your{" "}
+            <Link
+              href="/second-brain"
+              className="text-brand-primary hover:underline"
+            >
+              Second Brain
+            </Link>
+            .
           </p>
         ) : (
           secondBrain.recent_items.map((item) => (
-            <div
+            <Link
               key={item.id}
-              className="flex items-center gap-3 rounded-md border border-border-subtle px-3 py-2.5"
+              href={`/second-brain/${item.id}`}
+              className="flex items-center gap-3 rounded-md border border-border-subtle px-3 py-2.5 transition-colors hover:border-border-strong"
             >
               <FileText
                 aria-hidden="true"
@@ -538,7 +559,7 @@ export function SecondBrainSection({ dashboard }: { dashboard: Dashboard }) {
               <Badge variant="research">
                 {SOURCE_TYPE_LABEL[item.source_type] ?? item.source_type}
               </Badge>
-            </div>
+            </Link>
           ))
         )}
       </CardContent>

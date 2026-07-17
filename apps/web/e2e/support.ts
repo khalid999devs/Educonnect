@@ -332,6 +332,152 @@ export function templateCopy(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
+export function intakeItem(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jintake00000000000000i",
+    source: {
+      type: "link",
+      url: "https://example.edu/syllabus",
+      resource: null,
+    },
+    context: "Course syllabus",
+    state: "awaiting_review",
+    failure_code: null,
+    attempts: 1,
+    extraction: { characters: 4200, content_type: "text/html" },
+    classification: {
+      provider: "rule_based",
+      model: "v1",
+      schema_version: "v1",
+      latency_ms: 12,
+    },
+    events: [
+      {
+        event: "queued",
+        from_state: "uploaded_or_linked",
+        to_state: "queued",
+        detail: "Queued for processing",
+        occurred_at: "2026-07-18T09:00:00Z",
+      },
+    ],
+    queued_at: "2026-07-18T09:00:00Z",
+    started_at: "2026-07-18T09:00:05Z",
+    finished_at: null,
+    cancelled_at: null,
+    created_at: "2026-07-18T09:00:00Z",
+    updated_at: "2026-07-18T09:01:00Z",
+    ...overrides,
+  };
+}
+
+export function intakeSuggestion(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jsuggest0000000000000s",
+    kind: "task",
+    proposal: {
+      title: "Read chapter 3",
+      description: "Prepare for the quiz",
+      due_at: "2026-07-25",
+      course_id: null,
+      url: null,
+    },
+    confidence: 0.82,
+    reason: "The syllabus lists a chapter-3 quiz next week.",
+    schema_version: "v1",
+    status: "proposed",
+    created_task_id: null,
+    created_resource_id: null,
+    created_at: null,
+    ...overrides,
+  };
+}
+
+export function knowledgeItem(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jknow000000000000000000k",
+    version: 2,
+    title: "Attention is all you need",
+    summary: "Introduces the transformer architecture.",
+    source: {
+      type: "link",
+      url: "https://arxiv.org/abs/1706.03762",
+      resource: null,
+    },
+    citation: {
+      authors: "Vaswani et al.",
+      published_year: 2017,
+      venue: "NeurIPS",
+      doi: null,
+    },
+    tags: ["transformers"],
+    collections: [],
+    created_at: "2026-07-16T09:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function knowledgeItemDetail(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    ...knowledgeItem(),
+    notes: [],
+    links: [],
+    research_topics: [],
+    ...overrides,
+  };
+}
+
+export function brainCollection(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jcoll000000000000000000c",
+    version: 1,
+    name: "AI",
+    description: null,
+    kind: "research",
+    item_count: 3,
+    created_at: "2026-07-16T09:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function brainCollectionEnvelope(data: unknown[]) {
+  return {
+    data,
+    meta: {
+      summary: { total: data.length },
+      pagination: { next_cursor: null, previous_cursor: null, per_page: 20 },
+      request_id: "e2e-request",
+    },
+    links: { next: null, previous: null },
+  };
+}
+
+export function researchTopic(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jtopic00000000000000000t",
+    version: 1,
+    title: "Transformer interpretability",
+    description: "How attention maps relate to reasoning.",
+    keywords: ["attention", "probing"],
+    source_count: 1,
+    sources: [],
+    created_at: "2026-07-16T09:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
 export function dashboard(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     timeframe: {

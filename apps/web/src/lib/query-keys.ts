@@ -33,3 +33,25 @@ export const templateKeys = {
   copies: (params: Record<string, string | number | boolean | undefined>) =>
     ["templates", "copies", params] as const,
 };
+
+export const intakeKeys = {
+  all: ["intake"] as const,
+  list: (params: Record<string, string | number | boolean | undefined>) =>
+    ["intake", "list", params] as const,
+  item: (id: string) => ["intake", "item", id] as const,
+  suggestions: (id: string) => ["intake", "suggestions", id] as const,
+};
+
+export const brainKeys = {
+  all: ["brain"] as const,
+  search: (params: Record<string, string | number | boolean | undefined>) =>
+    ["brain", "search", params] as const,
+  item: (id: string) => ["brain", "item", id] as const,
+  collections: () => ["brain", "collections"] as const,
+};
+
+export const researchKeys = {
+  all: ["research"] as const,
+  list: () => ["research", "list"] as const,
+  topic: (id: string) => ["research", "topic", id] as const,
+};

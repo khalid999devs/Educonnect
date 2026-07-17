@@ -208,6 +208,130 @@ export function resource(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
+export function tool(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jtool000000000000000000t",
+    name: "Concept Mapper",
+    category: { key: "study-planning", name: "Study planning" },
+    purpose: "Turn a dense reading into a labelled concept map.",
+    selection_reason: "Chosen because it keeps sources visible and cited.",
+    use_cases: ["Exam revision", "Literature review"],
+    usage_guidance: "Paste your notes and let it group by theme.",
+    limitations: "It cannot judge source quality for you.",
+    cost_note: "Free tier is enough for coursework.",
+    privacy_note: "Do not paste personally identifying data.",
+    url: "https://tools.example.edu/concept-mapper",
+    provenance: "Reviewed against the provider documentation.",
+    last_reviewed_at: "2026-07-01T09:00:00Z",
+    viewer_state: { saved: false, dismissed: false },
+    ...overrides,
+  };
+}
+
+export function prompt(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jprompt0000000000000000p",
+    title: "Explain like a study partner",
+    category: { key: "study-planning", name: "Study planning" },
+    purpose: "Get a plain-language explanation you can verify.",
+    template_body:
+      "Explain {{concept}} at a first-year level with one example.",
+    placeholders: ["concept"],
+    expected_output: "A short explanation plus one worked example.",
+    integrity_note: "Use it to understand, then write the answer yourself.",
+    provenance: "Authored by the EduConnect learning team.",
+    related_tools: [],
+    last_reviewed_at: "2026-07-01T09:00:00Z",
+    viewer_state: { saved: false, dismissed: false, copy_count: 0 },
+    ...overrides,
+  };
+}
+
+export function workflow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jworkflow00000000000000w",
+    title: "From reading to revision notes",
+    category: { key: "study-planning", name: "Study planning" },
+    goal: "Convert a chapter into revision notes with integrity.",
+    expected_outcome: "A set of notes in your own words with citations.",
+    integrity_note: "Every step keeps the original source attributed.",
+    provenance: "Curated by the EduConnect learning team.",
+    steps: [
+      {
+        number: 1,
+        title: "Read and highlight",
+        instruction: "Skim, then mark the load-bearing claims.",
+        destination_action: "save_resource",
+        tool: null,
+        prompt: null,
+        template: null,
+      },
+    ],
+    last_reviewed_at: "2026-07-01T09:00:00Z",
+    viewer_state: { saved: false, dismissed: false },
+    ...overrides,
+  };
+}
+
+export function guidanceBundle(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    category: {
+      key: "study-planning",
+      name: "Study planning",
+      description: "Plan and revise effectively.",
+    },
+    tools: [tool()],
+    prompts: [prompt()],
+    workflows: [workflow()],
+    templates: [],
+    ...overrides,
+  };
+}
+
+export function template(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jtmpl0000000000000000000",
+    title: "Assignment structure",
+    category: { key: "academic-writing", name: "Academic writing" },
+    summary: "A structured outline for high-quality assignments.",
+    badge: "approved_free",
+    integrity_note:
+      "A scaffold to organize your own work, not to submit as-is.",
+    provenance: "Curated by the EduConnect learning team.",
+    latest_version: {
+      number: 2,
+      format: "markdown",
+      body: "# Title\n\n## Introduction\n\n## Body\n\n## Conclusion",
+    },
+    last_reviewed_at: "2026-07-01T09:00:00Z",
+    viewer_state: { saved: false, dismissed: false, active_copy_count: 0 },
+    ...overrides,
+  };
+}
+
+export function templateCopy(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jcopy0000000000000000000",
+    destination: "dashboard",
+    course: null,
+    source: {
+      template_id: "01jtmpl0000000000000000000",
+      template_title: "Assignment structure",
+      version_number: 2,
+    },
+    title: "Assignment structure",
+    format: "markdown",
+    body: "# Title\n\n## Introduction",
+    version: 1,
+    archived_at: null,
+    created_at: "2026-07-16T09:00:00Z",
+    updated_at: "2026-07-16T09:00:00Z",
+    ...overrides,
+  };
+}
+
 export function dashboard(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     timeframe: {

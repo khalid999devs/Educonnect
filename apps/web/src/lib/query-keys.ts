@@ -19,3 +19,17 @@ export const courseKeys = {
   all: ["courses"] as const,
   list: () => ["courses", "list"] as const,
 };
+
+export const guidanceKeys = {
+  all: ["guidance"] as const,
+  categories: () => ["guidance", "categories"] as const,
+  bundle: (category: string) => ["guidance", "bundle", category] as const,
+};
+
+export const templateKeys = {
+  all: ["templates"] as const,
+  list: (params: Record<string, string | number | boolean | undefined>) =>
+    ["templates", "list", params] as const,
+  copies: (params: Record<string, string | number | boolean | undefined>) =>
+    ["templates", "copies", params] as const,
+};

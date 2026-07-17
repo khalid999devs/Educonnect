@@ -77,13 +77,13 @@ export const STUDENT_NAV: StudentNavSection[] = [
         label: "Tools & Prompts",
         href: "/tools-prompts",
         icon: Wrench,
-        available: false,
+        available: true,
       },
       {
         label: "Templates",
         href: "/templates",
         icon: LayoutTemplate,
-        available: false,
+        available: true,
       },
     ],
   },
@@ -152,5 +152,5 @@ export const STUDENT_MOBILE_NAV: StudentNavItem[] = [
   { label: "Intake", href: "/intake", icon: Inbox, available: false },
   { label: "Planner", href: "/planner", icon: CalendarDays, available: true },
   { label: "Brain", href: "/second-brain", icon: Brain, available: false },
-  { label: "Tools", href: "/tools-prompts", icon: Wrench, available: false },
+  { label: "Tools", href: "/tools-prompts", icon: Wrench, available: true },
 ];

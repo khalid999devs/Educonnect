@@ -10,6 +10,7 @@ use App\Domains\Planner\Models\Task;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\Tools\Models\Tool;
 use App\Domains\Users\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kirschbaum\OpenApiValidator\ValidatesOpenApiSpec;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
@@ -30,6 +31,9 @@ final class DashboardOpenApiContractTest extends TestCase
         parent::setUp();
 
         $this->configureBrowserBoundary();
+        /* Frozen mid-day (14:00 Asia/Dhaka) so the populated fixture stays
+           inside the local today window at any suite run hour. */
+        $this->travelTo(CarbonImmutable::parse('2026-07-15T08:00:00Z'));
     }
 
     public function test_the_dashboard_aggregate_matches_the_live_openapi_contract(): void

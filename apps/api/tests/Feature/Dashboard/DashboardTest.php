@@ -33,6 +33,9 @@ final class DashboardTest extends TestCase
         parent::setUp();
 
         $this->configureBrowserBoundary();
+        /* Frozen mid-day (14:00 Asia/Dhaka) so fixtures built relative to now
+           never cross local midnight, whatever hour the suite runs at. */
+        $this->travelTo(CarbonImmutable::parse('2026-07-15T08:00:00Z'));
     }
 
     public function test_dashboard_returns_the_approved_hierarchy_with_truthful_data(): void

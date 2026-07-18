@@ -1,8 +1,19 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\Audit\ListAuditEventsController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminCurrentUserController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLogoutController;
+use App\Http\Controllers\Api\V1\Admin\Mentors\ListAdminMentorsController;
+use App\Http\Controllers\Api\V1\Admin\Mentors\SetMentorVerificationController;
+use App\Http\Controllers\Api\V1\Admin\Reports\ListAdminReportsController;
+use App\Http\Controllers\Api\V1\Admin\Reports\ResolveAdminReportController;
+use App\Http\Controllers\Api\V1\Admin\Roles\ChangeUserRolesController;
+use App\Http\Controllers\Api\V1\Admin\Roles\ListRolesController;
+use App\Http\Controllers\Api\V1\Admin\Users\ListUsersController;
+use App\Http\Controllers\Api\V1\Admin\Users\ReactivateUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\ShowUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\SuspendUserController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
@@ -146,6 +157,7 @@ use App\Http\Controllers\Api\V1\Workflows\SaveWorkflowController;
 use App\Http\Controllers\Api\V1\Workflows\ShowWorkflowController;
 use App\Http\Controllers\Api\V1\Workflows\UndismissWorkflowController;
 use App\Http\Controllers\Api\V1\Workflows\UnsaveWorkflowController;
+use App\Http\Middleware\EnsureAdminCapability;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -845,8 +857,63 @@ Route::prefix('admin')
             EnsureAdminSessionPasswordIsCurrent::class,
         ])->group(function (): void {
             Route::post('/auth/logout', AdminLogoutController::class)->name('auth.logout');
-            Route::get('/me', AdminCurrentUserController::class)
-                ->middleware(RequireAdminAccess::class)
-                ->name('me');
+
+            // Every operational route requires a verified, active admin-access holder;
+            // per-route capability gates then narrow each action.
+            Route::middleware(RequireAdminAccess::class)->group(function (): void {
+                $ulid = '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}';
+
+                Route::get('/me', AdminCurrentUserController::class)->name('me');
+
+                Route::prefix('users')->name('users.')->group(function () use ($ulid): void {
+                    Route::get('/', ListUsersController::class)
+                        ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':authorization.roles-view'])
+                        ->name('index');
+                    Route::get('/{user}', ShowUserController::class)
+                        ->where('user', $ulid)
+                        ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':authorization.roles-view'])
+                        ->name('show');
+                    Route::post('/{user}/suspension', SuspendUserController::class)
+                        ->where('user', $ulid)
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend'])
+                        ->name('suspend');
+                    Route::post('/{user}/reactivation', ReactivateUserController::class)
+                        ->where('user', $ulid)
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend'])
+                        ->name('reactivate');
+                    Route::put('/{user}/roles', ChangeUserRolesController::class)
+                        ->where('user', $ulid)
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':authorization.roles-assign'])
+                        ->name('roles.update');
+                });
+
+                Route::get('/roles', ListRolesController::class)
+                    ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':authorization.roles-view'])
+                    ->name('roles.index');
+
+                Route::prefix('mentors')->name('mentors.')->group(function () use ($ulid): void {
+                    Route::get('/', ListAdminMentorsController::class)
+                        ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':mentors.curate'])
+                        ->name('index');
+                    Route::patch('/{mentor}/verification', SetMentorVerificationController::class)
+                        ->where('mentor', $ulid)
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':mentors.curate'])
+                        ->name('verification');
+                });
+
+                Route::prefix('reports')->name('reports.')->group(function () use ($ulid): void {
+                    Route::get('/', ListAdminReportsController::class)
+                        ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':moderation.scoped,moderation.global'])
+                        ->name('index');
+                    Route::patch('/{report}/resolution', ResolveAdminReportController::class)
+                        ->where('report', $ulid)
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':moderation.scoped,moderation.global'])
+                        ->name('resolve');
+                });
+
+                Route::get('/audit-events', ListAuditEventsController::class)
+                    ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':audit.view-all'])
+                    ->name('audit.index');
+            });
         });
     });

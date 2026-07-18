@@ -19,6 +19,7 @@ final class RequireAdminAccess
 
         if (! $user instanceof User
             || ! $user->hasVerifiedEmail()
+            || $user->isSuspended()
             || ! $user->hasCapability(CapabilityKey::AdminAccess)) {
             throw new AuthorizationException;
         }

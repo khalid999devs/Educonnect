@@ -54,6 +54,17 @@ class UserFactory extends Factory
         ]);
     }
 
+    /**
+     * Indicate that the account is suspended.
+     */
+    public function suspended(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'suspended',
+            'suspended_at' => now(),
+        ]);
+    }
+
     public function withRole(RoleKey $role): static
     {
         return $this->withRoles($role);

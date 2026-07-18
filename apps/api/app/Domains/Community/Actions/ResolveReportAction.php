@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Community\Actions;
 
+use App\Domains\Audit\Enums\AuditAction;
+use App\Domains\Audit\Support\AuditRecorder;
 use App\Domains\Authorization\Contracts\ModerationTarget;
 use App\Domains\Authorization\Policies\ModerationPolicy;
 use App\Domains\Community\Enums\ModerationState;
@@ -26,6 +28,7 @@ final readonly class ResolveReportAction
     public function __construct(
         private FindReport $reports,
         private ModerationPolicy $moderation,
+        private AuditRecorder $auditRecorder,
     ) {}
 
     public function execute(
@@ -35,9 +38,11 @@ final readonly class ResolveReportAction
         bool $hideContent,
         ?string $note,
         int $expectedVersion,
+        string $reason,
+        string $requestId,
     ): ContentReport {
         try {
-            return DB::transaction(function () use ($user, $reportPublicId, $resolution, $hideContent, $note, $expectedVersion): ContentReport {
+            return DB::transaction(function () use ($user, $reportPublicId, $resolution, $hideContent, $note, $expectedVersion, $reason, $requestId): ContentReport {
                 $report = $this->reports->execute($reportPublicId, lockForUpdate: true);
                 $target = $this->lockTarget($report);
 
@@ -53,6 +58,9 @@ final readonly class ResolveReportAction
                     throw new CommunityVersionConflict;
                 }
 
+                $beforeStatus = $report->status->value;
+                $contentHidden = false;
+
                 if ($resolution === ReportStatus::Actioned->value
                     && $hideContent
                     && $target instanceof Model
@@ -61,6 +69,7 @@ final readonly class ResolveReportAction
                         'moderation_state' => ModerationState::HiddenByModerator->value,
                         'version' => (int) $target->getAttribute('version') + 1,
                     ])->save();
+                    $contentHidden = true;
                 }
 
                 $report->forceFill([
@@ -70,6 +79,26 @@ final readonly class ResolveReportAction
                     'handled_at' => now(),
                     'version' => $report->version + 1,
                 ])->save();
+
+                // Every moderation decision is an immutable, reason-bearing audit
+                // record (doc 08). The state captures only the status transition and
+                // whether content was hidden — never the reported body.
+                $afterState = ['report_status' => [$resolution]];
+
+                if ($contentHidden) {
+                    $afterState['moderation_state'] = [ModerationState::HiddenByModerator->value];
+                }
+
+                $this->auditRecorder->record(
+                    actor: $user,
+                    action: AuditAction::ReportResolved,
+                    subjectType: 'content_report',
+                    subjectId: (string) $report->public_id,
+                    reason: $reason,
+                    requestId: $requestId,
+                    beforeState: ['report_status' => [$beforeStatus]],
+                    afterState: $afterState,
+                );
 
                 return $report->load(['community', 'post', 'comment', 'reporter']);
             }, 3);

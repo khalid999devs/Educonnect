@@ -69,7 +69,17 @@ final class AuditRecorder
      */
     private function assertSafeState(array $state): void
     {
-        $allowedKeys = ['role_keys', 'capability_keys'];
+        // The allowlist keeps audit payloads to change-descriptive metadata only —
+        // never secrets or private academic/content bodies (doc 08). Each value is a
+        // short list of stable enum-like strings describing what changed.
+        $allowedKeys = [
+            'role_keys',
+            'capability_keys',
+            'account_status',
+            'verification_state',
+            'report_status',
+            'moderation_state',
+        ];
 
         if (array_diff(array_keys($state), $allowedKeys) !== []) {
             throw new InvalidArgumentException('Audit state contains a non-allowlisted field.');

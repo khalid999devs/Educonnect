@@ -25,6 +25,7 @@ final class AuthenticateAdminAction
             ['email' => $email, 'password' => $password],
             static fn (Authenticatable $candidate): bool => $candidate instanceof User
                 && $candidate->hasVerifiedEmail()
+                && ! $candidate->isSuspended()
                 && $candidate->hasCapability(CapabilityKey::AdminAccess),
         );
 

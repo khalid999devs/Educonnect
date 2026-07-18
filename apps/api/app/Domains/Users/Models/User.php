@@ -18,6 +18,7 @@ use App\Domains\Planner\Models\Task;
 use App\Domains\Resources\Models\Resource;
 use App\Domains\Resources\Models\StoredFile;
 use App\Domains\Tools\Models\UserToolPreference;
+use App\Domains\Users\Enums\AccountStatus;
 use App\Support\StoresUtcDateTimes;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
@@ -31,9 +32,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use SensitiveParameter;
 
+/**
+ * @property AccountStatus $status
+ * @property Carbon|null $suspended_at
+ */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['id', 'password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmailContract
@@ -132,6 +138,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
             ->exists();
     }
 
+    public function isSuspended(): bool
+    {
+        return $this->status === AccountStatus::Suspended;
+    }
+
     public function primaryRoleKey(): ?RoleKey
     {
         $key = $this->roles()
@@ -164,7 +175,10 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'status' => AccountStatus::class,
             'password' => 'hashed',
+            'cursor_created_at_desc' => 'immutable_datetime',
         ];
     }
 

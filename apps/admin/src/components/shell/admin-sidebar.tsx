@@ -10,10 +10,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { ADMIN_NAV } from "./admin-nav";
+import { useSession } from "@/providers/session-provider";
+
+import { ADMIN_NAV, navItemEnabled } from "./admin-nav";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { can } = useSession();
 
   return (
     <Sidebar
@@ -42,7 +45,7 @@ export function AdminSidebar() {
               label={item.label}
               icon={item.icon}
               href={item.href}
-              disabled={!item.available}
+              disabled={!navItemEnabled(item, can)}
               isActive={
                 item.href === "/"
                   ? pathname === "/"

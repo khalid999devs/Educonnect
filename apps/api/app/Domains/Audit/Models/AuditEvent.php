@@ -42,6 +42,7 @@ final class AuditEvent extends Model
             'before_state' => 'array',
             'after_state' => 'array',
             'created_at' => 'datetime',
+            'cursor_created_at_desc' => 'immutable_datetime',
         ];
     }
 }

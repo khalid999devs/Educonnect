@@ -18,7 +18,7 @@ final class AuthenticateUserAction
 
         $user = Auth::guard('web')->user();
 
-        if (! $user instanceof User) {
+        if (! $user instanceof User || $user->isSuspended()) {
             Auth::guard('web')->logout();
 
             return null;

@@ -4746,6 +4746,318 @@ paths:
           $ref: '#/components/responses/AuthenticationRequired'
         '403':
           $ref: '#/components/responses/AuthorizationDenied'
+  /api/v1/admin/users:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminUsers
+      summary: List and search platform user accounts for administration
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminSearch'
+        - $ref: '#/components/parameters/AdminRoleFilter'
+        - $ref: '#/components/parameters/AdminUserStatusFilter'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminUserCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/users/{user}:
+    parameters:
+      - $ref: '#/components/parameters/UserPublicId'
+    get:
+      tags:
+        - Administration
+      operationId: showAdminUser
+      summary: Return one platform user account for administration
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminUserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/users/{user}/suspension:
+    parameters:
+      - $ref: '#/components/parameters/UserPublicId'
+    post:
+      tags:
+        - Administration
+      operationId: suspendAdminUser
+      summary: Suspend one platform user account
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminReasonRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminUserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/users/{user}/reactivation:
+    parameters:
+      - $ref: '#/components/parameters/UserPublicId'
+    post:
+      tags:
+        - Administration
+      operationId: reactivateAdminUser
+      summary: Reactivate one suspended platform user account
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminReasonRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminUserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/users/{user}/roles:
+    parameters:
+      - $ref: '#/components/parameters/UserPublicId'
+    put:
+      tags:
+        - Administration
+      operationId: changeAdminUserRoles
+      summary: Replace the assigned roles of one platform user account
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeAdminUserRolesRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminUserSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/roles:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminRoles
+      summary: List the assignable administrative roles and their capabilities
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminRoleCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/mentors:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminMentors
+      summary: List and search mentor profiles for administration
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminSearch'
+        - $ref: '#/components/parameters/AdminMentorVerificationFilter'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminMentorCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/mentors/{mentor}/verification:
+    parameters:
+      - $ref: '#/components/parameters/MentorProfilePublicId'
+    patch:
+      tags:
+        - Administration
+      operationId: setMentorVerification
+      summary: Set the verification state of one mentor profile
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetMentorVerificationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorProfileSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/reports:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminReports
+      summary: List content reports for administration
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminReportStatusFilter'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminReportCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/reports/{report}/resolution:
+    parameters:
+      - $ref: '#/components/parameters/ContentReportPublicId'
+    patch:
+      tags:
+        - Administration
+      operationId: resolveAdminReport
+      summary: Resolve one content report and optionally hide the offending content
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveAdminReportRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContentReportSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/audit-events:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminAuditEvents
+      summary: List the administrative audit event log
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminAuditAction'
+        - $ref: '#/components/parameters/AdminAuditActorId'
+        - $ref: '#/components/parameters/AdminAuditSubjectType'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminAuditEventCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 components:
   securitySchemes:
     sessionCookie:
@@ -5379,6 +5691,77 @@ components:
       schema:
         type: string
         maxLength: 2048
+    AdminSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive search over administrative records.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+    AdminRoleFilter:
+      name: role
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AdminRoleKey'
+    AdminUserStatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AdminUserStatus'
+    AdminMentorVerificationFilter:
+      name: verification_state
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/MentorVerificationState'
+    AdminReportStatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ReportStatus'
+    AdminAuditAction:
+      name: action
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+    AdminAuditActorId:
+      name: actor_id
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/UserPublicId'
+    AdminAuditSubjectType:
+      name: subject_type
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+    AdminPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    AdminCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -5751,6 +6134,60 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminSessionSuccess'
+    AdminUserSuccess:
+      description: The operation returned one administrative user record.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminUserSuccess'
+    AdminUserCollectionSuccess:
+      description: The operation returned one page of administrative user records.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminUserCollectionSuccess'
+    AdminRoleCollectionSuccess:
+      description: The operation returned the assignable administrative roles.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminRoleCollectionSuccess'
+    AdminMentorCollectionSuccess:
+      description: The operation returned one page of mentor profiles for administration.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminMentorCollectionSuccess'
+    AdminReportCollectionSuccess:
+      description: The operation returned one page of content reports for administration.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminReportCollectionSuccess'
+    AdminAuditEventCollectionSuccess:
+      description: The operation returned one page of administrative audit events.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminAuditEventCollectionSuccess'
     NullSuccess:
       description: The operation completed successfully.
       headers:
@@ -11801,5 +12238,312 @@ components:
             $ref: '#/components/schemas/MentorRequest'
         meta:
           $ref: '#/components/schemas/MentorIncomingCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminRoleKey:
+      type: string
+      enum:
+        - student
+        - mentor
+        - moderator
+        - admin
+        - super_admin
+    AdminUserStatus:
+      type: string
+      enum:
+        - active
+        - suspended
+    AdminUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - email_verified
+        - status
+        - suspended_at
+        - roles
+        - last_login_at
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/UserPublicId'
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        email_verified:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/AdminUserStatus'
+        suspended_at:
+          type: string
+          format: date-time
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    Role:
+      type: object
+      required:
+        - key
+        - name
+        - display_priority
+        - is_protected
+        - capabilities
+      additionalProperties: false
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        display_priority:
+          type: integer
+        is_protected:
+          type: boolean
+        capabilities:
+          type: array
+          items:
+            type: string
+    AuditEventActor:
+      type: object
+      required:
+        - type
+        - id
+        - name
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+    AuditEventSubject:
+      type: object
+      required:
+        - type
+        - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+    AuditEvent:
+      type: object
+      required:
+        - id
+        - action
+        - actor
+        - subject
+        - reason
+        - before_state
+        - after_state
+        - request_id
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        actor:
+          $ref: '#/components/schemas/AuditEventActor'
+        subject:
+          $ref: '#/components/schemas/AuditEventSubject'
+        reason:
+          type: string
+        before_state:
+          type: object
+          additionalProperties: true
+        after_state:
+          type: object
+          additionalProperties: true
+        request_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    AdminReasonRequest:
+      type: object
+      required:
+        - reason
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    ChangeAdminUserRolesRequest:
+      type: object
+      required:
+        - roles
+        - reason
+      additionalProperties: false
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AdminRoleKey'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    SetMentorVerificationRequest:
+      type: object
+      required:
+        - verification_state
+        - expected_version
+        - reason
+      additionalProperties: false
+      properties:
+        verification_state:
+          $ref: '#/components/schemas/MentorVerificationState'
+        expected_version:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    ResolveAdminReportRequest:
+      type: object
+      required:
+        - resolution
+        - expected_version
+        - reason
+      additionalProperties: false
+      properties:
+        resolution:
+          $ref: '#/components/schemas/ModerationResolution'
+        hide_content:
+          type: boolean
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        expected_version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    AdminCollectionMeta:
+      type: object
+      required:
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    AdminUserSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminUser'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminUserCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminRoleCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminMentorCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/MentorProfile'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminReportCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ContentReport'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminAuditEventCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'

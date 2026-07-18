@@ -90,6 +90,24 @@ class AppServiceProvider extends ServiceProvider
         $this->registerCopilotRateLimiters();
         $this->registerCommunityRateLimiters();
         $this->registerMentorRateLimiters();
+        $this->registerAdminRateLimiters();
+    }
+
+    private function registerAdminRateLimiters(): void
+    {
+        RateLimiter::for('admin.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'admin-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        // Sensitive operational writes (suspend, role change, verify, resolve).
+        RateLimiter::for('admin.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'admin-write',
+            actorAttempts: 40,
+            ipAttempts: 40,
+        ));
     }
 
     private function registerCommunityRateLimiters(): void

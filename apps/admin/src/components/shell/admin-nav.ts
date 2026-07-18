@@ -24,12 +24,42 @@ export type AdminNavItem = {
   icon: LucideIcon;
   /** Modules render disabled until their phase ships them (doc 08 list). */
   available: boolean;
+  /**
+   * Capability (or any-of list) required to use the module. An available module
+   * the signed-in admin lacks the capability for renders disabled — the API
+   * remains authoritative regardless.
+   */
+  capability?: string | string[];
 };
 
 export type AdminNavSection = {
   title?: string;
   items: AdminNavItem[];
 };
+
+/**
+ * A module is usable when it has shipped AND the signed-in admin holds one of
+ * its required capabilities. Navigation shaping only — the API re-checks every
+ * request.
+ */
+export function navItemEnabled(
+  item: AdminNavItem,
+  can: (capability: string) => boolean,
+): boolean {
+  if (!item.available) {
+    return false;
+  }
+
+  if (item.capability === undefined) {
+    return true;
+  }
+
+  const capabilities = Array.isArray(item.capability)
+    ? item.capability
+    : [item.capability];
+
+  return capabilities.some((capability) => can(capability));
+}
 
 export const ADMIN_NAV: AdminNavSection[] = [
   {
@@ -45,13 +75,26 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: "People",
     items: [
-      { label: "Users", href: "/users", icon: Users, available: false },
-      { label: "Roles", href: "/roles", icon: ShieldCheck, available: false },
+      {
+        label: "Users",
+        href: "/users",
+        icon: Users,
+        available: true,
+        capability: "authorization.roles-view",
+      },
+      {
+        label: "Roles",
+        href: "/roles",
+        icon: ShieldCheck,
+        available: true,
+        capability: "authorization.roles-view",
+      },
       {
         label: "Mentors",
         href: "/mentors",
         icon: HeartHandshake,
-        available: false,
+        available: true,
+        capability: "mentors.curate",
       },
     ],
   },
@@ -94,12 +137,19 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: "Safety",
     items: [
-      { label: "Reports", href: "/reports", icon: Flag, available: false },
+      {
+        label: "Reports",
+        href: "/reports",
+        icon: Flag,
+        available: true,
+        capability: ["moderation.scoped", "moderation.global"],
+      },
       {
         label: "Audit log",
         href: "/audit",
         icon: ScrollText,
-        available: false,
+        available: true,
+        capability: "audit.view-all",
       },
     ],
   },

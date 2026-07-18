@@ -401,8 +401,12 @@ final class ResourceMigrationTest extends TestCase
 
     public function test_migration_rolls_back_atomically_when_empty_and_refuses_private_rows(): void
     {
-        // Phase 14 intake items and Phase 16 knowledge items reference
-        // resources(user_id, id), so those foundations must lower before resources can.
+        // Phase 14 intake items, Phase 16 knowledge items, and Phase 25 community
+        // posts reference resources(user_id, id), so those foundations must lower
+        // before resources can.
+        $community = require database_path('migrations/2026_07_18_000016_create_community_and_mentor_foundation.php');
+        $this->assertInstanceOf(Migration::class, $community);
+        $community->down();
         $secondBrain = require database_path('migrations/2026_07_16_000015_create_second_brain_foundation.php');
         $this->assertInstanceOf(Migration::class, $secondBrain);
         $secondBrain->down();

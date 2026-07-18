@@ -55,3 +55,27 @@ export const researchKeys = {
   list: () => ["research", "list"] as const,
   topic: (id: string) => ["research", "topic", id] as const,
 };
+
+export const communityKeys = {
+  all: ["community"] as const,
+  communities: (
+    params: Record<string, string | number | boolean | undefined>,
+  ) => ["community", "communities", params] as const,
+  community: (id: string) => ["community", "community", id] as const,
+  feed: () => ["community", "feed"] as const,
+  posts: (communityId: string) => ["community", "posts", communityId] as const,
+  post: (id: string) => ["community", "post", id] as const,
+  comments: (postId: string) => ["community", "comments", postId] as const,
+  moderation: (params: Record<string, string | number | boolean | undefined>) =>
+    ["community", "moderation", params] as const,
+};
+
+export const mentorKeys = {
+  all: ["mentors"] as const,
+  list: (params: Record<string, string | number | boolean | undefined>) =>
+    ["mentors", "list", params] as const,
+  mentor: (id: string) => ["mentors", "mentor", id] as const,
+  ownProfile: () => ["mentors", "own-profile"] as const,
+  sentRequests: () => ["mentors", "requests", "sent"] as const,
+  incomingRequests: () => ["mentors", "requests", "incoming"] as const,
+};

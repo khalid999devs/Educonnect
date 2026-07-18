@@ -148,7 +148,9 @@ final class CourseMigrationTest extends TestCase
         $intakeMigration = $this->intakeMigration();
         $suggestionMigration = $this->suggestionMigration();
         $secondBrainMigration = $this->secondBrainMigration();
+        $communityMigration = $this->communityMigration();
 
+        $communityMigration->down();
         $secondBrainMigration->down();
         $suggestionMigration->down();
         $intakeMigration->down();
@@ -254,6 +256,16 @@ final class CourseMigrationTest extends TestCase
     {
         // Phase 16 knowledge items reference resources(user_id, id).
         $migration = require database_path('migrations/2026_07_16_000015_create_second_brain_foundation.php');
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        return $migration;
+    }
+
+    private function communityMigration(): Migration
+    {
+        // Phase 25 mentor requests reference courses(user_id, id) and community
+        // posts reference resources(user_id, id).
+        $migration = require database_path('migrations/2026_07_18_000016_create_community_and_mentor_foundation.php');
         $this->assertInstanceOf(Migration::class, $migration);
 
         return $migration;

@@ -41,6 +41,10 @@ tags:
     description: One bounded truthful aggregate read model for the approved student dashboard hierarchy.
   - name: Copilot
     description: Bounded contextual assistant over the student's own workspace snapshot; advisory only, never mutating.
+  - name: Community
+    description: Member-scoped student communities with feeds, posts, comments, content reports, and moderator resolution.
+  - name: Mentor
+    description: Mentor directory profiles and the bounded request lifecycle between students and mentors.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -3886,6 +3890,795 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/communities:
+    get:
+      tags:
+        - Community
+      operationId: listCommunities
+      summary: List and search the published student communities
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CommunitySearch'
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/communities/{community}:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPublicId'
+    get:
+      tags:
+        - Community
+      operationId: showCommunity
+      summary: Return one published community with the viewer's membership state
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/communities/{community}/membership:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPublicId'
+    post:
+      tags:
+        - Community
+      operationId: joinCommunity
+      summary: Join one published community as the current user
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Community
+      operationId: leaveCommunity
+      summary: Leave one community the current user belongs to
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/communities/{community}/posts:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPublicId'
+    get:
+      tags:
+        - Community
+      operationId: listCommunityPosts
+      summary: List one community's visible posts in reverse-chronological order
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityPostCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Community
+      operationId: createCommunityPost
+      summary: Publish a post to a community the current user has joined
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommunityPostRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CommunityPostCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/feed:
+    get:
+      tags:
+        - Community
+      operationId: listFeed
+      summary: List the current user's aggregated cross-community post feed
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/FeedCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/posts/{post}:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPostPublicId'
+    get:
+      tags:
+        - Community
+      operationId: showPost
+      summary: Return one community post visible to the current user
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityPostSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    patch:
+      tags:
+        - Community
+      operationId: updatePost
+      summary: Update the current user's own post with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommunityPostRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityPostSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Community
+      operationId: deletePost
+      summary: Remove the current user's own post with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/posts/{post}/comments:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPostPublicId'
+    get:
+      tags:
+        - Community
+      operationId: listComments
+      summary: List one post's visible comments in chronological order
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityCommentCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Community
+      operationId: createComment
+      summary: Comment on a post inside a community the current user has joined
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommunityCommentRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CommunityCommentCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/posts/{post}/reports:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPostPublicId'
+    post:
+      tags:
+        - Community
+      operationId: reportPost
+      summary: Report one post for moderator review
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContentReportRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ContentReportCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/comments/{comment}:
+    parameters:
+      - $ref: '#/components/parameters/CommunityCommentPublicId'
+    delete:
+      tags:
+        - Community
+      operationId: deleteComment
+      summary: Remove the current user's own comment with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityVersionedMutationRequest'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/comments/{comment}/reports:
+    parameters:
+      - $ref: '#/components/parameters/CommunityCommentPublicId'
+    post:
+      tags:
+        - Community
+      operationId: reportComment
+      summary: Report one comment for moderator review
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContentReportRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ContentReportCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/moderation/reports:
+    get:
+      tags:
+        - Community
+      operationId: listModerationReports
+      summary: List content reports in communities the current user moderates
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/ModerationStatusFilter'
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContentReportCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/moderation/reports/{report}/resolution:
+    parameters:
+      - $ref: '#/components/parameters/ContentReportPublicId'
+    patch:
+      tags:
+        - Community
+      operationId: resolveReport
+      summary: Resolve one content report and optionally hide the offending content
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveContentReportRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContentReportSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentors:
+    get:
+      tags:
+        - Mentor
+      operationId: listMentors
+      summary: List and search verified and unverified mentor directory profiles
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/MentorSearch'
+        - $ref: '#/components/parameters/MentorExpertise'
+        - $ref: '#/components/parameters/MentorPerPage'
+        - $ref: '#/components/parameters/MentorCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorProfileCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentors/{mentor}:
+    parameters:
+      - $ref: '#/components/parameters/MentorProfilePublicId'
+    get:
+      tags:
+        - Mentor
+      operationId: showMentor
+      summary: Return one mentor directory profile
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorProfileSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentors/{mentor}/requests:
+    parameters:
+      - $ref: '#/components/parameters/MentorProfilePublicId'
+    post:
+      tags:
+        - Mentor
+      operationId: createMentorRequest
+      summary: Send a mentorship request to one mentor
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorRequestRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/MentorRequestCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentor-profile:
+    get:
+      tags:
+        - Mentor
+      operationId: showOwnMentorProfile
+      summary: Return the current user's own mentor profile
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorProfileSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Mentor
+      operationId: createMentorProfile
+      summary: Create the current user's mentor directory profile
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorProfileRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/MentorProfileCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    patch:
+      tags:
+        - Mentor
+      operationId: updateMentorProfile
+      summary: Update the current user's mentor profile with optimistic concurrency
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMentorProfileRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorProfileSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentor-requests:
+    get:
+      tags:
+        - Mentor
+      operationId: listSentMentorRequests
+      summary: List mentorship requests the current user has sent
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/MentorPerPage'
+        - $ref: '#/components/parameters/MentorCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorRequestCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentor-requests/incoming:
+    get:
+      tags:
+        - Mentor
+      operationId: listIncomingMentorRequests
+      summary: List mentorship requests addressed to the current user's mentor profile
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/MentorPerPage'
+        - $ref: '#/components/parameters/MentorCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorRequestIncomingCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/mentor-requests/{mentorRequest}:
+    parameters:
+      - $ref: '#/components/parameters/MentorRequestPublicId'
+    patch:
+      tags:
+        - Mentor
+      operationId: transitionMentorRequest
+      summary: Transition one mentorship request through its lifecycle
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionMentorRequestRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/MentorRequestSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/auth/login:
     post:
       tags:
@@ -4485,6 +5278,107 @@ components:
       schema:
         type: string
         maxLength: 2048
+    CommunityPublicId:
+      name: community
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/CommunityPublicId'
+    CommunityPostPublicId:
+      name: post
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/CommunityPostPublicId'
+    CommunityCommentPublicId:
+      name: comment
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/CommunityCommentPublicId'
+    ContentReportPublicId:
+      name: report
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ContentReportPublicId'
+    CommunitySearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive search over published community names, summaries, and topics.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+    CommunityPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    CommunityCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 2048
+    ModerationStatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ReportStatus'
+    MentorProfilePublicId:
+      name: mentor
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/MentorProfilePublicId'
+    MentorRequestPublicId:
+      name: mentorRequest
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/MentorRequestPublicId'
+    MentorSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive search over mentor names, headlines, and expertise.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+    MentorExpertise:
+      name: expertise
+      in: query
+      required: false
+      description: Restrict the directory to mentors carrying this expertise tag.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 40
+    MentorPerPage:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    MentorCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 2048
   headers:
     RequestId:
       description: Correlates the response body with request-scoped logs.
@@ -5058,6 +5952,177 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CopilotReplySuccess'
+    CommunitySuccess:
+      description: The operation returned one community with the viewer's membership state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunitySuccess'
+    CommunityCollectionSuccess:
+      description: The operation returned one page of published communities.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityCollectionSuccess'
+    CommunityPostSuccess:
+      description: The operation returned one community post.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityPostSuccess'
+    CommunityPostCreated:
+      description: The community post was published.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityPostSuccess'
+    CommunityPostCollectionSuccess:
+      description: The operation returned one page of a community's visible posts.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityPostCollectionSuccess'
+    FeedCollectionSuccess:
+      description: The operation returned one page of the current user's aggregated feed.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FeedCollectionSuccess'
+    CommunityCommentSuccess:
+      description: The operation returned one comment.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityCommentSuccess'
+    CommunityCommentCreated:
+      description: The comment was added to the post.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityCommentSuccess'
+    CommunityCommentCollectionSuccess:
+      description: The operation returned one page of a post's visible comments.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityCommentCollectionSuccess'
+    ContentReportSuccess:
+      description: The operation returned one content report.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ContentReportSuccess'
+    ContentReportCreated:
+      description: The content report was filed for moderator review.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ContentReportSuccess'
+    ContentReportCollectionSuccess:
+      description: The operation returned one page of content reports awaiting moderation.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ContentReportCollectionSuccess'
+    MentorProfileSuccess:
+      description: The operation returned one mentor profile.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorProfileSuccess'
+    MentorProfileCreated:
+      description: The current user's mentor profile was created.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorProfileSuccess'
+    MentorProfileCollectionSuccess:
+      description: The operation returned one page of mentor directory profiles.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorProfileCollectionSuccess'
+    MentorRequestSuccess:
+      description: The operation returned one mentorship request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorRequestSuccess'
+    MentorRequestCreated:
+      description: The mentorship request was sent.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorRequestSuccess'
+    MentorRequestCollectionSuccess:
+      description: The operation returned one page of the current user's sent mentorship requests.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorRequestCollectionSuccess'
+    MentorRequestIncomingCollectionSuccess:
+      description: The operation returned one page of mentorship requests addressed to the current user.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MentorRequestIncomingCollectionSuccess'
   schemas:
     RequestId:
       type: string
@@ -9813,3 +10878,928 @@ components:
           $ref: '#/components/schemas/Dashboard'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
+    CommunityPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c0
+    CommunityPostPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c1
+    CommunityCommentPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c2
+    ContentReportPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c3
+    MentorProfilePublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c4
+    MentorRequestPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz8p7j2d9k4s5t6v7w8xb9c5
+    CommunityVersion:
+      type: integer
+      minimum: 1
+    MentorVersion:
+      type: integer
+      minimum: 1
+    CommunityVisibility:
+      type: string
+      enum:
+        - published
+        - archived
+    MembershipRole:
+      type: string
+      enum:
+        - member
+        - moderator
+    ModerationState:
+      type: string
+      enum:
+        - visible
+        - hidden_by_moderator
+        - removed_by_author
+    ReportReason:
+      type: string
+      enum:
+        - spam
+        - harassment
+        - off_topic
+        - safety
+        - other
+    ReportStatus:
+      type: string
+      enum:
+        - open
+        - reviewing
+        - actioned
+        - dismissed
+    ModerationResolution:
+      type: string
+      enum:
+        - actioned
+        - dismissed
+    MentorVerificationState:
+      type: string
+      enum:
+        - unverified
+        - verified
+    MentorRequestStatus:
+      type: string
+      enum:
+        - open
+        - accepted
+        - declined
+        - withdrawn
+        - completed
+    MentorRequestAction:
+      type: string
+      enum:
+        - withdraw
+        - accept
+        - decline
+        - complete
+    Community:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - summary
+        - description
+        - topic
+        - visibility
+        - is_seeded
+        - is_member
+        - membership_role
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CommunityPublicId'
+        slug:
+          type: string
+        name:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        topic:
+          type: string
+          nullable: true
+        visibility:
+          $ref: '#/components/schemas/CommunityVisibility'
+        is_seeded:
+          type: boolean
+        is_member:
+          type: boolean
+        membership_role:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/MembershipRole'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+    CommunityPostAuthor:
+      type: object
+      required:
+        - name
+        - is_verified_mentor
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        is_verified_mentor:
+          type: boolean
+    CommunityPostCommunitySummary:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CommunityPublicId'
+        name:
+          type: string
+        slug:
+          type: string
+    CommunityPostSharedResource:
+      type: object
+      required:
+        - title
+        - url
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+    CommunityPost:
+      type: object
+      required:
+        - id
+        - author
+        - title
+        - body
+        - moderation_state
+        - is_mine
+        - shared_resource
+        - comment_count
+        - version
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CommunityPostPublicId'
+        community:
+          $ref: '#/components/schemas/CommunityPostCommunitySummary'
+        author:
+          $ref: '#/components/schemas/CommunityPostAuthor'
+        title:
+          type: string
+          nullable: true
+        body:
+          type: string
+          nullable: true
+        moderation_state:
+          $ref: '#/components/schemas/ModerationState'
+        is_mine:
+          type: boolean
+        shared_resource:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CommunityPostSharedResource'
+        comment_count:
+          type: integer
+          minimum: 0
+        version:
+          $ref: '#/components/schemas/CommunityVersion'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    CommunityComment:
+      type: object
+      required:
+        - id
+        - author
+        - body
+        - moderation_state
+        - is_mine
+        - version
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CommunityCommentPublicId'
+        author:
+          $ref: '#/components/schemas/CommunityPostAuthor'
+        body:
+          type: string
+          nullable: true
+        moderation_state:
+          $ref: '#/components/schemas/ModerationState'
+        is_mine:
+          type: boolean
+        version:
+          $ref: '#/components/schemas/CommunityVersion'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+    ContentReportCommunitySummary:
+      type: object
+      required:
+        - id
+        - name
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/CommunityPublicId'
+        name:
+          type: string
+    ContentReportSubject:
+      type: object
+      required:
+        - type
+        - id
+        - excerpt
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+            - post
+            - comment
+        id:
+          type: string
+          nullable: true
+          pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+        excerpt:
+          type: string
+          nullable: true
+    ContentReport:
+      type: object
+      required:
+        - id
+        - subject
+        - reason
+        - detail
+        - status
+        - resolution_note
+        - version
+        - handled_at
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ContentReportPublicId'
+        community:
+          $ref: '#/components/schemas/ContentReportCommunitySummary'
+        subject:
+          $ref: '#/components/schemas/ContentReportSubject'
+        reason:
+          $ref: '#/components/schemas/ReportReason'
+        detail:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        resolution_note:
+          type: string
+          nullable: true
+        version:
+          $ref: '#/components/schemas/CommunityVersion'
+        handled_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+    MentorProfile:
+      type: object
+      required:
+        - id
+        - name
+        - headline
+        - bio
+        - expertise
+        - availability_note
+        - verification_state
+        - is_accepting_requests
+        - version
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/MentorProfilePublicId'
+        name:
+          type: string
+        headline:
+          type: string
+        bio:
+          type: string
+        expertise:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+        availability_note:
+          type: string
+          nullable: true
+        verification_state:
+          $ref: '#/components/schemas/MentorVerificationState'
+        is_accepting_requests:
+          type: boolean
+        version:
+          $ref: '#/components/schemas/MentorVersion'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+    MentorRequestMentorSummary:
+      type: object
+      required:
+        - id
+        - name
+        - headline
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/MentorProfilePublicId'
+        name:
+          type: string
+        headline:
+          type: string
+    MentorRequestRequesterSummary:
+      type: object
+      required:
+        - name
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+    MentorRequest:
+      type: object
+      required:
+        - id
+        - subject
+        - message
+        - status
+        - response_note
+        - version
+        - created_at
+        - responded_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/MentorRequestPublicId'
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          $ref: '#/components/schemas/MentorRequestStatus'
+        response_note:
+          type: string
+          nullable: true
+        mentor:
+          $ref: '#/components/schemas/MentorRequestMentorSummary'
+        requester:
+          $ref: '#/components/schemas/MentorRequestRequesterSummary'
+        version:
+          $ref: '#/components/schemas/MentorVersion'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+    CommunityTotalSummary:
+      type: object
+      required:
+        - total
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+    FeedSummary:
+      type: object
+      required:
+        - communities
+      additionalProperties: false
+      properties:
+        communities:
+          type: integer
+          minimum: 0
+    ModerationSummary:
+      type: object
+      required:
+        - returned
+      additionalProperties: false
+      properties:
+        returned:
+          type: integer
+          minimum: 0
+    MentorTotalSummary:
+      type: object
+      required:
+        - total
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+    MentorIncomingSummary:
+      type: object
+      required:
+        - open
+      additionalProperties: false
+      properties:
+        open:
+          type: integer
+          minimum: 0
+    CommunityCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/CommunityTotalSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    FeedCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/FeedSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    ModerationCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/ModerationSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    MentorCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/MentorTotalSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    MentorIncomingCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/MentorIncomingSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    CreateCommunityPostRequest:
+      type: object
+      required:
+        - body
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 160
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        shared_resource_id:
+          type: string
+          nullable: true
+          pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+    UpdateCommunityPostRequest:
+      type: object
+      required:
+        - body
+        - expected_version
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 160
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        shared_resource_id:
+          type: string
+          nullable: true
+          pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+        expected_version:
+          $ref: '#/components/schemas/CommunityVersion'
+    CreateCommunityCommentRequest:
+      type: object
+      required:
+        - body
+      additionalProperties: false
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    CreateContentReportRequest:
+      type: object
+      required:
+        - reason
+      additionalProperties: false
+      properties:
+        reason:
+          $ref: '#/components/schemas/ReportReason'
+        detail:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 1000
+    ResolveContentReportRequest:
+      type: object
+      required:
+        - resolution
+        - expected_version
+      additionalProperties: false
+      properties:
+        resolution:
+          $ref: '#/components/schemas/ModerationResolution'
+        hide_content:
+          type: boolean
+          nullable: true
+        note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        expected_version:
+          $ref: '#/components/schemas/CommunityVersion'
+    CommunityVersionedMutationRequest:
+      type: object
+      required:
+        - expected_version
+      additionalProperties: false
+      properties:
+        expected_version:
+          $ref: '#/components/schemas/CommunityVersion'
+    CreateMentorProfileRequest:
+      type: object
+      required:
+        - headline
+        - bio
+      additionalProperties: false
+      properties:
+        headline:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bio:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        expertise:
+          type: array
+          nullable: true
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        availability_note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 280
+        is_accepting_requests:
+          type: boolean
+          nullable: true
+    UpdateMentorProfileRequest:
+      type: object
+      required:
+        - headline
+        - bio
+        - expected_version
+      additionalProperties: false
+      properties:
+        headline:
+          type: string
+          minLength: 1
+          maxLength: 160
+        bio:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        expertise:
+          type: array
+          nullable: true
+          maxItems: 12
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        availability_note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 280
+        is_accepting_requests:
+          type: boolean
+          nullable: true
+        expected_version:
+          $ref: '#/components/schemas/MentorVersion'
+    CreateMentorRequestRequest:
+      type: object
+      required:
+        - subject
+        - message
+      additionalProperties: false
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 160
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        context_course_id:
+          type: string
+          nullable: true
+          pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+    TransitionMentorRequestRequest:
+      type: object
+      required:
+        - action
+        - expected_version
+      additionalProperties: false
+      properties:
+        action:
+          $ref: '#/components/schemas/MentorRequestAction'
+        response_note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        expected_version:
+          $ref: '#/components/schemas/MentorVersion'
+    CommunitySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Community'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CommunityCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Community'
+        meta:
+          $ref: '#/components/schemas/CommunityCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    CommunityPostSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CommunityPost'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CommunityPostCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CommunityPost'
+        meta:
+          $ref: '#/components/schemas/CommunityCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    FeedCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CommunityPost'
+        meta:
+          $ref: '#/components/schemas/FeedCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    CommunityCommentSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/CommunityComment'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    CommunityCommentCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CommunityComment'
+        meta:
+          $ref: '#/components/schemas/CommunityCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    ContentReportSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ContentReport'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    ContentReportCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ContentReport'
+        meta:
+          $ref: '#/components/schemas/ModerationCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    MentorProfileSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/MentorProfile'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    MentorProfileCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/MentorProfile'
+        meta:
+          $ref: '#/components/schemas/MentorCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    MentorRequestSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/MentorRequest'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    MentorRequestCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/MentorRequest'
+        meta:
+          $ref: '#/components/schemas/MentorCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    MentorRequestIncomingCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/MentorRequest'
+        meta:
+          $ref: '#/components/schemas/MentorIncomingCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'

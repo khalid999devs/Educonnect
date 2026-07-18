@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domains\Authorization\Enums\CapabilityKey;
+use App\Domains\Community\Models\CommunityComment;
+use App\Domains\Community\Models\CommunityPost;
+use App\Domains\Community\Policies\CommunityCommentPolicy;
+use App\Domains\Community\Policies\CommunityPostPolicy;
 use App\Domains\Courses\Models\AcademicTerm;
 use App\Domains\Courses\Models\Course;
 use App\Domains\Courses\Policies\AcademicTermPolicy;
@@ -21,6 +25,10 @@ use App\Domains\Guidance\Policies\UserWorkflowPreferencePolicy;
 use App\Domains\Guidance\Policies\WorkflowRecipePolicy;
 use App\Domains\Intake\Models\IntakeItem;
 use App\Domains\Intake\Policies\IntakeItemPolicy;
+use App\Domains\Mentor\Models\MentorProfile;
+use App\Domains\Mentor\Models\MentorRequest;
+use App\Domains\Mentor\Policies\MentorProfilePolicy;
+use App\Domains\Mentor\Policies\MentorRequestPolicy;
 use App\Domains\Onboarding\Models\OnboardingProgress;
 use App\Domains\Onboarding\Policies\OnboardingProgressPolicy;
 use App\Domains\Planner\Models\FocusSession;
@@ -78,6 +86,10 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(KnowledgeItem::class, KnowledgeItemPolicy::class);
         Gate::policy(ResearchTopic::class, ResearchTopicPolicy::class);
         Gate::policy(UserWorkflowPreference::class, UserWorkflowPreferencePolicy::class);
+        Gate::policy(CommunityPost::class, CommunityPostPolicy::class);
+        Gate::policy(CommunityComment::class, CommunityCommentPolicy::class);
+        Gate::policy(MentorProfile::class, MentorProfilePolicy::class);
+        Gate::policy(MentorRequest::class, MentorRequestPolicy::class);
 
         foreach (CapabilityKey::cases() as $capability) {
             Gate::define(
@@ -85,5 +97,11 @@ final class AuthorizationServiceProvider extends ServiceProvider
                 static fn (User $user): bool => $user->hasCapability($capability),
             );
         }
+
+        // Community moderation is open to any moderator, whether their remit is a
+        // scoped set of communities or the whole platform; per-target scope is then
+        // enforced by the ModerationPolicy against the reported content.
+        Gate::define('community.moderate', static fn (User $user): bool => $user->hasCapability(CapabilityKey::ModerationScoped)
+            || $user->hasCapability(CapabilityKey::ModerationGlobal));
     }
 }

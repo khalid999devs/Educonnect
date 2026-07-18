@@ -202,6 +202,7 @@ final class DataFoundationMigrationTest extends TestCase
     /** @return array{Migration, Migration, Migration, Migration, Migration} */
     private function lowerDependentFoundations(): array
     {
+        $community = $this->migration('2026_07_18_000016_create_community_and_mentor_foundation.php');
         $secondBrain = $this->migration('2026_07_16_000015_create_second_brain_foundation.php');
         $suggestions = $this->migration('2026_07_16_000014_create_intake_suggestions.php');
         $intake = $this->migration('2026_07_16_000013_create_intake_foundation.php');
@@ -211,6 +212,7 @@ final class DataFoundationMigrationTest extends TestCase
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        $community->down();
         $secondBrain->down();
         $suggestions->down();
         $intake->down();

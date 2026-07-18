@@ -88,6 +88,72 @@ class AppServiceProvider extends ServiceProvider
         $this->registerSecondBrainRateLimiters();
         $this->registerDashboardRateLimiters();
         $this->registerCopilotRateLimiters();
+        $this->registerCommunityRateLimiters();
+        $this->registerMentorRateLimiters();
+    }
+
+    private function registerCommunityRateLimiters(): void
+    {
+        RateLimiter::for('community.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'community-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('community.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'community-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        // Deliberately tight: reporting is an abuse-prone action.
+        RateLimiter::for('community.report', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'community-report',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
+        RateLimiter::for('community.destructive', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'community-destructive',
+            actorAttempts: 30,
+            ipAttempts: 30,
+        ));
+        RateLimiter::for('moderation.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'moderation-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('moderation.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'moderation-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+    }
+
+    private function registerMentorRateLimiters(): void
+    {
+        RateLimiter::for('mentor.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'mentor-read',
+            actorAttempts: 120,
+            ipAttempts: 120,
+        ));
+        RateLimiter::for('mentor.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'mentor-write',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        // Deliberately tight: an unsolicited help request reaches another student.
+        RateLimiter::for('mentor.request', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'mentor-request',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
     }
 
     private function registerAuthenticationRateLimiters(): void

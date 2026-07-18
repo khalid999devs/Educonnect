@@ -541,3 +541,104 @@ export function dashboard(overrides: Partial<Record<string, unknown>> = {}) {
     ...overrides,
   };
 }
+
+export function community(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jcommunity0000000000000a",
+    slug: "study-skills",
+    name: "Study Skills",
+    summary: "Share revision techniques and exam preparation.",
+    description: null,
+    topic: "Productivity",
+    visibility: "published",
+    is_seeded: true,
+    is_member: true,
+    membership_role: "member",
+    created_at: "2026-07-10T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function post(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01jpost0000000000000000aaa",
+    community: {
+      id: "01jcommunity0000000000000a",
+      name: "Study Skills",
+      slug: "study-skills",
+    },
+    author: { name: "Mei Lin", is_verified_mentor: false },
+    title: null,
+    body: "Looking for study buddies for Data Analytics this week.",
+    moderation_state: "visible",
+    is_mine: false,
+    shared_resource: null,
+    comment_count: 0,
+    version: 1,
+    created_at: "2026-07-17T09:00:00Z",
+    updated_at: "2026-07-17T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function contentReport(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jreport000000000000000aa",
+    community: { id: "01jcommunity0000000000000a", name: "Study Skills" },
+    subject: {
+      type: "post",
+      id: "01jpost0000000000000000aaa",
+      excerpt: "Looking for study buddies",
+    },
+    reason: "spam",
+    detail: null,
+    status: "open",
+    resolution_note: null,
+    version: 1,
+    handled_at: null,
+    created_at: "2026-07-17T10:00:00Z",
+    ...overrides,
+  };
+}
+
+export function mentorProfile(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jmentor00000000000000aaa",
+    name: "Dr Sarah Lee",
+    headline: "Algorithms and study skills mentor",
+    bio: "Ten years tutoring computer science students.",
+    expertise: ["algorithms", "study skills"],
+    availability_note: "Usually replies within a few days.",
+    verification_state: "verified",
+    is_accepting_requests: true,
+    version: 1,
+    created_at: "2026-07-10T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function mentorRequest(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01jmreq0000000000000000aaa",
+    subject: "Dynamic programming help",
+    message: "Could you review my approach?",
+    status: "open",
+    response_note: null,
+    mentor: {
+      id: "01jmentor00000000000000aaa",
+      name: "Dr Sarah Lee",
+      headline: "Algorithms and study skills mentor",
+    },
+    requester: { name: "Sam Student" },
+    version: 1,
+    created_at: "2026-07-17T09:00:00Z",
+    responded_at: null,
+    ...overrides,
+  };
+}

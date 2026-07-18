@@ -12,6 +12,23 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\Community\CreateCommentController;
+use App\Http\Controllers\Api\V1\Community\CreateCommentReportController;
+use App\Http\Controllers\Api\V1\Community\CreatePostController;
+use App\Http\Controllers\Api\V1\Community\CreatePostReportController;
+use App\Http\Controllers\Api\V1\Community\DeleteCommentController;
+use App\Http\Controllers\Api\V1\Community\DeletePostController;
+use App\Http\Controllers\Api\V1\Community\JoinCommunityController;
+use App\Http\Controllers\Api\V1\Community\LeaveCommunityController;
+use App\Http\Controllers\Api\V1\Community\ListCommentsController;
+use App\Http\Controllers\Api\V1\Community\ListCommunitiesController;
+use App\Http\Controllers\Api\V1\Community\ListCommunityPostsController;
+use App\Http\Controllers\Api\V1\Community\ListFeedController;
+use App\Http\Controllers\Api\V1\Community\ListModerationReportsController;
+use App\Http\Controllers\Api\V1\Community\ResolveReportController;
+use App\Http\Controllers\Api\V1\Community\ShowCommunityController;
+use App\Http\Controllers\Api\V1\Community\ShowPostController;
+use App\Http\Controllers\Api\V1\Community\UpdatePostController;
 use App\Http\Controllers\Api\V1\Copilot\CopilotAvailabilityController;
 use App\Http\Controllers\Api\V1\Copilot\CopilotMessageController;
 use App\Http\Controllers\Api\V1\Courses\ArchiveCourseController;
@@ -36,6 +53,15 @@ use App\Http\Controllers\Api\V1\Intake\ListIntakeItemsController;
 use App\Http\Controllers\Api\V1\Intake\ListIntakeSuggestionsController;
 use App\Http\Controllers\Api\V1\Intake\RetryIntakeItemController;
 use App\Http\Controllers\Api\V1\Intake\ShowIntakeItemController;
+use App\Http\Controllers\Api\V1\Mentor\CreateMentorProfileController;
+use App\Http\Controllers\Api\V1\Mentor\CreateMentorRequestController;
+use App\Http\Controllers\Api\V1\Mentor\ListIncomingRequestsController;
+use App\Http\Controllers\Api\V1\Mentor\ListMentorsController;
+use App\Http\Controllers\Api\V1\Mentor\ListSentRequestsController;
+use App\Http\Controllers\Api\V1\Mentor\ShowMentorController;
+use App\Http\Controllers\Api\V1\Mentor\ShowOwnMentorProfileController;
+use App\Http\Controllers\Api\V1\Mentor\TransitionMentorRequestController;
+use App\Http\Controllers\Api\V1\Mentor\UpdateMentorProfileController;
 use App\Http\Controllers\Api\V1\Onboarding\CompleteOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\ShowOnboardingController;
 use App\Http\Controllers\Api\V1\Onboarding\UpdateOnboardingStepController;
@@ -668,6 +694,137 @@ Route::middleware([
                         ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
                         ->name('sources.destroy');
+                });
+
+            Route::prefix('communities')
+                ->name('communities.')
+                ->group(function (): void {
+                    Route::get('/', ListCommunitiesController::class)
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{community}', ShowCommunityController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::post('/{community}/membership', JoinCommunityController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.write', 'can:academic.manage-own'])
+                        ->name('membership.store');
+                    Route::delete('/{community}/membership', LeaveCommunityController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.write', 'can:academic.manage-own'])
+                        ->name('membership.destroy');
+                    Route::get('/{community}/posts', ListCommunityPostsController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('posts.index');
+                    Route::post('/{community}/posts', CreatePostController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.write', 'can:academic.manage-own'])
+                        ->name('posts.store');
+                });
+
+            Route::get('feed', ListFeedController::class)
+                ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                ->name('feed.index');
+
+            Route::prefix('posts')
+                ->name('posts.')
+                ->group(function (): void {
+                    Route::get('/{post}', ShowPostController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::patch('/{post}', UpdatePostController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.write', 'can:academic.manage-own'])
+                        ->name('update');
+                    Route::delete('/{post}', DeletePostController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::get('/{post}/comments', ListCommentsController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('comments.index');
+                    Route::post('/{post}/comments', CreateCommentController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.write', 'can:academic.manage-own'])
+                        ->name('comments.store');
+                    Route::post('/{post}/reports', CreatePostReportController::class)
+                        ->where('post', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.report', 'can:academic.manage-own'])
+                        ->name('reports.store');
+                });
+
+            Route::prefix('comments')
+                ->name('comments.')
+                ->group(function (): void {
+                    Route::delete('/{comment}', DeleteCommentController::class)
+                        ->where('comment', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.destructive', 'can:academic.manage-own'])
+                        ->name('destroy');
+                    Route::post('/{comment}/reports', CreateCommentReportController::class)
+                        ->where('comment', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.report', 'can:academic.manage-own'])
+                        ->name('reports.store');
+                });
+
+            Route::prefix('moderation')
+                ->name('moderation.')
+                ->group(function (): void {
+                    Route::get('/reports', ListModerationReportsController::class)
+                        ->middleware(['throttle:moderation.read', 'can:community.moderate'])
+                        ->name('reports.index');
+                    Route::patch('/reports/{report}/resolution', ResolveReportController::class)
+                        ->where('report', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:moderation.write', 'can:community.moderate'])
+                        ->name('reports.resolve');
+                });
+
+            Route::prefix('mentors')
+                ->name('mentors.')
+                ->group(function (): void {
+                    Route::get('/', ListMentorsController::class)
+                        ->middleware(['throttle:mentor.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/{mentor}', ShowMentorController::class)
+                        ->where('mentor', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:mentor.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::post('/{mentor}/requests', CreateMentorRequestController::class)
+                        ->where('mentor', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:mentor.request', 'can:academic.manage-own'])
+                        ->name('requests.store');
+                });
+
+            Route::prefix('mentor-profile')
+                ->name('mentor-profile.')
+                ->group(function (): void {
+                    Route::get('/', ShowOwnMentorProfileController::class)
+                        ->middleware(['throttle:mentor.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::post('/', CreateMentorProfileController::class)
+                        ->middleware(['throttle:mentor.write', 'can:academic.manage-own'])
+                        ->name('store');
+                    Route::patch('/', UpdateMentorProfileController::class)
+                        ->middleware(['throttle:mentor.write', 'can:academic.manage-own'])
+                        ->name('update');
+                });
+
+            Route::prefix('mentor-requests')
+                ->name('mentor-requests.')
+                ->group(function (): void {
+                    Route::get('/', ListSentRequestsController::class)
+                        ->middleware(['throttle:mentor.read', 'can:academic.manage-own'])
+                        ->name('index');
+                    Route::get('/incoming', ListIncomingRequestsController::class)
+                        ->middleware(['throttle:mentor.read', 'can:academic.manage-own'])
+                        ->name('incoming');
+                    Route::patch('/{mentorRequest}', TransitionMentorRequestController::class)
+                        ->where('mentorRequest', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:mentor.write', 'can:academic.manage-own'])
+                        ->name('update');
                 });
         });
     });

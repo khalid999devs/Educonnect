@@ -33,7 +33,7 @@ final readonly class LinkContentFetcher
                 throw new IntakeAcquisitionFailure(IntakeFailureCode::UnsafeUrl, $exception->getMessage());
             }
 
-            $response = $this->request($safe['url']);
+            $response = $this->request($safe);
             $status = $response->status();
 
             if ($status >= 300 && $status < 400) {
@@ -71,17 +71,25 @@ final readonly class LinkContentFetcher
         throw new IntakeAcquisitionFailure(IntakeFailureCode::LinkFetchFailed, 'redirect limit exceeded');
     }
 
-    private function request(string $url): Response
+    /**
+     * @param  array{url: string, host: string, addresses: list<string>}  $safe
+     */
+    private function request(array $safe): Response
     {
         try {
             return Http::withOptions([
                 'allow_redirects' => false,
                 'stream' => true,
+                // Pin the connection to the addresses that just passed the SSRF
+                // guard so libcurl cannot re-resolve to a private IP (see
+                // SafeIntakeUrl::curlPinOptions). Ignored only if ext-curl is
+                // absent, in which case the per-hop guard still applies.
+                'curl' => SafeIntakeUrl::curlPinOptions($safe),
             ])
                 ->connectTimeout((int) config('intake.fetch_connect_timeout_seconds'))
                 ->timeout((int) config('intake.fetch_timeout_seconds'))
                 ->withHeaders(['Accept' => 'text/html, text/plain, text/markdown'])
-                ->get($url);
+                ->get($safe['url']);
         } catch (ConnectionException $exception) {
             throw new IntakeAcquisitionFailure(
                 IntakeFailureCode::LinkFetchFailed,

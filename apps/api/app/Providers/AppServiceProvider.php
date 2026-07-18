@@ -108,6 +108,14 @@ class AppServiceProvider extends ServiceProvider
             actorAttempts: 40,
             ipAttempts: 40,
         ));
+        // Deliberately tight: step-up password confirmation must resist online
+        // guessing against an already-authenticated admin session.
+        RateLimiter::for('auth.admin-reauth', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'admin-reauth',
+            actorAttempts: 5,
+            ipAttempts: 15,
+        ));
     }
 
     private function registerCommunityRateLimiters(): void

@@ -28,10 +28,12 @@ import { ApiError } from "@/lib/api/http";
 import { formatDateTime, humanizeKey } from "@/lib/format";
 import { userKeys } from "@/lib/query-keys";
 import { useSession } from "@/providers/session-provider";
+import { useStepUp } from "@/providers/step-up-provider";
 
 export function UserDetailView({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const { can, session } = useSession();
+  const { runWithStepUp } = useStepUp();
   const [dialog, setDialog] = useState<
     "suspend" | "reactivate" | "roles" | null
   >(null);
@@ -145,7 +147,9 @@ export function UserDetailView({ userId }: { userId: string }) {
           confirmLabel="Suspend"
           confirmVariant="destructive"
           onClose={() => setDialog(null)}
-          onConfirm={(reason) => suspendUser(user.id, reason)}
+          onConfirm={(reason) =>
+            runWithStepUp(() => suspendUser(user.id, reason))
+          }
           onDone={closeAndRefresh}
         />
       ) : null}
@@ -157,7 +161,9 @@ export function UserDetailView({ userId }: { userId: string }) {
           confirmLabel="Reactivate"
           confirmVariant="primary"
           onClose={() => setDialog(null)}
-          onConfirm={(reason) => reactivateUser(user.id, reason)}
+          onConfirm={(reason) =>
+            runWithStepUp(() => reactivateUser(user.id, reason))
+          }
           onDone={closeAndRefresh}
         />
       ) : null}
@@ -166,7 +172,9 @@ export function UserDetailView({ userId }: { userId: string }) {
         <RolesDialog
           currentRoles={user.roles}
           onClose={() => setDialog(null)}
-          onConfirm={(roles, reason) => changeUserRoles(user.id, roles, reason)}
+          onConfirm={(roles, reason) =>
+            runWithStepUp(() => changeUserRoles(user.id, roles, reason))
+          }
           onDone={closeAndRefresh}
         />
       ) : null}

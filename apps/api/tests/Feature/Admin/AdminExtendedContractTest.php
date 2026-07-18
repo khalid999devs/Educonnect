@@ -37,6 +37,7 @@ final class AdminExtendedContractTest extends TestCase
         ToolCategory::factory()->create(['slug' => 'academic-writing', 'name' => 'Academic writing']);
 
         $this->signInAsAdmin($superAdmin);
+        $this->reauthenticateAdmin();
 
         // Templates.
         $template = $this->adminPost('/api/v1/admin/content/templates', [

@@ -14,6 +14,7 @@ enum ApiErrorCode: string
     case InternalError = 'INTERNAL_ERROR';
     case MethodNotAllowed = 'METHOD_NOT_ALLOWED';
     case RateLimited = 'RATE_LIMITED';
+    case ReauthenticationRequired = 'REAUTHENTICATION_REQUIRED';
     case ResourceNotFound = 'RESOURCE_NOT_FOUND';
     case ServiceUnavailable = 'SERVICE_UNAVAILABLE';
     case ValidationFailed = 'VALIDATION_FAILED';

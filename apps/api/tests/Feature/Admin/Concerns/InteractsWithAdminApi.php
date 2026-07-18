@@ -44,6 +44,19 @@ trait InteractsWithAdminApi
             ->assertOk();
     }
 
+    /**
+     * Establishes the short-lived step-up re-authentication grant that the
+     * highest-risk admin routes (suspension, reactivation, role assignment,
+     * demo-data seeding) require. Call after signInAsAdmin() in any test that
+     * exercises those routes past their capability gate.
+     */
+    private function reauthenticateAdmin(string $password = 'secret123'): void
+    {
+        $this->withHeaders($this->adminHeaders())
+            ->postJson('/api/v1/admin/auth/reauth', ['password' => $password])
+            ->assertOk();
+    }
+
     private function adminGet(string $uri): TestResponse
     {
         return $this->withHeaders($this->adminHeaders())->getJson($uri);

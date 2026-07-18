@@ -34,6 +34,7 @@ final class AdminAuditLogTest extends TestCase
         $target = User::factory()->create();
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         // Generate a real audit event by performing a sensitive action.
         $this->adminPost("/api/v1/admin/users/{$target->public_id}/suspension", [

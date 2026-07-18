@@ -60,6 +60,7 @@ final class AdminUsersTest extends TestCase
         $target = User::factory()->create(['email' => 'target@example.com']);
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $suspended = $this->adminPost("/api/v1/admin/users/{$target->public_id}/suspension", [
             'reason' => 'Repeated policy violations in community posts.',
@@ -97,6 +98,7 @@ final class AdminUsersTest extends TestCase
         $target = User::factory()->suspended()->create();
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $response = $this->adminPost("/api/v1/admin/users/{$target->public_id}/suspension", [
             'reason' => 'Trying to suspend twice.',
@@ -113,6 +115,7 @@ final class AdminUsersTest extends TestCase
         ]);
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $response = $this->adminPost("/api/v1/admin/users/{$admin->public_id}/suspension", [
             'reason' => 'Should be refused.',
@@ -131,6 +134,7 @@ final class AdminUsersTest extends TestCase
         $peer = User::factory()->withRole(RoleKey::Admin)->create(['email' => 'peer@example.com']);
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $response = $this->adminPost("/api/v1/admin/users/{$peer->public_id}/suspension", [
             'reason' => 'Should be refused: admin is protected.',
@@ -148,6 +152,7 @@ final class AdminUsersTest extends TestCase
         $admin = User::factory()->withRole(RoleKey::Admin)->create(['email' => 'admin@example.com']);
 
         $this->signInAsAdmin($superAdmin);
+        $this->reauthenticateAdmin();
 
         $this->adminPost("/api/v1/admin/users/{$admin->public_id}/suspension", [
             'reason' => 'Super admin action within remit.',
@@ -182,6 +187,7 @@ final class AdminUsersTest extends TestCase
         $target = User::factory()->create();
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $this->assertApiError(
             $this->adminPost("/api/v1/admin/users/{$target->public_id}/suspension", []),

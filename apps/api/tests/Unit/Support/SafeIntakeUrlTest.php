@@ -22,6 +22,20 @@ final class SafeIntakeUrlTest extends TestCase
         self::assertSame(['93.184.216.34'], $safe['addresses']);
     }
 
+    public function test_connection_pin_targets_only_the_validated_addresses(): void
+    {
+        $guard = new SafeIntakeUrl(new FakeHostResolver([
+            'university.example.edu' => ['93.184.216.34', '93.184.216.35'],
+        ]));
+
+        $safe = $guard->assertSafe('https://university.example.edu/syllabus');
+
+        self::assertSame(
+            [CURLOPT_RESOLVE => ['university.example.edu:443:93.184.216.34,93.184.216.35']],
+            SafeIntakeUrl::curlPinOptions($safe),
+        );
+    }
+
     #[DataProvider('unsafeUrlProvider')]
     public function test_unsafe_urls_are_rejected(string $url, array $hostMap): void
     {

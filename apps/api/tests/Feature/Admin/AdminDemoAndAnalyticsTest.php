@@ -33,6 +33,7 @@ final class AdminDemoAndAnalyticsTest extends TestCase
             'password' => 'secret123',
         ]);
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $this->assertSame(0, Tool::query()->count());
 

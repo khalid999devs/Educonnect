@@ -15,13 +15,15 @@ import { useState } from "react";
 import { seedDemoContent } from "@/lib/api/admin-analytics";
 import { ApiError } from "@/lib/api/http";
 import { contentKeys } from "@/lib/query-keys";
+import { useStepUp } from "@/providers/step-up-provider";
 
 export function DemoDataView() {
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
+  const { runWithStepUp } = useStepUp();
 
   const mutation = useMutation({
-    mutationFn: () => seedDemoContent(reason.trim()),
+    mutationFn: () => runWithStepUp(() => seedDemoContent(reason.trim())),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: contentKeys.all });
     },

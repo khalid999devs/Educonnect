@@ -4729,6 +4729,39 @@ paths:
           $ref: '#/components/responses/AuthorizationDenied'
         '419':
           $ref: '#/components/responses/CsrfMismatch'
+  /api/v1/admin/auth/reauth:
+    post:
+      tags:
+        - Administration
+      operationId: reauthenticateAdministrator
+      summary: Establish a step-up re-authentication grant for high-risk admin actions
+      description: Confirms the current administrator password and records a short-lived, session-bound grant that the highest-risk admin actions require.
+      security:
+        - adminSessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminReauthRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminReauthSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/me:
     get:
       tags:
@@ -4827,6 +4860,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationFailed'
+        '423':
+          $ref: '#/components/responses/ReauthRequired'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/admin/users/{user}/reactivation:
@@ -4860,6 +4895,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationFailed'
+        '423':
+          $ref: '#/components/responses/ReauthRequired'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/admin/users/{user}/roles:
@@ -4893,6 +4930,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationFailed'
+        '423':
+          $ref: '#/components/responses/ReauthRequired'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/admin/roles:
@@ -5786,6 +5825,8 @@ paths:
           $ref: '#/components/responses/AuthorizationDenied'
         '422':
           $ref: '#/components/responses/ValidationFailed'
+        '423':
+          $ref: '#/components/responses/ReauthRequired'
         '429':
           $ref: '#/components/responses/RateLimited'
 components:
@@ -6894,6 +6935,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminSessionSuccess'
+    AdminReauthSuccess:
+      description: The step-up re-authentication grant was established.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminReauthSuccess'
     AdminUserSuccess:
       description: The operation returned one administrative user record.
       headers:
@@ -7112,6 +7162,9 @@ components:
       $ref: '#/components/responses/GenericError'
     RateLimited:
       description: The account or source IP has temporarily exhausted its request allowance.
+      $ref: '#/components/responses/GenericError'
+    ReauthRequired:
+      description: A fresh step-up re-authentication is required before this high-risk action.
       $ref: '#/components/responses/GenericError'
     ServiceUnavailable:
       description: Private object storage is temporarily unavailable; no provider detail or signed URL is exposed.
@@ -10698,6 +10751,38 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/AdminSessionData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminReauthRequest:
+      type: object
+      required:
+        - password
+      additionalProperties: false
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          format: password
+    AdminReauthData:
+      type: object
+      required:
+        - reauthenticated_until
+      additionalProperties: false
+      properties:
+        reauthenticated_until:
+          type: string
+          format: date-time
+          description: The instant at which the step-up grant expires and a fresh confirmation is required.
+    AdminReauthSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminReauthData'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
     NullSuccess:

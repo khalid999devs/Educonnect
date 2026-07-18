@@ -122,4 +122,18 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Step-Up Re-authentication Timeout
+    |--------------------------------------------------------------------------
+    |
+    | The number of seconds a step-up re-authentication (a fresh password
+    | confirmation) remains valid for the highest-risk admin actions. Kept
+    | deliberately short so an unattended or hijacked live admin session cannot
+    | perform destructive actions without the current password.
+    |
+    */
+
+    'admin_reauth_timeout' => (int) env('ADMIN_REAUTH_TIMEOUT', 300),
+
 ];

@@ -63,6 +63,7 @@ final class ApiExceptionRenderer
             409 => [ApiErrorCode::Conflict, 'The request conflicts with the current resource state.'],
             419 => [ApiErrorCode::CsrfTokenMismatch, 'The CSRF token is invalid or expired.'],
             422 => [ApiErrorCode::ValidationFailed, 'Some fields need attention.'],
+            423 => [ApiErrorCode::ReauthenticationRequired, 'Re-authenticate to continue.'],
             429 => [ApiErrorCode::RateLimited, 'Too many requests. Please try again later.'],
             502, 503 => [ApiErrorCode::ServiceUnavailable, 'The service is temporarily unavailable.'],
             default => $status >= 500

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\Audit\ListAuditEventsController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminCurrentUserController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLogoutController;
+use App\Http\Controllers\Api\V1\Admin\Auth\AdminReauthController;
 use App\Http\Controllers\Api\V1\Admin\Community\CreateCommunityController as CreateAdminCommunityController;
 use App\Http\Controllers\Api\V1\Admin\Community\ListCommunitiesController as ListAdminCommunitiesController;
 use App\Http\Controllers\Api\V1\Admin\Community\SetCommunityVisibilityController;
@@ -185,6 +186,7 @@ use App\Http\Controllers\Api\V1\Workflows\ShowWorkflowController;
 use App\Http\Controllers\Api\V1\Workflows\UndismissWorkflowController;
 use App\Http\Controllers\Api\V1\Workflows\UnsaveWorkflowController;
 use App\Http\Middleware\EnsureAdminCapability;
+use App\Http\Middleware\EnsureAdminReauthenticated;
 use App\Http\Middleware\EnsureAdminSessionPasswordIsCurrent;
 use App\Http\Middleware\RequireAdminAccess;
 use App\Http\Middleware\RequireBrowserSurface;
@@ -892,6 +894,12 @@ Route::prefix('admin')
 
                 Route::get('/me', AdminCurrentUserController::class)->name('me');
 
+                // Step-up re-authentication: establishes a short-lived password
+                // confirmation grant that the high-risk routes below require.
+                Route::post('/auth/reauth', AdminReauthController::class)
+                    ->middleware('throttle:auth.admin-reauth')
+                    ->name('auth.reauth');
+
                 Route::prefix('users')->name('users.')->group(function () use ($ulid): void {
                     Route::get('/', ListUsersController::class)
                         ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':authorization.roles-view'])
@@ -902,15 +910,15 @@ Route::prefix('admin')
                         ->name('show');
                     Route::post('/{user}/suspension', SuspendUserController::class)
                         ->where('user', $ulid)
-                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend'])
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend', EnsureAdminReauthenticated::class])
                         ->name('suspend');
                     Route::post('/{user}/reactivation', ReactivateUserController::class)
                         ->where('user', $ulid)
-                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend'])
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':users.suspend', EnsureAdminReauthenticated::class])
                         ->name('reactivate');
                     Route::put('/{user}/roles', ChangeUserRolesController::class)
                         ->where('user', $ulid)
-                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':authorization.roles-assign'])
+                        ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':authorization.roles-assign', EnsureAdminReauthenticated::class])
                         ->name('roles.update');
                 });
 
@@ -1020,7 +1028,7 @@ Route::prefix('admin')
                     ->name('analytics');
 
                 Route::post('/demo-data', SeedDemoContentController::class)
-                    ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':content.curate'])
+                    ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':content.curate', EnsureAdminReauthenticated::class])
                     ->name('demo-data.seed');
             });
         });

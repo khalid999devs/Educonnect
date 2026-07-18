@@ -27,6 +27,18 @@ export async function adminLogout(): Promise<void> {
   await apiFetch("/api/v1/admin/auth/logout", { method: "POST" });
 }
 
+/**
+ * Step-up re-authentication: confirms the current password to establish the
+ * short-lived grant the highest-risk admin actions require. Throws an ApiError
+ * (422) on a wrong password.
+ */
+export async function reauthenticate(password: string): Promise<void> {
+  await apiFetch("/api/v1/admin/auth/reauth", {
+    method: "POST",
+    body: { password },
+  });
+}
+
 export async function currentAdmin(): Promise<AdminSession> {
   return parseSession(await apiFetch("/api/v1/admin/me"));
 }

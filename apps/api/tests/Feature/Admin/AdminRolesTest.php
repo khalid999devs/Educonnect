@@ -53,6 +53,7 @@ final class AdminRolesTest extends TestCase
         $target = User::factory()->create(['email' => 'target@example.com']);
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $response = $this->adminPut("/api/v1/admin/users/{$target->public_id}/roles", [
             'roles' => [RoleKey::Student->value, RoleKey::Mentor->value],
@@ -81,6 +82,7 @@ final class AdminRolesTest extends TestCase
         $target = User::factory()->create();
 
         $this->signInAsAdmin($admin);
+        $this->reauthenticateAdmin();
 
         $response = $this->adminPut("/api/v1/admin/users/{$target->public_id}/roles", [
             'roles' => [RoleKey::Admin->value],
@@ -100,6 +102,7 @@ final class AdminRolesTest extends TestCase
         $target = User::factory()->create();
 
         $this->signInAsAdmin($superAdmin);
+        $this->reauthenticateAdmin();
 
         $this->adminPut("/api/v1/admin/users/{$target->public_id}/roles", [
             'roles' => [RoleKey::Admin->value],

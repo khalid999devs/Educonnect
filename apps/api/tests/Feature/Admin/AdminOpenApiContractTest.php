@@ -47,6 +47,7 @@ final class AdminOpenApiContractTest extends TestCase
         [$report] = $this->reportedContent();
 
         $this->signInAsAdmin($superAdmin);
+        $this->reauthenticateAdmin();
 
         $this->adminGet('/api/v1/admin/users?per_page=10')->assertOk();
         $this->adminGet("/api/v1/admin/users/{$target->public_id}")->assertOk();

@@ -30,7 +30,7 @@ export function AdminSidebar() {
       }
       footer={
         <p className="text-caption text-text-muted">
-          Console shell (Phase 18). Admin modules unlock in later phases.
+          Admin modules unlock for your capabilities as their APIs ship.
         </p>
       }
     >

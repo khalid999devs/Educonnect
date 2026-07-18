@@ -14,4 +14,6 @@ enum AuditAction: string
     case MentorVerificationChanged = 'mentors.verification-changed';
     case ReportResolved = 'community.report-resolved';
     case ContentLifecycleChanged = 'content.lifecycle-changed';
+    case DemoDataSeeded = 'admin.demo-data-seeded';
+    case CommunityVisibilityChanged = 'community.visibility-changed';
 }

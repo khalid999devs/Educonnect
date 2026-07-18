@@ -5488,6 +5488,306 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/content/templates:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminTemplates
+      summary: List and filter curated templates for administration
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminContentStateFilter'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminTemplateCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Administration
+      operationId: createAdminTemplate
+      summary: Create a curated template as a draft with its first version
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminTemplateContent'
+      responses:
+        '201':
+          $ref: '#/components/responses/AdminTemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/content/templates/{template}:
+    parameters:
+      - $ref: '#/components/parameters/AdminTemplatePublicId'
+    get:
+      tags:
+        - Administration
+      operationId: showAdminTemplate
+      summary: Return one curated template for administration
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminTemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    put:
+      tags:
+        - Administration
+      operationId: updateAdminTemplate
+      summary: Edit a draft template's metadata and optionally append a version
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminTemplateUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminTemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/content/templates/{template}/lifecycle:
+    parameters:
+      - $ref: '#/components/parameters/AdminTemplatePublicId'
+    patch:
+      tags:
+        - Administration
+      operationId: transitionAdminTemplate
+      summary: Advance the lifecycle state of one curated template
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminContentTransition'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminTemplateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/communities:
+    get:
+      tags:
+        - Administration
+      operationId: listAdminCommunities
+      summary: List and filter communities for administration
+      security:
+        - adminSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AdminCommunityVisibilityFilter'
+        - $ref: '#/components/parameters/AdminCursor'
+        - $ref: '#/components/parameters/AdminPerPage'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminCommunityCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      tags:
+        - Administration
+      operationId: createAdminCommunity
+      summary: Create an admin-managed community
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCommunityContent'
+      responses:
+        '201':
+          $ref: '#/components/responses/AdminCommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/communities/{community}:
+    parameters:
+      - $ref: '#/components/parameters/AdminCommunityPublicId'
+    put:
+      tags:
+        - Administration
+      operationId: updateAdminCommunity
+      summary: Edit a community's presentation
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCommunityUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminCommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/communities/{community}/visibility:
+    parameters:
+      - $ref: '#/components/parameters/AdminCommunityPublicId'
+    patch:
+      tags:
+        - Administration
+      operationId: setAdminCommunityVisibility
+      summary: Publish or archive a community
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCommunityVisibility'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminCommunitySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/analytics:
+    get:
+      tags:
+        - Administration
+      operationId: getAdminOperationalOverview
+      summary: Return a privacy-safe aggregate operational overview
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminOperationalOverviewSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/demo-data:
+    post:
+      tags:
+        - Administration
+      operationId: seedAdminDemoContent
+      summary: Idempotently seed the deterministic guidance launch catalog
+      security:
+        - adminSessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDemoDataRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminDemoDataSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
 components:
   securitySchemes:
     sessionCookie:
@@ -5810,6 +6110,30 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/WorkflowPublicId'
+    AdminTemplatePublicId:
+      name: template
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$'
+    AdminCommunityPublicId:
+      name: community
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$'
+    AdminCommunityVisibilityFilter:
+      name: visibility
+      in: query
+      required: false
+      description: Filter communities by visibility.
+      schema:
+        type: string
+        enum:
+          - published
+          - archived
     PromptSearch:
       name: search
       in: query
@@ -6687,6 +7011,60 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminWorkflowCollectionSuccess'
+    AdminTemplateSuccess:
+      description: The operation returned one curated template record.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminTemplateSuccess'
+    AdminTemplateCollectionSuccess:
+      description: The operation returned one page of curated template records.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminTemplateCollectionSuccess'
+    AdminCommunitySuccess:
+      description: The operation returned one managed community record.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminCommunitySuccess'
+    AdminCommunityCollectionSuccess:
+      description: The operation returned one page of managed community records.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminCommunityCollectionSuccess'
+    AdminOperationalOverviewSuccess:
+      description: The operation returned a privacy-safe operational overview.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminOperationalOverviewSuccess'
+    AdminDemoDataSuccess:
+      description: The demo-data seed completed and returned catalog counts.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminDemoDataSuccess'
     NullSuccess:
       description: The operation completed successfully.
       headers:
@@ -13778,3 +14156,500 @@ components:
           $ref: '#/components/schemas/AdminCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'
+    AdminTemplate:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - summary
+        - badge
+        - integrity_note
+        - provenance
+        - latest_version
+        - state
+        - last_reviewed_at
+        - published_at
+        - archived_at
+        - version
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: '^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$'
+        title:
+          type: string
+        category:
+          $ref: '#/components/schemas/AdminContentCategorySummary'
+        summary:
+          type: string
+        badge:
+          type: string
+          enum:
+            - approved_free
+        integrity_note:
+          type: string
+        provenance:
+          type: string
+        latest_version:
+          type: object
+          nullable: true
+          required:
+            - number
+            - format
+            - body
+          additionalProperties: false
+          properties:
+            number:
+              type: integer
+            format:
+              type: string
+              enum:
+                - markdown
+                - plain
+            body:
+              type: string
+        state:
+          $ref: '#/components/schemas/AdminContentState'
+        last_reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AdminTemplateContent:
+      type: object
+      required:
+        - category_slug
+        - title
+        - summary
+        - integrity_note
+        - provenance
+        - format
+        - body
+      additionalProperties: false
+      properties:
+        category_slug:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        integrity_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        format:
+          type: string
+          enum:
+            - markdown
+            - plain
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+        change_note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+    AdminTemplateUpdate:
+      type: object
+      required:
+        - category_slug
+        - title
+        - summary
+        - integrity_note
+        - provenance
+        - expected_version
+      additionalProperties: false
+      properties:
+        category_slug:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        integrity_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        format:
+          type: string
+          enum:
+            - markdown
+            - plain
+        body:
+          type: string
+          minLength: 1
+          maxLength: 20000
+        change_note:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        expected_version:
+          type: integer
+          minimum: 1
+    AdminCommunity:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - summary
+        - description
+        - topic
+        - visibility
+        - is_seeded
+        - member_count
+        - version
+        - created_at
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: '^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$'
+        slug:
+          type: string
+        name:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+          nullable: true
+        topic:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum:
+            - published
+            - archived
+        is_seeded:
+          type: boolean
+        member_count:
+          type: integer
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    AdminCommunityContent:
+      type: object
+      required:
+        - name
+        - summary
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 280
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 80
+    AdminCommunityUpdate:
+      type: object
+      required:
+        - name
+        - summary
+        - expected_version
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 280
+        description:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 2000
+        topic:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 80
+        expected_version:
+          type: integer
+          minimum: 1
+    AdminCommunityVisibility:
+      type: object
+      required:
+        - visibility
+        - expected_version
+        - reason
+      additionalProperties: false
+      properties:
+        visibility:
+          type: string
+          enum:
+            - published
+            - archived
+        expected_version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    AdminContentStateCounts:
+      type: object
+      required:
+        - draft
+        - in_review
+        - published
+        - archived
+      additionalProperties: false
+      properties:
+        draft:
+          type: integer
+        in_review:
+          type: integer
+        published:
+          type: integer
+        archived:
+          type: integer
+    AdminOperationalOverview:
+      type: object
+      required:
+        - users
+        - content
+        - community
+        - mentors
+        - audit_event_count
+      additionalProperties: false
+      properties:
+        users:
+          type: object
+          required:
+            - total
+            - active
+            - suspended
+            - by_role
+          additionalProperties: false
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            suspended:
+              type: integer
+            by_role:
+              type: object
+              additionalProperties:
+                type: integer
+        content:
+          type: object
+          required:
+            - tools
+            - prompts
+            - workflows
+            - templates
+          additionalProperties: false
+          properties:
+            tools:
+              $ref: '#/components/schemas/AdminContentStateCounts'
+            prompts:
+              $ref: '#/components/schemas/AdminContentStateCounts'
+            workflows:
+              $ref: '#/components/schemas/AdminContentStateCounts'
+            templates:
+              $ref: '#/components/schemas/AdminContentStateCounts'
+        community:
+          type: object
+          required:
+            - communities
+            - memberships
+            - reports
+          additionalProperties: false
+          properties:
+            communities:
+              type: integer
+            memberships:
+              type: integer
+            reports:
+              type: object
+              required:
+                - open
+                - reviewing
+                - actioned
+                - dismissed
+              additionalProperties: false
+              properties:
+                open:
+                  type: integer
+                reviewing:
+                  type: integer
+                actioned:
+                  type: integer
+                dismissed:
+                  type: integer
+        mentors:
+          type: object
+          required:
+            - verified
+            - unverified
+          additionalProperties: false
+          properties:
+            verified:
+              type: integer
+            unverified:
+              type: integer
+        audit_event_count:
+          type: integer
+    AdminDemoDataRequest:
+      type: object
+      required:
+        - reason
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    AdminTemplateSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminTemplate'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminTemplateCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AdminTemplate'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminCommunitySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminCommunity'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminCommunityCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AdminCommunity'
+        meta:
+          $ref: '#/components/schemas/AdminCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    AdminOperationalOverviewSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminOperationalOverview'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminDemoDataSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          required:
+            - catalog
+          additionalProperties: false
+          properties:
+            catalog:
+              type: object
+              required:
+                - tools
+                - prompts
+                - workflows
+              additionalProperties: false
+              properties:
+                tools:
+                  type: integer
+                prompts:
+                  type: integer
+                workflows:
+                  type: integer
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'

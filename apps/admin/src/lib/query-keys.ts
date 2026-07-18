@@ -37,3 +37,13 @@ export const contentKeys = {
   list: (type: string, state: string) =>
     [...contentKeys.type(type), "list", state] as const,
 };
+
+export const communityMgmtKeys = {
+  all: ["admin", "communities"] as const,
+  list: (visibility: string) =>
+    [...communityMgmtKeys.all, "list", visibility] as const,
+};
+
+export const analyticsKeys = {
+  overview: ["admin", "analytics", "overview"] as const,
+};

@@ -93,6 +93,50 @@ export const FULL_ADMIN_CAPS = [
   "audit.view-all",
 ];
 
+export function adminCommunityRow(
+  overrides: Partial<Record<string, unknown>> = {},
+) {
+  return {
+    id: "01JCOMM00000000000000000AA",
+    slug: "study-skills",
+    name: "Study Skills",
+    summary: "Share revision techniques.",
+    description: null,
+    topic: "Productivity",
+    visibility: "published",
+    is_seeded: true,
+    member_count: 12,
+    version: 1,
+    created_at: "2026-07-01T09:00:00Z",
+    ...overrides,
+  };
+}
+
+export function operationalOverview() {
+  const counts = { draft: 1, in_review: 0, published: 2, archived: 0 };
+  return {
+    users: {
+      total: 5,
+      active: 4,
+      suspended: 1,
+      by_role: { admin: 1, student: 4 },
+    },
+    content: {
+      tools: counts,
+      prompts: counts,
+      workflows: counts,
+      templates: counts,
+    },
+    community: {
+      communities: 2,
+      memberships: 20,
+      reports: { open: 3, reviewing: 1, actioned: 0, dismissed: 0 },
+    },
+    mentors: { verified: 2, unverified: 1 },
+    audit_event_count: 42,
+  };
+}
+
 export function adminToolRow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: "01JTOOL00000000000000000AA",

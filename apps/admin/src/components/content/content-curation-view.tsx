@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ContentType } from "@/lib/api/admin-content";
 
 import { PromptsCuration } from "./prompts-curation";
+import { TemplatesCuration } from "./templates-curation";
 import { ToolsCuration } from "./tools-curation";
 import { WorkflowsCuration } from "./workflows-curation";
 
@@ -12,12 +13,15 @@ const TABS: Array<{ type: ContentType; label: string }> = [
   { type: "tools", label: "Tools" },
   { type: "prompts", label: "Prompts" },
   { type: "workflows", label: "Workflows" },
+  { type: "templates", label: "Templates" },
 ];
 
 const DESCRIPTION: Record<ContentType, string> = {
   tools: "Curated tools students can reach from goal-based guidance.",
   prompts: "Reusable prompt templates with integrity notes and related tools.",
   workflows: "Step-by-step recipes that move a goal to a reviewed result.",
+  templates:
+    "Reusable document templates with an approved badge and versioned body.",
 };
 
 export function ContentCurationView({ type }: { type: ContentType }) {
@@ -48,6 +52,7 @@ export function ContentCurationView({ type }: { type: ContentType }) {
       {type === "tools" ? <ToolsCuration /> : null}
       {type === "prompts" ? <PromptsCuration /> : null}
       {type === "workflows" ? <WorkflowsCuration /> : null}
+      {type === "templates" ? <TemplatesCuration /> : null}
     </div>
   );
 }

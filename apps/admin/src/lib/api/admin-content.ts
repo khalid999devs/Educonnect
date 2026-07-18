@@ -11,8 +11,8 @@ export const CONTENT_STATES = [
 
 export type ContentState = (typeof CONTENT_STATES)[number];
 
-/** The four content lifecycle types share a URL segment and a transition contract. */
-export type ContentType = "tools" | "prompts" | "workflows";
+/** The content lifecycle types share a URL segment and a transition contract. */
+export type ContentType = "tools" | "prompts" | "workflows" | "templates";
 
 export const categorySchema = z.object({
   slug: z.string(),
@@ -266,6 +266,83 @@ export async function updateWorkflow(
       body: { ...content, expected_version: expectedVersion },
     }),
     adminWorkflowSchema,
+  );
+}
+
+export const TEMPLATE_FORMATS = ["markdown", "plain"] as const;
+
+export const adminTemplateSchema = z.object({
+  ...lifecycleFields,
+  title: z.string(),
+  category: z.object({ slug: z.string(), name: z.string() }).nullable(),
+  summary: z.string(),
+  badge: z.string(),
+  integrity_note: z.string(),
+  provenance: z.string(),
+  latest_version: z
+    .object({
+      number: z.number(),
+      format: z.enum(TEMPLATE_FORMATS),
+      body: z.string(),
+    })
+    .nullable(),
+});
+
+export type AdminTemplate = z.infer<typeof adminTemplateSchema>;
+
+export type TemplateContent = {
+  category_slug: string;
+  title: string;
+  summary: string;
+  integrity_note: string;
+  provenance: string;
+  format: (typeof TEMPLATE_FORMATS)[number];
+  body: string;
+  change_note: string | null;
+};
+
+export async function listTemplates(filters: {
+  state?: string;
+  cursor?: string;
+}): Promise<Page<AdminTemplate>> {
+  const query = toQueryString({
+    state: filters.state || undefined,
+    cursor: filters.cursor,
+  });
+
+  return parsePage(
+    await apiFetch(`/api/v1/admin/content/templates${query}`),
+    adminTemplateSchema,
+  );
+}
+
+export async function createTemplate(
+  content: TemplateContent,
+): Promise<AdminTemplate> {
+  return parseResource(
+    await apiFetch("/api/v1/admin/content/templates", {
+      method: "POST",
+      body: { ...content, change_note: content.change_note ?? undefined },
+    }),
+    adminTemplateSchema,
+  );
+}
+
+export async function updateTemplate(
+  id: string,
+  content: TemplateContent,
+  expectedVersion: number,
+): Promise<AdminTemplate> {
+  return parseResource(
+    await apiFetch(`/api/v1/admin/content/templates/${id}`, {
+      method: "PUT",
+      body: {
+        ...content,
+        change_note: content.change_note ?? undefined,
+        expected_version: expectedVersion,
+      },
+    }),
+    adminTemplateSchema,
   );
 }
 

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Content",
 };
 
-const TYPES: ContentType[] = ["tools", "prompts", "workflows"];
+const TYPES: ContentType[] = ["tools", "prompts", "workflows", "templates"];
 
 export default async function ContentPage({
   params,

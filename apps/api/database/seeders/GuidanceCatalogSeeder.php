@@ -92,6 +92,12 @@ final class GuidanceCatalogSeeder extends Seeder
 
     private function category(string $slug, string $name, string $description, int $sortOrder): ToolCategory
     {
+        $existing = ToolCategory::query()->where('slug', $slug)->first();
+
+        if ($existing instanceof ToolCategory) {
+            return $existing;
+        }
+
         $category = new ToolCategory;
         $category->forceFill([
             'slug' => $slug,

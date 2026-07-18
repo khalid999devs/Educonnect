@@ -1,15 +1,25 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\Analytics\OperationalOverviewController;
 use App\Http\Controllers\Api\V1\Admin\Audit\ListAuditEventsController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminCurrentUserController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLogoutController;
+use App\Http\Controllers\Api\V1\Admin\Community\CreateCommunityController as CreateAdminCommunityController;
+use App\Http\Controllers\Api\V1\Admin\Community\ListCommunitiesController as ListAdminCommunitiesController;
+use App\Http\Controllers\Api\V1\Admin\Community\SetCommunityVisibilityController;
+use App\Http\Controllers\Api\V1\Admin\Community\UpdateCommunityController as UpdateAdminCommunityController;
 use App\Http\Controllers\Api\V1\Admin\Content\ListToolCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Content\Prompts\CreatePromptController as CreateAdminPromptController;
 use App\Http\Controllers\Api\V1\Admin\Content\Prompts\ListPromptsController as ListAdminPromptsController;
 use App\Http\Controllers\Api\V1\Admin\Content\Prompts\ShowPromptController as ShowAdminPromptController;
 use App\Http\Controllers\Api\V1\Admin\Content\Prompts\TransitionPromptController;
 use App\Http\Controllers\Api\V1\Admin\Content\Prompts\UpdatePromptController as UpdateAdminPromptController;
+use App\Http\Controllers\Api\V1\Admin\Content\Templates\CreateTemplateController as CreateAdminTemplateController;
+use App\Http\Controllers\Api\V1\Admin\Content\Templates\ListTemplatesController as ListAdminTemplatesController;
+use App\Http\Controllers\Api\V1\Admin\Content\Templates\ShowTemplateController as ShowAdminTemplateController;
+use App\Http\Controllers\Api\V1\Admin\Content\Templates\TransitionTemplateController;
+use App\Http\Controllers\Api\V1\Admin\Content\Templates\UpdateTemplateController as UpdateAdminTemplateController;
 use App\Http\Controllers\Api\V1\Admin\Content\Tools\CreateToolController as CreateAdminToolController;
 use App\Http\Controllers\Api\V1\Admin\Content\Tools\ListToolsController as ListAdminToolsController;
 use App\Http\Controllers\Api\V1\Admin\Content\Tools\ShowToolController as ShowAdminToolController;
@@ -20,6 +30,7 @@ use App\Http\Controllers\Api\V1\Admin\Content\Workflows\ListWorkflowsController 
 use App\Http\Controllers\Api\V1\Admin\Content\Workflows\ShowWorkflowController as ShowAdminWorkflowController;
 use App\Http\Controllers\Api\V1\Admin\Content\Workflows\TransitionWorkflowController;
 use App\Http\Controllers\Api\V1\Admin\Content\Workflows\UpdateWorkflowController as UpdateAdminWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\DemoData\SeedDemoContentController;
 use App\Http\Controllers\Api\V1\Admin\Mentors\ListAdminMentorsController;
 use App\Http\Controllers\Api\V1\Admin\Mentors\SetMentorVerificationController;
 use App\Http\Controllers\Api\V1\Admin\Reports\ListAdminReportsController;
@@ -976,7 +987,41 @@ Route::prefix('admin')
                         Route::patch('/{workflow}/lifecycle', TransitionWorkflowController::class)
                             ->where('workflow', $ulid)->middleware(['throttle:admin.write', $curate])->name('lifecycle');
                     });
+
+                    Route::prefix('templates')->name('templates.')->group(function () use ($ulid, $curate): void {
+                        Route::get('/', ListAdminTemplatesController::class)
+                            ->middleware(['throttle:admin.read', $curate])->name('index');
+                        Route::post('/', CreateAdminTemplateController::class)
+                            ->middleware(['throttle:admin.write', $curate])->name('store');
+                        Route::get('/{template}', ShowAdminTemplateController::class)
+                            ->where('template', $ulid)->middleware(['throttle:admin.read', $curate])->name('show');
+                        Route::put('/{template}', UpdateAdminTemplateController::class)
+                            ->where('template', $ulid)->middleware(['throttle:admin.write', $curate])->name('update');
+                        Route::patch('/{template}/lifecycle', TransitionTemplateController::class)
+                            ->where('template', $ulid)->middleware(['throttle:admin.write', $curate])->name('lifecycle');
+                    });
                 });
+
+                Route::prefix('communities')->name('communities.')->group(function () use ($ulid): void {
+                    $curate = EnsureAdminCapability::class.':content.curate';
+
+                    Route::get('/', ListAdminCommunitiesController::class)
+                        ->middleware(['throttle:admin.read', $curate])->name('index');
+                    Route::post('/', CreateAdminCommunityController::class)
+                        ->middleware(['throttle:admin.write', $curate])->name('store');
+                    Route::put('/{community}', UpdateAdminCommunityController::class)
+                        ->where('community', $ulid)->middleware(['throttle:admin.write', $curate])->name('update');
+                    Route::patch('/{community}/visibility', SetCommunityVisibilityController::class)
+                        ->where('community', $ulid)->middleware(['throttle:admin.write', $curate])->name('visibility');
+                });
+
+                Route::get('/analytics', OperationalOverviewController::class)
+                    ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':audit.view-all'])
+                    ->name('analytics');
+
+                Route::post('/demo-data', SeedDemoContentController::class)
+                    ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':content.curate'])
+                    ->name('demo-data.seed');
             });
         });
     });

@@ -80,6 +80,8 @@ final class AuditRecorder
             'report_status',
             'moderation_state',
             'content_state',
+            'visibility',
+            'demo_data',
         ];
 
         if (array_diff(array_keys($state), $allowedKeys) !== []) {

@@ -4,6 +4,22 @@ use App\Http\Controllers\Api\V1\Admin\Audit\ListAuditEventsController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminCurrentUserController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Api\V1\Admin\Auth\AdminLogoutController;
+use App\Http\Controllers\Api\V1\Admin\Content\ListToolCategoriesController;
+use App\Http\Controllers\Api\V1\Admin\Content\Prompts\CreatePromptController as CreateAdminPromptController;
+use App\Http\Controllers\Api\V1\Admin\Content\Prompts\ListPromptsController as ListAdminPromptsController;
+use App\Http\Controllers\Api\V1\Admin\Content\Prompts\ShowPromptController as ShowAdminPromptController;
+use App\Http\Controllers\Api\V1\Admin\Content\Prompts\TransitionPromptController;
+use App\Http\Controllers\Api\V1\Admin\Content\Prompts\UpdatePromptController as UpdateAdminPromptController;
+use App\Http\Controllers\Api\V1\Admin\Content\Tools\CreateToolController as CreateAdminToolController;
+use App\Http\Controllers\Api\V1\Admin\Content\Tools\ListToolsController as ListAdminToolsController;
+use App\Http\Controllers\Api\V1\Admin\Content\Tools\ShowToolController as ShowAdminToolController;
+use App\Http\Controllers\Api\V1\Admin\Content\Tools\TransitionToolController;
+use App\Http\Controllers\Api\V1\Admin\Content\Tools\UpdateToolController as UpdateAdminToolController;
+use App\Http\Controllers\Api\V1\Admin\Content\Workflows\CreateWorkflowController as CreateAdminWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\Content\Workflows\ListWorkflowsController as ListAdminWorkflowsController;
+use App\Http\Controllers\Api\V1\Admin\Content\Workflows\ShowWorkflowController as ShowAdminWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\Content\Workflows\TransitionWorkflowController;
+use App\Http\Controllers\Api\V1\Admin\Content\Workflows\UpdateWorkflowController as UpdateAdminWorkflowController;
 use App\Http\Controllers\Api\V1\Admin\Mentors\ListAdminMentorsController;
 use App\Http\Controllers\Api\V1\Admin\Mentors\SetMentorVerificationController;
 use App\Http\Controllers\Api\V1\Admin\Reports\ListAdminReportsController;
@@ -914,6 +930,53 @@ Route::prefix('admin')
                 Route::get('/audit-events', ListAuditEventsController::class)
                     ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':audit.view-all'])
                     ->name('audit.index');
+
+                Route::prefix('content')->name('content.')->group(function () use ($ulid): void {
+                    $curate = EnsureAdminCapability::class.':content.curate';
+
+                    Route::get('/categories', ListToolCategoriesController::class)
+                        ->middleware(['throttle:admin.read', $curate])
+                        ->name('categories.index');
+
+                    Route::prefix('tools')->name('tools.')->group(function () use ($ulid, $curate): void {
+                        Route::get('/', ListAdminToolsController::class)
+                            ->middleware(['throttle:admin.read', $curate])->name('index');
+                        Route::post('/', CreateAdminToolController::class)
+                            ->middleware(['throttle:admin.write', $curate])->name('store');
+                        Route::get('/{tool}', ShowAdminToolController::class)
+                            ->where('tool', $ulid)->middleware(['throttle:admin.read', $curate])->name('show');
+                        Route::put('/{tool}', UpdateAdminToolController::class)
+                            ->where('tool', $ulid)->middleware(['throttle:admin.write', $curate])->name('update');
+                        Route::patch('/{tool}/lifecycle', TransitionToolController::class)
+                            ->where('tool', $ulid)->middleware(['throttle:admin.write', $curate])->name('lifecycle');
+                    });
+
+                    Route::prefix('prompts')->name('prompts.')->group(function () use ($ulid, $curate): void {
+                        Route::get('/', ListAdminPromptsController::class)
+                            ->middleware(['throttle:admin.read', $curate])->name('index');
+                        Route::post('/', CreateAdminPromptController::class)
+                            ->middleware(['throttle:admin.write', $curate])->name('store');
+                        Route::get('/{prompt}', ShowAdminPromptController::class)
+                            ->where('prompt', $ulid)->middleware(['throttle:admin.read', $curate])->name('show');
+                        Route::put('/{prompt}', UpdateAdminPromptController::class)
+                            ->where('prompt', $ulid)->middleware(['throttle:admin.write', $curate])->name('update');
+                        Route::patch('/{prompt}/lifecycle', TransitionPromptController::class)
+                            ->where('prompt', $ulid)->middleware(['throttle:admin.write', $curate])->name('lifecycle');
+                    });
+
+                    Route::prefix('workflows')->name('workflows.')->group(function () use ($ulid, $curate): void {
+                        Route::get('/', ListAdminWorkflowsController::class)
+                            ->middleware(['throttle:admin.read', $curate])->name('index');
+                        Route::post('/', CreateAdminWorkflowController::class)
+                            ->middleware(['throttle:admin.write', $curate])->name('store');
+                        Route::get('/{workflow}', ShowAdminWorkflowController::class)
+                            ->where('workflow', $ulid)->middleware(['throttle:admin.read', $curate])->name('show');
+                        Route::put('/{workflow}', UpdateAdminWorkflowController::class)
+                            ->where('workflow', $ulid)->middleware(['throttle:admin.write', $curate])->name('update');
+                        Route::patch('/{workflow}/lifecycle', TransitionWorkflowController::class)
+                            ->where('workflow', $ulid)->middleware(['throttle:admin.write', $curate])->name('lifecycle');
+                    });
+                });
             });
         });
     });

@@ -13,4 +13,5 @@ enum AuditAction: string
     case UserReactivated = 'users.account-reactivated';
     case MentorVerificationChanged = 'mentors.verification-changed';
     case ReportResolved = 'community.report-resolved';
+    case ContentLifecycleChanged = 'content.lifecycle-changed';
 }

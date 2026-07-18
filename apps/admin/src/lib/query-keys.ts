@@ -29,3 +29,11 @@ export const auditKeys = {
   all: ["admin", "audit"] as const,
   list: (action: string) => [...auditKeys.all, "list", action] as const,
 };
+
+export const contentKeys = {
+  all: ["admin", "content"] as const,
+  categories: () => [...contentKeys.all, "categories"] as const,
+  type: (type: string) => [...contentKeys.all, type] as const,
+  list: (type: string, state: string) =>
+    [...contentKeys.type(type), "list", state] as const,
+};

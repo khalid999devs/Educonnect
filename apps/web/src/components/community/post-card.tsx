@@ -86,7 +86,7 @@ export function PostCard({
               </h3>
             ) : null}
             {post.body ? (
-              <p className="whitespace-pre-wrap break-words text-body text-text-secondary">
+              <p className="whitespace-pre-wrap wrap-break-word text-body text-text-secondary">
                 {post.body}
               </p>
             ) : null}

@@ -68,6 +68,21 @@ trait InteractsWithAdmin
         };
     }
 
+    protected function plainSingleLineText(): Closure
+    {
+        return static function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_string($value)) {
+                return;
+            }
+
+            if (preg_match('/[\x00-\x1F\x7F]/u', $value) === 1
+                || str_contains($value, '<')
+                || str_contains($value, '>')) {
+                $fail("The {$attribute} field must be plain single-line text.");
+            }
+        };
+    }
+
     public function reason(): string
     {
         $value = $this->input('reason');

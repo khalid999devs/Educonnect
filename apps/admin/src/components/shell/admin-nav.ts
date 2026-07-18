@@ -101,18 +101,26 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: "Content",
     items: [
-      { label: "Tools", href: "/tools", icon: Wrench, available: false },
+      {
+        label: "Tools",
+        href: "/content/tools",
+        icon: Wrench,
+        available: true,
+        capability: "content.curate",
+      },
       {
         label: "Prompts",
-        href: "/prompts",
+        href: "/content/prompts",
         icon: MessageSquare,
-        available: false,
+        available: true,
+        capability: "content.curate",
       },
       {
         label: "Workflows",
-        href: "/workflows",
+        href: "/content/workflows",
         icon: Workflow,
-        available: false,
+        available: true,
+        capability: "content.curate",
       },
       {
         label: "Templates",

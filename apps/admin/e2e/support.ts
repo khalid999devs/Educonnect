@@ -88,9 +88,35 @@ export const FULL_ADMIN_CAPS = [
   "authorization.roles-assign",
   "users.suspend",
   "mentors.curate",
+  "content.curate",
   "moderation.global",
   "audit.view-all",
 ];
+
+export function adminToolRow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "01JTOOL00000000000000000AA",
+    name: "Concept Mapper",
+    category: { slug: "study-planning", name: "Study planning" },
+    purpose: "Map a dense reading.",
+    selection_reason: "Keeps sources visible.",
+    use_cases: ["Revision"],
+    usage_guidance: "Paste your notes.",
+    limitations: "Cannot judge quality.",
+    cost_note: "Free tier.",
+    privacy_note: "No personal data.",
+    url: "https://tools.example.edu/concept-mapper",
+    provenance: "Reviewed against provider docs.",
+    state: "draft",
+    last_reviewed_at: null,
+    published_at: null,
+    archived_at: null,
+    version: 1,
+    created_at: "2026-07-01T09:00:00Z",
+    updated_at: "2026-07-10T09:00:00Z",
+    ...overrides,
+  };
+}
 
 export const MODERATOR_CAPS = [
   "admin.access",

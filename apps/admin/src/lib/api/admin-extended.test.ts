@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { adminCommunitySchema } from "./admin-communities";
 import { adminTemplateSchema } from "./admin-content";
-import { operationalOverviewSchema } from "./admin-analytics";
+import {
+  operationalOverviewSchema,
+  operationalTelemetrySchema,
+} from "./admin-analytics";
 
 describe("adminTemplateSchema", () => {
   it("parses a template with a latest version", () => {
@@ -71,5 +74,39 @@ describe("operationalOverviewSchema", () => {
 
     expect(overview.users.suspended).toBe(1);
     expect(overview.content.tools.published).toBe(2);
+  });
+});
+
+describe("operationalTelemetrySchema", () => {
+  it("parses telemetry with null latencies and empty maps", () => {
+    const telemetry = operationalTelemetrySchema.parse({
+      window_hours: 24,
+      generated_at: "2026-07-19T12:00:00Z",
+      ai: {
+        total: 0,
+        by_outcome: { success: 0, failure: 0, fallback: 0, degraded: 0 },
+        fallback_rate: 0,
+        failure_rate: 0,
+        latency_ms: { p50: null, p95: null, p99: null },
+        by_feature: {},
+      },
+      jobs: {
+        total: 0,
+        by_outcome: { success: 0, failure: 0, fallback: 0, degraded: 0 },
+        failure_rate: 0,
+        by_job: {},
+      },
+      errors: { total: 0, by_code: {} },
+      http: {
+        request_count: 0,
+        error_count: 0,
+        error_rate: 0,
+        latency_ms: { p50: null, p95: null, p99: null },
+        window_seconds: 3600,
+      },
+    });
+
+    expect(telemetry.ai.latency_ms.p95).toBeNull();
+    expect(telemetry.http.request_count).toBe(0);
   });
 });

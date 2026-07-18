@@ -54,7 +54,11 @@ final class AccountStatusMigrationTest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        Artisan::call('migrate:rollback', ['--step' => 1]);
+        // The Phase-28 telemetry migration (000018) now sits above the
+        // account-status migration (000017); rolling back two steps drops the
+        // (dependency-free) telemetry table first, then trips the account-status
+        // down() guard that refuses while suspended accounts exist.
+        Artisan::call('migrate:rollback', ['--step' => 2]);
     }
 
     private function assertQueryRejected(string $expectedSqlState, callable $operation): void

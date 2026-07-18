@@ -16,6 +16,8 @@ use App\Domains\Intake\Support\IntakeEventRecorder;
 use App\Domains\Intake\Support\LinkContentFetcher;
 use App\Domains\Resources\Models\StoredFile;
 use App\Domains\Resources\Support\ResourceStorage;
+use App\Domains\Telemetry\Enums\TelemetryOutcome;
+use App\Domains\Telemetry\Support\TelemetryRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -38,8 +40,9 @@ final class ProcessIntakeItem implements ShouldQueue
         IntakeContentExtractor $extractor,
         IntakeEventRecorder $events,
         ResourceStorage $storage,
+        TelemetryRecorder $telemetry,
     ): void {
-        $item = $this->claim($events);
+        $item = $this->claim($events, $telemetry);
 
         if (! $item instanceof IntakeItem) {
             return;
@@ -63,20 +66,47 @@ final class ProcessIntakeItem implements ShouldQueue
             ]);
 
             $this->finish($item, $events, mb_strlen($text));
+            $telemetry->recordIntakeJob('intake.process', TelemetryOutcome::Success);
         } catch (IntakeAcquisitionFailure $failure) {
             $this->markFailed($item, $events, $failure->failureCode, $failure->getMessage());
+            $telemetry->recordIntakeJob('intake.process', TelemetryOutcome::Failure, null, [
+                'code' => $failure->failureCode->value,
+            ]);
         } catch (Throwable $exception) {
             Log::error('Intake processing failed unexpectedly.', [
                 'intake_item_id' => $this->intakeItemId,
                 'exception_type' => $exception::class,
             ]);
             $this->markFailed($item, $events, IntakeFailureCode::ExtractionFailed, 'unexpected processing failure');
+            $telemetry->recordIntakeJob('intake.process', TelemetryOutcome::Failure, null, [
+                'code' => IntakeFailureCode::ExtractionFailed->value,
+            ]);
         }
     }
 
-    private function claim(IntakeEventRecorder $events): ?IntakeItem
+    /**
+     * Called by the queue when the job dies terminally (an escaped exception, a
+     * timeout, or a graceful worker shutdown). A hard kill that never invokes
+     * this is the reaper's job; here we free the item from `extracting` so it is
+     * not stranded forever.
+     */
+    public function failed(?Throwable $exception): void
     {
-        return DB::transaction(function () use ($events): ?IntakeItem {
+        $events = app(IntakeEventRecorder::class);
+        $telemetry = app(TelemetryRecorder::class);
+        $item = IntakeItem::query()->whereKey($this->intakeItemId)->first();
+
+        if (! $item instanceof IntakeItem || $item->state !== IntakeState::Extracting) {
+            return;
+        }
+
+        $this->markFailed($item, $events, IntakeFailureCode::Interrupted, 'processing worker terminated before completion');
+        $telemetry->recordIntakeJob('intake.process', TelemetryOutcome::Failure, null, ['code' => 'interrupted']);
+    }
+
+    private function claim(IntakeEventRecorder $events, TelemetryRecorder $telemetry): ?IntakeItem
+    {
+        return DB::transaction(function () use ($events, $telemetry): ?IntakeItem {
             $item = IntakeItem::query()->whereKey($this->intakeItemId)->lockForUpdate()->first();
 
             if (! $item instanceof IntakeItem || $item->state !== IntakeState::Queued) {
@@ -93,6 +123,9 @@ final class ProcessIntakeItem implements ShouldQueue
                     'finished_at' => now(),
                 ])->save();
                 $events->record($item, 'failed', IntakeState::Queued, IntakeState::FailedFinal, 'attempts exhausted');
+                $telemetry->recordIntakeJob('intake.process', TelemetryOutcome::Failure, null, [
+                    'code' => IntakeFailureCode::AttemptsExhausted->value,
+                ]);
 
                 return null;
             }

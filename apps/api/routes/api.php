@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\V1\Admin\Reports\ListAdminReportsController;
 use App\Http\Controllers\Api\V1\Admin\Reports\ResolveAdminReportController;
 use App\Http\Controllers\Api\V1\Admin\Roles\ChangeUserRolesController;
 use App\Http\Controllers\Api\V1\Admin\Roles\ListRolesController;
+use App\Http\Controllers\Api\V1\Admin\Telemetry\OperationalTelemetryController;
 use App\Http\Controllers\Api\V1\Admin\Users\ListUsersController;
 use App\Http\Controllers\Api\V1\Admin\Users\ReactivateUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\ShowUserController;
@@ -1026,6 +1027,10 @@ Route::prefix('admin')
                 Route::get('/analytics', OperationalOverviewController::class)
                     ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':audit.view-all'])
                     ->name('analytics');
+
+                Route::get('/telemetry', OperationalTelemetryController::class)
+                    ->middleware(['throttle:admin.read', EnsureAdminCapability::class.':audit.view-all'])
+                    ->name('telemetry');
 
                 Route::post('/demo-data', SeedDemoContentController::class)
                     ->middleware(['throttle:admin.write', EnsureAdminCapability::class.':content.curate', EnsureAdminReauthenticated::class])

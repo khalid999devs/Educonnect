@@ -137,6 +137,38 @@ export function operationalOverview() {
   };
 }
 
+export function operationalTelemetry() {
+  return {
+    window_hours: 24,
+    generated_at: "2026-07-19T12:00:00Z",
+    ai: {
+      total: 12,
+      by_outcome: { success: 10, failure: 1, fallback: 1, degraded: 0 },
+      fallback_rate: 0.0833,
+      failure_rate: 0.0833,
+      latency_ms: { p50: 620, p95: 1400, p99: 1900 },
+      by_feature: { "intake.classification": 9, copilot: 3 },
+    },
+    jobs: {
+      total: 8,
+      by_outcome: { success: 7, failure: 1, fallback: 0, degraded: 0 },
+      failure_rate: 0.125,
+      by_job: { "intake.process": 5, "intake.classify": 3 },
+    },
+    errors: {
+      total: 1,
+      by_code: { internal_error: 1 },
+    },
+    http: {
+      request_count: 340,
+      error_count: 2,
+      error_rate: 0.0059,
+      latency_ms: { p50: 50, p95: 250, p99: 500 },
+      window_seconds: 3600,
+    },
+  };
+}
+
 export function adminToolRow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: "01JTOOL00000000000000000AA",

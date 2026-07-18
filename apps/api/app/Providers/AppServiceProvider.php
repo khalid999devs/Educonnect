@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Domains\Copilot\Contracts\ChatProvider;
 use App\Domains\Copilot\OpenAiChatProvider;
+use App\Domains\Guidance\Models\PromptTemplate;
+use App\Domains\Guidance\Models\WorkflowRecipe;
+use App\Domains\Guidance\Models\WorkflowStep;
 use App\Domains\Intake\AI\OpenAiClassificationProvider;
 use App\Domains\Intake\AI\RuleBasedClassificationProvider;
 use App\Domains\Intake\Contracts\AIProvider;
@@ -13,7 +16,12 @@ use App\Domains\Intake\Support\DnsHostResolver;
 use App\Domains\Intake\Support\PlainTextExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
 use App\Domains\Resources\Support\S3StrictPutUploadSigner;
+use App\Domains\Templates\Models\Template;
+use App\Domains\Templates\Models\TemplateVersion;
+use App\Domains\Tools\Models\Tool;
+use App\Domains\Tools\Models\ToolCategory;
 use App\Support\Ai\OpenAiClient;
+use App\Support\CacheVersion;
 use App\Support\ProductionConfiguration;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -91,6 +99,34 @@ class AppServiceProvider extends ServiceProvider
         $this->registerCommunityRateLimiters();
         $this->registerMentorRateLimiters();
         $this->registerAdminRateLimiters();
+        $this->registerContentCacheInvalidation();
+    }
+
+    /**
+     * Any curation of the published catalog bumps the shared content version so
+     * the cached guidance bundle self-invalidates immediately (see CacheVersion
+     * and BuildCategoryGuidance).
+     */
+    private function registerContentCacheInvalidation(): void
+    {
+        $bump = static function (): void {
+            app(CacheVersion::class)->bump('content');
+        };
+
+        $models = [
+            Tool::class,
+            ToolCategory::class,
+            PromptTemplate::class,
+            WorkflowRecipe::class,
+            WorkflowStep::class,
+            Template::class,
+            TemplateVersion::class,
+        ];
+
+        foreach ($models as $model) {
+            $model::saved($bump);
+            $model::deleted($bump);
+        }
     }
 
     private function registerAdminRateLimiters(): void

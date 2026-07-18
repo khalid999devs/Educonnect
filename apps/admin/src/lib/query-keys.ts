@@ -46,4 +46,5 @@ export const communityMgmtKeys = {
 
 export const analyticsKeys = {
   overview: ["admin", "analytics", "overview"] as const,
+  telemetry: ["admin", "analytics", "telemetry"] as const,
 };

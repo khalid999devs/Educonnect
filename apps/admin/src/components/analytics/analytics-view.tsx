@@ -12,7 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   getOperationalOverview,
+  getOperationalTelemetry,
   type OperationalOverview,
+  type OperationalTelemetry,
 } from "@/lib/api/admin-analytics";
 import { humanizeKey } from "@/lib/format";
 import { analyticsKeys } from "@/lib/query-keys";
@@ -22,15 +24,20 @@ export function AnalyticsView() {
     queryKey: analyticsKeys.overview,
     queryFn: getOperationalOverview,
   });
+  const telemetry = useQuery({
+    queryKey: analyticsKeys.telemetry,
+    queryFn: getOperationalTelemetry,
+    refetchInterval: 30_000,
+  });
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-h2 text-text-primary">Analytics</h1>
         <p className="text-body text-text-secondary">
-          A privacy-safe operational overview — aggregate counts only, never
-          private academic content. AI-usage, job-health, and error telemetry
-          arrive with the hardening phase.
+          A privacy-safe operational overview — aggregate counts and operational
+          telemetry only, never prompts, completions, or private academic
+          content.
         </p>
       </header>
 
@@ -49,6 +56,168 @@ export function AnalyticsView() {
       ) : (
         <Overview overview={query.data} />
       )}
+
+      {telemetry.isPending ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={`t-${index}`} className="h-40 w-full" />
+          ))}
+        </div>
+      ) : telemetry.isError ? (
+        <ErrorState
+          title="Could not load telemetry"
+          description="Operational telemetry could not be loaded."
+          onRetry={() => void telemetry.refetch()}
+        />
+      ) : (
+        <Telemetry telemetry={telemetry.data} />
+      )}
+    </div>
+  );
+}
+
+function formatLatency(value: number | null): string {
+  return value === null ? "—" : `${value} ms`;
+}
+
+function formatRate(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function Telemetry({ telemetry }: { telemetry: OperationalTelemetry }) {
+  const { ai, jobs, errors, http } = telemetry;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-h3 text-text-primary">Operational telemetry</h2>
+        <p className="text-caption text-text-muted">
+          Last {telemetry.window_hours}h · AI, jobs & errors are durable; HTTP
+          is a rolling {Math.round(http.window_seconds / 60)}-min estimate
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>AI providers</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {ai.total === 0 ? (
+              <p className="text-body text-text-muted">
+                No AI-provider calls in this window.
+              </p>
+            ) : (
+              <>
+                <Stat label="Calls" value={ai.total} />
+                <Stat label="Succeeded" value={ai.by_outcome.success} />
+                <Stat label="Failed" value={ai.by_outcome.failure} />
+                <Stat
+                  label="Fell back to deterministic"
+                  value={ai.by_outcome.fallback}
+                />
+                <TextStat
+                  label="Fallback rate"
+                  value={formatRate(ai.fallback_rate)}
+                />
+                <TextStat
+                  label="Latency p95"
+                  value={formatLatency(ai.latency_ms.p95)}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Background jobs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {jobs.total === 0 ? (
+              <p className="text-body text-text-muted">
+                No intake jobs ran in this window.
+              </p>
+            ) : (
+              <>
+                <Stat label="Runs" value={jobs.total} />
+                <Stat label="Succeeded" value={jobs.by_outcome.success} />
+                <Stat label="Failed" value={jobs.by_outcome.failure} />
+                <TextStat
+                  label="Failure rate"
+                  value={formatRate(jobs.failure_rate)}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>HTTP latency</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {http.request_count === 0 ? (
+              <p className="text-body text-text-muted">
+                No requests sampled in this window yet.
+              </p>
+            ) : (
+              <>
+                <Stat label="Requests" value={http.request_count} />
+                <TextStat
+                  label="Error rate (5xx)"
+                  value={formatRate(http.error_rate)}
+                />
+                <TextStat
+                  label="Latency p50"
+                  value={formatLatency(http.latency_ms.p50)}
+                />
+                <TextStat
+                  label="Latency p95"
+                  value={formatLatency(http.latency_ms.p95)}
+                />
+                <TextStat
+                  label="Latency p99"
+                  value={formatLatency(http.latency_ms.p99)}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Captured server errors</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {errors.total === 0 ? (
+              <p className="text-body text-text-muted">
+                No server faults captured in this window.
+              </p>
+            ) : (
+              <>
+                <Stat label="Total" value={errors.total} />
+                <div className="pt-2">
+                  <p className="mb-1 text-caption font-medium uppercase tracking-wide text-text-muted">
+                    By code
+                  </p>
+                  {Object.entries(errors.by_code).map(([code, count]) => (
+                    <Stat key={code} label={humanizeKey(code)} value={count} />
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function TextStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between text-body">
+      <span className="text-text-secondary">{label}</span>
+      <span className="font-semibold text-text-primary">{value}</span>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\RecordHttpMetrics;
 use App\Http\Middleware\RequireBrowserSurface;
 use App\Http\Middleware\RequireStatefulSpaSession;
 use App\Http\Middleware\RequireVerifiedEmail;
@@ -27,10 +28,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('resources:reconcile-storage --limit=10')
             ->everyFiveMinutes()
             ->withoutOverlapping(120);
+        $schedule->command('telemetry:prune')
+            ->dailyAt('03:15')
+            ->withoutOverlapping(600);
+        $schedule->command('intake:recover-stranded --limit=50')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(120);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
         $middleware->statefulApi();
+        $middleware->appendToGroup('api', RecordHttpMetrics::class);
         $middleware->prependToPriorityList(AuthenticatesRequests::class, RequireBrowserSurface::class);
         $middleware->prependToPriorityList(RequireBrowserSurface::class, RequireStatefulSpaSession::class);
         $middleware->prependToPriorityList(ThrottleRequests::class, RequireVerifiedEmail::class);

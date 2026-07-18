@@ -51,6 +51,27 @@ final class IntakeItemFactory extends Factory
         ]);
     }
 
+    public function extracting(): static
+    {
+        return $this->state(fn (): array => [
+            'state' => IntakeState::Extracting->value,
+            'queued_at' => now()->subMinute(),
+            'started_at' => now()->subSeconds(30),
+            'attempts' => 1,
+        ]);
+    }
+
+    public function organizing(): static
+    {
+        return $this->state(fn (): array => [
+            'state' => IntakeState::Organizing->value,
+            'queued_at' => now()->subMinutes(2),
+            'started_at' => now()->subMinute(),
+            'finished_at' => now()->subSeconds(30),
+            'attempts' => 1,
+        ]);
+    }
+
     public function awaitingReview(): static
     {
         return $this->state(fn (): array => [

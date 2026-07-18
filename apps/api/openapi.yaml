@@ -5800,6 +5800,25 @@ paths:
           $ref: '#/components/responses/AuthorizationDenied'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/admin/telemetry:
+    get:
+      tags:
+        - Administration
+      operationId: getAdminOperationalTelemetry
+      summary: Return privacy-safe operational telemetry (AI, jobs, errors, HTTP)
+      security:
+        - adminSessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminOperationalTelemetrySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/admin/demo-data:
     post:
       tags:
@@ -7106,6 +7125,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminOperationalOverviewSuccess'
+    AdminOperationalTelemetrySuccess:
+      description: The operation returned privacy-safe operational telemetry.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminOperationalTelemetrySuccess'
     AdminDemoDataSuccess:
       description: The demo-data seed completed and returned catalog counts.
       headers:
@@ -14632,6 +14660,133 @@ components:
               type: integer
         audit_event_count:
           type: integer
+    AdminTelemetryLatency:
+      type: object
+      required:
+        - p50
+        - p95
+        - p99
+      additionalProperties: false
+      properties:
+        p50:
+          type: integer
+          nullable: true
+        p95:
+          type: integer
+          nullable: true
+        p99:
+          type: integer
+          nullable: true
+    AdminTelemetryOutcomeCounts:
+      type: object
+      required:
+        - success
+        - failure
+        - fallback
+        - degraded
+      additionalProperties: false
+      properties:
+        success:
+          type: integer
+        failure:
+          type: integer
+        fallback:
+          type: integer
+        degraded:
+          type: integer
+    AdminOperationalTelemetry:
+      type: object
+      required:
+        - window_hours
+        - generated_at
+        - ai
+        - jobs
+        - errors
+        - http
+      additionalProperties: false
+      properties:
+        window_hours:
+          type: integer
+        generated_at:
+          type: string
+          format: date-time
+        ai:
+          type: object
+          required:
+            - total
+            - by_outcome
+            - fallback_rate
+            - failure_rate
+            - latency_ms
+            - by_feature
+          additionalProperties: false
+          properties:
+            total:
+              type: integer
+            by_outcome:
+              $ref: '#/components/schemas/AdminTelemetryOutcomeCounts'
+            fallback_rate:
+              type: number
+            failure_rate:
+              type: number
+            latency_ms:
+              $ref: '#/components/schemas/AdminTelemetryLatency'
+            by_feature:
+              type: object
+              additionalProperties:
+                type: integer
+        jobs:
+          type: object
+          required:
+            - total
+            - by_outcome
+            - failure_rate
+            - by_job
+          additionalProperties: false
+          properties:
+            total:
+              type: integer
+            by_outcome:
+              $ref: '#/components/schemas/AdminTelemetryOutcomeCounts'
+            failure_rate:
+              type: number
+            by_job:
+              type: object
+              additionalProperties:
+                type: integer
+        errors:
+          type: object
+          required:
+            - total
+            - by_code
+          additionalProperties: false
+          properties:
+            total:
+              type: integer
+            by_code:
+              type: object
+              additionalProperties:
+                type: integer
+        http:
+          type: object
+          required:
+            - request_count
+            - error_count
+            - error_rate
+            - latency_ms
+            - window_seconds
+          additionalProperties: false
+          properties:
+            request_count:
+              type: integer
+            error_count:
+              type: integer
+            error_rate:
+              type: number
+            latency_ms:
+              $ref: '#/components/schemas/AdminTelemetryLatency'
+            window_seconds:
+              type: integer
     AdminDemoDataRequest:
       type: object
       required:
@@ -14707,6 +14862,17 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/AdminOperationalOverview'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AdminOperationalTelemetrySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminOperationalTelemetry'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
     AdminDemoDataSuccess:

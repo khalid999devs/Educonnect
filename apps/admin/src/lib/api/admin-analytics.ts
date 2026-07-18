@@ -43,6 +43,57 @@ export async function getOperationalOverview(): Promise<OperationalOverview> {
   );
 }
 
+const outcomeCounts = z.object({
+  success: z.number(),
+  failure: z.number(),
+  fallback: z.number(),
+  degraded: z.number(),
+});
+
+const latency = z.object({
+  p50: z.number().nullable(),
+  p95: z.number().nullable(),
+  p99: z.number().nullable(),
+});
+
+export const operationalTelemetrySchema = z.object({
+  window_hours: z.number(),
+  generated_at: z.string(),
+  ai: z.object({
+    total: z.number(),
+    by_outcome: outcomeCounts,
+    fallback_rate: z.number(),
+    failure_rate: z.number(),
+    latency_ms: latency,
+    by_feature: z.record(z.string(), z.number()),
+  }),
+  jobs: z.object({
+    total: z.number(),
+    by_outcome: outcomeCounts,
+    failure_rate: z.number(),
+    by_job: z.record(z.string(), z.number()),
+  }),
+  errors: z.object({
+    total: z.number(),
+    by_code: z.record(z.string(), z.number()),
+  }),
+  http: z.object({
+    request_count: z.number(),
+    error_count: z.number(),
+    error_rate: z.number(),
+    latency_ms: latency,
+    window_seconds: z.number(),
+  }),
+});
+
+export type OperationalTelemetry = z.infer<typeof operationalTelemetrySchema>;
+
+export async function getOperationalTelemetry(): Promise<OperationalTelemetry> {
+  return operationalTelemetrySchema.parse(
+    envelopeData(await apiFetch("/api/v1/admin/telemetry")),
+  );
+}
+
 export async function seedDemoContent(
   reason: string,
 ): Promise<{ tools: number; prompts: number; workflows: number }> {

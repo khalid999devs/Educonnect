@@ -9,6 +9,7 @@ import {
   mockCsrf,
   mockJson,
   operationalOverview,
+  operationalTelemetry,
   sessionWith,
 } from "./support";
 
@@ -57,6 +58,11 @@ test.describe("extended admin curation", () => {
       `${API}/api/v1/admin/analytics`,
       envelope(operationalOverview()),
     );
+    await mockJson(
+      page,
+      `${API}/api/v1/admin/telemetry`,
+      envelope(operationalTelemetry()),
+    );
 
     await page.goto("/analytics");
 
@@ -65,6 +71,11 @@ test.describe("extended admin curation", () => {
     ).toBeVisible();
     await expect(page.getByText("Published communities")).toBeVisible();
     await expect(page.getByText("Report backlog")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Operational telemetry" }),
+    ).toBeVisible();
+    await expect(page.getByText("AI providers")).toBeVisible();
+    await expect(page.getByText("Fallback rate")).toBeVisible();
   });
 
   test("an admin seeds demo content", async ({ page }) => {

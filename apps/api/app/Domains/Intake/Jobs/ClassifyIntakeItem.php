@@ -7,6 +7,7 @@ namespace App\Domains\Intake\Jobs;
 use App\Domains\Courses\Models\Course;
 use App\Domains\Intake\AI\ClassificationPolicy;
 use App\Domains\Intake\AI\ClassificationRequest;
+use App\Domains\Intake\AI\RuleBasedClassificationProvider;
 use App\Domains\Intake\AI\SuggestionSchemaV1;
 use App\Domains\Intake\Contracts\AIProvider;
 use App\Domains\Intake\Enums\IntakeArtifactKind;
@@ -17,6 +18,8 @@ use App\Domains\Intake\Exceptions\InvalidSuggestionOutput;
 use App\Domains\Intake\Models\IntakeItem;
 use App\Domains\Intake\Models\IntakeSuggestion;
 use App\Domains\Intake\Support\IntakeEventRecorder;
+use App\Domains\Telemetry\Enums\TelemetryOutcome;
+use App\Domains\Telemetry\Support\TelemetryRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -38,6 +41,7 @@ final class ClassifyIntakeItem implements ShouldQueue
         ClassificationPolicy $policy,
         SuggestionSchemaV1 $schema,
         IntakeEventRecorder $events,
+        TelemetryRecorder $telemetry,
     ): void {
         $item = $this->claim($events);
 
@@ -49,23 +53,71 @@ final class ClassifyIntakeItem implements ShouldQueue
 
         if (! $request instanceof ClassificationRequest) {
             $this->markFailed($item, $events, 'no extracted text artifact is available');
+            $telemetry->recordIntakeJob('intake.classify', TelemetryOutcome::Failure, null, ['code' => 'no_text']);
 
             return;
         }
 
+        $usedFallback = false;
+
         foreach ($policy->providers() as $provider) {
+            $remote = ! $provider instanceof RuleBasedClassificationProvider;
+            $startedAt = hrtime(true);
             $outcome = $this->attemptProvider($provider, $policy, $schema, $request);
+            $latencyMs = (int) ((hrtime(true) - $startedAt) / 1_000_000);
 
             if ($outcome !== null) {
+                if ($remote) {
+                    $telemetry->recordAiCall('intake.classification', TelemetryOutcome::Success, $outcome['latency_ms'], [
+                        'provider' => $provider->name(),
+                        'model' => $provider->model(),
+                    ]);
+                } elseif ($usedFallback) {
+                    // A remote provider failed first; the deterministic path answered.
+                    $telemetry->recordAiCall('intake.classification', TelemetryOutcome::Fallback, $latencyMs, [
+                        'provider' => $provider->name(),
+                    ]);
+                }
+
                 $this->persist($item, $events, $provider, $outcome['suggestions'], $outcome['latency_ms']);
+                $telemetry->recordIntakeJob('intake.classify', TelemetryOutcome::Success);
 
                 return;
+            }
+
+            if ($remote) {
+                $usedFallback = true;
+                $telemetry->recordAiCall('intake.classification', TelemetryOutcome::Failure, $latencyMs, [
+                    'provider' => $provider->name(),
+                ]);
             }
 
             $events->record($item, 'classifier_rejected', null, null, 'provider '.$provider->name().' produced no valid output');
         }
 
         $this->markFailed($item, $events, 'every approved provider failed schema validation');
+        $telemetry->recordIntakeJob('intake.classify', TelemetryOutcome::Failure, null, [
+            'code' => 'classification_failed',
+        ]);
+    }
+
+    /**
+     * Frees the item from `organizing` when the classification job dies
+     * terminally, so a lost worker cannot strand it. A hard kill that never
+     * calls this is handled by the reaper.
+     */
+    public function failed(?Throwable $exception): void
+    {
+        $events = app(IntakeEventRecorder::class);
+        $telemetry = app(TelemetryRecorder::class);
+        $item = IntakeItem::query()->whereKey($this->intakeItemId)->first();
+
+        if (! $item instanceof IntakeItem || $item->state !== IntakeState::Organizing) {
+            return;
+        }
+
+        $this->markFailed($item, $events, 'classification worker terminated before completion');
+        $telemetry->recordIntakeJob('intake.classify', TelemetryOutcome::Failure, null, ['code' => 'interrupted']);
     }
 
     private function claim(IntakeEventRecorder $events): ?IntakeItem

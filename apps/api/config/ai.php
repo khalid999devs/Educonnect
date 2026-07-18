@@ -42,4 +42,22 @@ return [
         'max_context_tasks' => 5,
         'max_context_courses' => 12,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Provider circuit breaker (Phase 28)
+    |--------------------------------------------------------------------------
+    |
+    | After `failure_threshold` consecutive failures the breaker opens for
+    | `cooldown_seconds`; while open, calls short-circuit immediately so a
+    | failing provider is not hammered — intake degrades to its deterministic
+    | classifier and the Copilot reports itself briefly unavailable.
+    |
+    */
+
+    'circuit_breaker' => [
+        'enabled' => (bool) env('AI_CIRCUIT_BREAKER_ENABLED', true),
+        'failure_threshold' => max(1, (int) env('AI_CIRCUIT_BREAKER_THRESHOLD', 5)),
+        'cooldown_seconds' => max(1, (int) env('AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS', 60)),
+    ],
 ];

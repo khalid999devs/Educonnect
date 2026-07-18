@@ -16,6 +16,8 @@ enum IntakeFailureCode: string
     case ExtractionFailed = 'extraction_failed';
     case AttemptsExhausted = 'attempts_exhausted';
     case ClassificationFailed = 'classification_failed';
+    case Interrupted = 'interrupted';
+    case StrandedTimeout = 'stranded_timeout';
 
     public function isRetryable(): bool
     {
@@ -25,6 +27,8 @@ enum IntakeFailureCode: string
             self::FileUnavailable,
             self::ExtractionFailed,
             self::ClassificationFailed,
+            self::Interrupted,
+            self::StrandedTimeout,
         ], true);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Domains\Telemetry\Support\TelemetryRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -12,6 +13,8 @@ use Throwable;
 
 final class ApiExceptionRenderer
 {
+    public function __construct(private readonly TelemetryRecorder $telemetry) {}
+
     /**
      * Headers whose meaning survives replacing the original representation body.
      *
@@ -39,6 +42,16 @@ final class ApiExceptionRenderer
         $details = $exception instanceof ValidationException
             ? ['fields' => $exception->errors()]
             : [];
+
+        if ($status >= 500 && ! $exception instanceof ValidationException) {
+            $this->telemetry->recordServerError($status, strtolower($code->value), [
+                'exception' => $exception::class,
+                'route' => $request->route()?->getName() ?? $request->method().' '.$request->path(),
+                'request_id' => is_string($request->attributes->get(RequestId::ATTRIBUTE))
+                    ? (string) $request->attributes->get(RequestId::ATTRIBUTE)
+                    : null,
+            ]);
+        }
 
         return ApiResponse::error(
             code: $exception instanceof ValidationException ? ApiErrorCode::ValidationFailed : $code,

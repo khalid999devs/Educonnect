@@ -87,8 +87,9 @@ final class AdminExtendedContractTest extends TestCase
             'reason' => 'Retiring.',
         ])->assertOk();
 
-        // Analytics + demo data.
+        // Analytics + telemetry + demo data.
         $this->adminGet('/api/v1/admin/analytics')->assertOk();
+        $this->adminGet('/api/v1/admin/telemetry')->assertOk();
         $this->adminPost('/api/v1/admin/demo-data', ['reason' => 'Seed the catalog.'])->assertOk();
     }
 

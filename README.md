@@ -1,166 +1,240 @@
+<div align="center">
+
 # EduConnect
 
-EduConnect is a premium academic workspace for university students. It brings courses, deadlines, academic materials, tools, prompts, templates, communities, mentors, and research work into one focused dashboard.
+**Web Programming Lab Project — Khalid Ahammed (2207035)**
 
-The product is designed to help students understand what to do next, choose the right academic workflow, and keep important work organized without relying on scattered files, links, emails, and group chats.
+_Department of Computer Science & Engineering_
+_Khulna University of Engineering & Technology (KUET)_
 
-## Product Scope
+A premium academic workspace that brings a university student's courses, deadlines,
+materials, curated tools, communities, and research into one focused, honest dashboard.
 
-The MVP is centered on:
+`Laravel 13` · `PostgreSQL 18` · `Next.js 16` · `React 19` · `TypeScript 6` · `Tailwind CSS 4`
 
-- Student registration and academic onboarding
-- Personalized course, task, and deadline management
-- Manual academic file, notice, and resource intake
-- Curated tools, prompts, workflows, and templates
-- Academic resources and saved items
-- Research topic and reading-progress tracking
-- University, department, course, and topic communities
-- Mentor discovery and help requests
-- A public product experience and demonstration dashboard
-- A separate operational console for administration and moderation
+</div>
 
-EduConnect intentionally excludes paid marketplaces, mentor payments, full email or drive synchronization, unlimited AI chat, and native mobile applications from the MVP.
+---
 
-## Architecture
+## Overview
 
-EduConnect uses a monorepo with independently deployable application surfaces:
+Students already have a dozen tools — flashcard apps, citation managers, AI assistants, drives,
+and group chats. What they lack is a single place that turns _"I need to do this"_ into
+_"it's done and stored where I'll find it."_ **EduConnect** closes that gap.
+
+It unifies courses, tasks, deadlines, academic files, curated AI tools, prompts, workflows,
+templates, communities, mentors, and research work into one dashboard, so a student can always
+see what to do next, choose the right academic workflow, and stay organized without scattered
+files, links, emails, and chats.
+
+The project is built on three principles:
+
+- **Academic integrity first** — every recommendation carries its reasoning, and every AI
+  suggestion is _review-first_: nothing is written to a student's workspace without explicit
+  confirmation.
+- **No fabricated numbers** — all progress is computed from the student's own real records.
+  There are no streaks, badges, or vanity metrics; an empty week honestly says so.
+- **Private by default** — academic data is isolated per student, private files use signed
+  access, and authorization is always enforced by the backend.
+
+The system ships as three independently deployable surfaces: a **public marketing site with a
+live demo**, the **student application**, and a separate **administration console**.
+
+---
+
+## Key Features
+
+| Area                                      | What it does                                                                                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Registration & Onboarding**             | Email registration and a guided six-step wizard (institution → program → term → courses → goals → first source) that shapes a real workspace.                 |
+| **Truthful Dashboard**                    | A personalized home composed from real records — today's classes, open tasks, what's next, and honest progress.                                               |
+| **Smart Intake**                          | Upload a file or paste a link; a background pipeline extracts text and proposes tasks and resources _with reasons_ — you review and confirm every suggestion. |
+| **Planner**                               | Weekly schedule, deadlines, and focus sessions in a timezone-correct private workspace.                                                                       |
+| **Resources**                             | A private library for PDFs, images, notes, and links, with a strict upload lifecycle and signed downloads.                                                    |
+| **Second Brain & Research**               | Searchable knowledge base and research-topic tracking with reading progress.                                                                                  |
+| **Tools, Prompts, Workflows & Templates** | Goal-based guidance — curated tools, editable prompts, step-by-step workflow recipes, and copyable templates, each with academic-integrity notes.             |
+| **Communities & Mentors**                 | Curated academic communities and mentor discovery with help requests.                                                                                         |
+| **AI Copilot**                            | An advisory assistant that reads a summary of your workspace, explains what you're seeing, and suggests a real next step — it never changes your records.     |
+| **Administration Console**                | Users & roles, content curation (draft → review → publish), moderation, and a live operational analytics dashboard.                                           |
+
+> **Excluded from scope (by design):** paid marketplaces, mentor payments, full email/drive
+> synchronization, unlimited AI chat, and native mobile apps.
+
+---
+
+## Screens & Flows
+
+### Public site & Live Demo
+
+<table>
+<tr>
+<td width="50%"><img src="ss/marketing-home-hero.png" alt="Marketing home page"><br><sub><b>Home</b> — the landing page with a real product preview.</sub></td>
+<td width="50%"><img src="ss/marketing-features.png" alt="Feature grid"><br><sub><b>Features</b> — every capability is walkable in the live demo.</sub></td>
+</tr>
+</table>
+
+### Onboarding — a six-step academic setup
+
+<table>
+<tr>
+<td width="33%"><img src="ss/onboarding-01-institution.png" alt="Onboarding: institution"><br><sub><b>1 · Institution</b></sub></td>
+<td width="33%"><img src="ss/onboarding-04-courses.png" alt="Onboarding: courses"><br><sub><b>4 · Courses</b></sub></td>
+<td width="33%"><img src="ss/onboarding-07-review-finish.png" alt="Onboarding: review and finish"><br><sub><b>Review & finish</b></sub></td>
+</tr>
+</table>
+
+### Student workspace
+
+<table>
+<tr>
+<td width="50%"><img src="ss/student-dashboard-populated.png" alt="Student dashboard"><br><sub><b>Dashboard</b> — real records, truthful progress.</sub></td>
+<td width="50%"><img src="ss/student-dashboard-copilot.png" alt="AI Copilot"><br><sub><b>AI Copilot</b> — advisory only; never changes records.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="ss/student-smart-intake.png" alt="Smart Intake"><br><sub><b>Smart Intake</b> — extract, suggest, review, confirm.</sub></td>
+<td width="50%"><img src="ss/student-planner.png" alt="Planner"><br><sub><b>Planner</b> — weekly schedule, deadlines, focus.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="ss/student-resources-library.png" alt="Resources library"><br><sub><b>Resources</b> — private library, files & links.</sub></td>
+<td width="50%"><img src="ss/student-templates.png" alt="Templates"><br><sub><b>Templates</b> — copy into your own library and edit.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="ss/student-second-brain.png" alt="Second Brain"><br><sub><b>Second Brain</b> — searchable knowledge base.</sub></td>
+<td width="50%"><img src="ss/student-community.png" alt="Community"><br><sub><b>Community</b> — curated academic spaces.</sub></td>
+</tr>
+</table>
+
+### Administration console
+
+<table>
+<tr>
+<td width="50%"><img src="ss/admin-users.png" alt="Admin users"><br><sub><b>Users</b> — roles, status, suspend/reactivate with a reason.</sub></td>
+<td width="50%"><img src="ss/admin-content-prompts.png" alt="Admin content curation"><br><sub><b>Content curation</b> — draft → review → publish.</sub></td>
+</tr>
+</table>
+
+> The complete set of captured screens (28) lives in [`ss/`](ss/).
+
+---
+
+## Architecture & Project Structure
+
+EduConnect is a **monorepo** with a Laravel modular-monolith backend and independent Next.js
+frontends. Business capabilities are separated by domain while sharing one deployable API and
+one PostgreSQL database.
 
 ```text
 educonnect/
 ├── apps/
-│   ├── api/       Laravel REST API
-│   ├── web/       Public website and student application
-│   └── admin/     Private administration console
+│   ├── api/          Laravel 13 REST API — domains, policies, queued jobs
+│   │   ├── app/Domains/     Auth, Users, Courses, Planner, Resources, Intake,
+│   │   │                    Guidance, Templates, Community, Mentor, Admin, Copilot …
+│   │   ├── database/        Migrations, seeders (incl. DemoSeeder), factories
+│   │   ├── routes/          api.php, health.php
+│   │   └── tests/           Feature + unit tests (PHPUnit on PostgreSQL)
+│   ├── web/          Public site + student application (Next.js 16 / React 19)
+│   │   └── src/{app,components,lib,providers}
+│   └── admin/        Private administration console (Next.js 16)
+│       └── src/{app,components,lib,providers}
 ├── packages/
-│   └── ui/        Shared interface components when needed
-├── infra/
-│   └── docker/    Reserved for phase-owned local infrastructure
-└── .github/       Repository automation and contribution templates
+│   ├── ui/           @educonnect/ui — shared, source-shipped design system
+│   └── config/       Shared TypeScript / ESLint / Prettier config
+├── ss/               Screenshots of every screen (used in this README)
+└── .github/          CI workflows (API CI + security scanning)
 ```
 
-The backend is a Laravel modular monolith. Business capabilities remain separated by domain while sharing one deployable API and one PostgreSQL database. Slow or unreliable work is designed for queues, private files use object storage, and authorization is always enforced by the backend.
+**How it fits together**
 
-## Technology Stack
+- The **student browser** talks to a same-origin gateway that proxies API and Sanctum requests
+  to Laravel; the **administration console** runs on its own origin with a separate session
+  boundary.
+- Slow or unreliable work (extraction, AI classification, notifications) runs on **queues**;
+  private academic files live in **object storage** behind signed URLs.
+- **Authorization is deny-by-default** and enforced by backend policies — the frontends only
+  _shape_ navigation.
 
-| Layer | Technology |
-|---|---|
-| Backend | Laravel 13.17.0 |
-| Backend runtime | PHP 8.5.8 |
-| Database | PostgreSQL 18.4 |
-| Cache and queues | Redis or Valkey |
-| Object storage | Cloudflare R2 or another S3-compatible service |
-| Web application targets | Next.js 16.2.x and React 19.2.x |
-| Frontend language target | TypeScript 6.0.x |
-| Styling target | Tailwind CSS 4.3.x and shadcn/ui |
-| Node runtime | Node.js 24.18.0 LTS |
-| Package manager | pnpm 11.11.0 |
+### Technology Stack
 
-## Current Status
+| Layer          | Technology                                                                          |
+| -------------- | ----------------------------------------------------------------------------------- |
+| Backend        | Laravel 13.17 · PHP 8.5                                                             |
+| Database       | PostgreSQL 18                                                                       |
+| Cache & queues | Database driver (Redis/Valkey-ready)                                                |
+| Object storage | S3-compatible (Cloudflare R2), with a local-disk mode for development               |
+| Frontend       | Next.js 16.2 · React 19.2 · TypeScript 6.0                                          |
+| Styling & UI   | Tailwind CSS 4.3 · shared `@educonnect/ui` component library                        |
+| AI             | OpenAI (Smart Intake classification & Copilot), with deterministic non-AI fallbacks |
+| Tooling        | Node.js 24.18 · pnpm 11.11 · Composer 2.10                                          |
 
-EduConnect is a feature-complete MVP in final hardening. The Laravel 13 REST API — PostgreSQL data foundation, first-party cookie/session authentication, deny-by-default authorization, and the full set of student and administration product domains — is implemented alongside the student web application (`apps/web`) and the private administration console (`apps/admin`). The most recent work hardened security, performance, and reliability: measured HTTP latency, an operational-telemetry surface, intake recovery, and AI-provider resilience. Container images and a staging deployment pipeline are the remaining pre-production work.
+### Quality & Security Highlights
 
-## Requirements
+- Deny-by-default authorization, per-student data isolation, and a distinct admin security
+  boundary with step-up re-authentication for high-risk actions.
+- Cookie/session authentication (Sanctum SPA), CSRF validation, exact origin allowlists, and
+  layered account/IP rate limiting.
+- Automated quality gate: code formatting, static analysis (PHPStan level 6), OpenAPI contract
+  validation, and a full PHPUnit + Vitest + Playwright test suite, run in CI.
 
-Install the following supported toolchain before developing locally:
+---
 
-- PHP 8.5.8
-- Composer 2.10.2
-- PostgreSQL 18.4
-- Node.js 24.18.0 LTS
-- pnpm 11.11.0 through Corepack
-- Redis or Valkey when queue and cache-backed features are enabled
+## Getting Started
 
-## Fresh-clone setup
+### Prerequisites
 
-Activate the package manager pinned in `package.json`, then install the workspace metadata and lock-backed PHP dependencies:
+- PHP **8.5**, Composer **2.10**
+- PostgreSQL **18**
+- Node.js **24.18** and pnpm **11.11** (via Corepack)
+
+### 1. Install dependencies
 
 ```bash
 corepack enable
-pnpm run install:all
+pnpm run install:all          # workspace metadata + lock-backed PHP dependencies
 ```
 
-Create the isolated local PostgreSQL databases once:
+### 2. Create the databases and initialize the API
 
 ```bash
 createdb educonnect
 createdb educonnect_test
-```
 
-Create `apps/api/.env` from `apps/api/.env.example`, set the local PostgreSQL connection without committing credentials, then initialize the API:
-
-```bash
 cd apps/api
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
 ```
 
-Do not run destructive migration commands against an unknown or shared database.
+### 3. (Optional) Seed demo data
 
-## Backend development
-
-Start the API from `apps/api`:
+Populates the guidance catalog, templates, and two ready-to-use accounts:
 
 ```bash
-cd apps/api
-php artisan serve
+php artisan db:seed --class=DemoSeeder
 ```
 
-`composer run dev` is an API-server shortcut. Start `php artisan queue:listen` or `php artisan pail` in separate terminals only when that backend work is needed.
+| Account       | Email                     | Password       |
+| ------------- | ------------------------- | -------------- |
+| Administrator | `admin@educonnect.test`   | `Password123!` |
+| Student       | `student@educonnect.test` | `Password123!` |
 
-## Quality checks
-
-Run the complete currently available workspace baseline from the repository root:
+### 4. Run the applications
 
 ```bash
-pnpm run check
-pnpm run audit
+cd apps/api   && php artisan serve        # API            → http://localhost:8000
+cd apps/api   && php artisan queue:work   # background jobs (intake, AI, email)
+cd apps/web   && pnpm dev                 # student app    → http://localhost:3000
+cd apps/admin && pnpm dev                 # admin console  → http://localhost:3001
 ```
 
-The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test/build scripts, and PostgreSQL-backed Laravel tests. The web, admin, and shared UI packages each contribute their own lint, type-check, unit-test, and build scripts to these fan-outs.
-
-Useful targeted commands:
+### 5. Verify the quality gate
 
 ```bash
-pnpm run versions:check
-pnpm run format:check
-pnpm run analyse
-pnpm run contracts:check
-pnpm run typecheck
-pnpm run test
-pnpm run build
-composer --working-dir=apps/api validate --strict
-composer --working-dir=apps/api check-platform-reqs
+pnpm run check          # versions, formatting, static analysis, contracts, tests, builds
+pnpm run audit          # dependency advisories
 ```
 
-## Engineering Principles
+---
 
-- Build small, complete, testable product slices.
-- Keep controllers and interface components thin.
-- Validate every write and authorize every protected operation.
-- Use stable API resources instead of exposing raw persistence models.
-- Paginate list endpoints and index common database queries.
-- Queue slow work such as parsing, notifications, ingestion, and AI operations.
-- Store private academic files outside the application server.
-- Keep secrets out of source code and client bundles.
-- Prefer clear names and straightforward code over premature abstractions.
-- Add comments only for important business rules or non-obvious decisions.
-
-## Security Model
-
-EduConnect follows deny-by-default authorization and least-privilege access. Student-owned records are isolated by backend policies, administration operations use a separate security boundary, private files require controlled access, and sensitive actions are designed for auditability.
-
-All runtime secrets and provider credentials must be supplied through environment configuration. They must never be embedded in source code or exposed to browser bundles.
-
-The student browser uses a same-origin gateway that proxies API and Sanctum requests to Laravel. Host-only encrypted session cookies, CSRF validation, exact origin allowlists, session rotation/revocation, queued verification/reset notifications, and layered account/IP throttles form the authentication boundary. The administration surface receives its separate session boundary in its owning phase.
-
-## Development Workflow
-
-1. Select one bounded feature or infrastructure slice.
-2. Confirm its API, data, authorization, and failure behavior.
-3. Implement only that slice.
-4. Add meaningful tests for business rules and access control.
-5. Run tests, formatting, and relevant build checks.
-6. Review changed files for secrets, debug output, and unrelated work.
-
-The project favors production-minded simplicity: a clean modular monolith, explicit boundaries, measurable quality gates, and no premature distributed architecture.
+<div align="center">
+<sub>EduConnect · Web Programming Lab Project · Khalid Ahammed (2207035) · KUET CSE</sub>
+</div>

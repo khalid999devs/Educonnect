@@ -283,7 +283,7 @@ export function IntakeView() {
                   <FormField
                     label="Ready file"
                     required
-                    hint="Upload files in Resources first; PDF, text, and Markdown can be read"
+                    hint="Upload files in Resources first; PDF, images (OCR), text, and Markdown can be read"
                     error={submitApiError?.fieldError("resource_id")}
                   >
                     {(control) => (

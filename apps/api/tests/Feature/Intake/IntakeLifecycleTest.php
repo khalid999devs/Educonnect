@@ -96,6 +96,9 @@ final class IntakeLifecycleTest extends TestCase
         $readyPdf = Resource::factory()->file()->create(['user_id' => $user->getKey()]);
         StoredFile::factory()->forResource($readyPdf)->state(['declared_mime_type' => 'application/pdf'])->ready()->create();
 
+        $readyImage = Resource::factory()->file()->create(['user_id' => $user->getKey()]);
+        StoredFile::factory()->forResource($readyImage)->state(['declared_mime_type' => 'image/png'])->ready()->create();
+
         $pendingFile = Resource::factory()->file()->create(['user_id' => $user->getKey()]);
         StoredFile::factory()->forResource($pendingFile)->create(['declared_mime_type' => 'text/plain']);
 
@@ -113,9 +116,16 @@ final class IntakeLifecycleTest extends TestCase
             ->assertJsonPath('data.state', 'queued');
         Queue::assertPushed(ProcessIntakeItem::class, 1);
 
+        // PDF (text layer) and images (OCR) are now extractable and accepted.
         $this->withHeaders($this->headers())
             ->postJson('/api/v1/intake/files', ['resource_id' => $readyPdf->public_id])
-            ->assertUnprocessable();
+            ->assertCreated()
+            ->assertJsonPath('data.state', 'queued');
+        $this->withHeaders($this->headers())
+            ->postJson('/api/v1/intake/files', ['resource_id' => $readyImage->public_id])
+            ->assertCreated()
+            ->assertJsonPath('data.state', 'queued');
+
         $this->withHeaders($this->headers())
             ->postJson('/api/v1/intake/files', ['resource_id' => $pendingFile->public_id])
             ->assertUnprocessable();

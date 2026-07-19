@@ -12,7 +12,10 @@ use App\Domains\Intake\AI\RuleBasedClassificationProvider;
 use App\Domains\Intake\Contracts\AIProvider;
 use App\Domains\Intake\Contracts\HostResolver;
 use App\Domains\Intake\Contracts\IntakeContentExtractor;
+use App\Domains\Intake\Support\CompositeIntakeExtractor;
 use App\Domains\Intake\Support\DnsHostResolver;
+use App\Domains\Intake\Support\ImageOcrExtractor;
+use App\Domains\Intake\Support\PdfExtractor;
 use App\Domains\Intake\Support\PlainTextExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
 use App\Domains\Resources\Support\LocalResourceUploadSigner;
@@ -47,7 +50,13 @@ class AppServiceProvider extends ServiceProvider
                 : $this->app->make(S3StrictPutUploadSigner::class);
         });
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
-        $this->app->bind(IntakeContentExtractor::class, PlainTextExtractor::class);
+        // Extraction dispatches by content type: plain text/HTML, PDF text
+        // layer, then image OCR. Adapters are tried in order.
+        $this->app->bind(IntakeContentExtractor::class, fn (): CompositeIntakeExtractor => new CompositeIntakeExtractor(
+            $this->app->make(PlainTextExtractor::class),
+            $this->app->make(PdfExtractor::class),
+            $this->app->make(ImageOcrExtractor::class),
+        ));
         /*
          * The OpenAI provider activates only when a key is configured; the
          * ClassificationPolicy chain always keeps the deterministic

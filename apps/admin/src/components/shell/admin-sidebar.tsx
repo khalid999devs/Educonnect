@@ -31,11 +31,6 @@ export function AdminSidebar() {
           <Badge variant="brand">Console</Badge>
         </Link>
       }
-      footer={
-        <p className="text-caption text-text-muted">
-          Admin modules unlock for your capabilities as their APIs ship.
-        </p>
-      }
     >
       {ADMIN_NAV.map((section, index) => (
         <SidebarSection key={section.title ?? index} title={section.title}>

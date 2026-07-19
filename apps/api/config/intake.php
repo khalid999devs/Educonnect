@@ -18,11 +18,29 @@ return [
     'extractable_file_mime_types' => [
         'text/plain',
         'text/markdown',
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/webp',
     ],
     'classification' => [
         'max_output_retries' => 2,
         'max_suggestions' => 10,
         'max_courses' => 50,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optical character recognition
+    |--------------------------------------------------------------------------
+    | Image resources are read with the Tesseract engine (invoked out of
+    | process). `binary` is resolved from PATH by default; set an absolute path
+    | if the queue worker runs without the interactive shell's PATH.
+    */
+    'ocr' => [
+        'binary' => env('INTAKE_OCR_BINARY', 'tesseract'),
+        'languages' => env('INTAKE_OCR_LANGUAGES', 'eng'),
+        'timeout_seconds' => (int) env('INTAKE_OCR_TIMEOUT_SECONDS', 30),
     ],
 
     /*

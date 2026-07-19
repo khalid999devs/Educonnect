@@ -2,7 +2,7 @@
 
 # EduConnect
 
-**Web Programming Lab Project — Khalid Ahammed (2207035)**
+**Web Programming Lab Project - Khalid Ahammed (2207035)**
 
 _Department of Computer Science & Engineering_
 _Khulna University of Engineering & Technology (KUET)_

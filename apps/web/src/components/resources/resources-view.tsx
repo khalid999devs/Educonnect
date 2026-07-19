@@ -134,7 +134,7 @@ export function ResourcesView() {
       setNotice(
         resource.kind === "link"
           ? "Link removed."
-          : "File deletion started — the entry shows Deleting until cleanup finishes.",
+          : "File deletion started. The entry shows Deleting until cleanup finishes.",
       );
     },
   });
@@ -144,7 +144,7 @@ export function ResourcesView() {
       cancelResourceUpload(resource.id, resource.version),
     onSuccess: () => {
       invalidateResources();
-      setNotice("Unfinished upload cancelled — cleanup has started.");
+      setNotice("Unfinished upload cancelled. Cleanup has started.");
     },
     onError: () => {
       invalidateResources();

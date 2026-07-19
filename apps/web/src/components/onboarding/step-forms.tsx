@@ -289,7 +289,7 @@ export function StudyStageStepForm({
       ) : null}
       <FormField
         label="Current year"
-        hint="Free text — whatever matches your university."
+        hint="Free text. Whatever matches your university."
         error={error?.fieldError("year_label")}
       >
         {(control) => (
@@ -670,7 +670,7 @@ export function GoalsStepForm({
 
       <ChipEditor
         label="What slows you down today?"
-        hint="Optional — helps tailor guidance to real problems."
+        hint="Optional. Helps tailor guidance to real problems."
         values={problems}
         onChange={setProblems}
         suggestions={PROBLEM_SUGGESTIONS}
@@ -680,7 +680,7 @@ export function GoalsStepForm({
 
       <p className="flex items-center gap-1.5 text-caption text-text-muted">
         <Badge variant="ai">Adaptive</Badge>
-        Your dashboard and recommendations adapt to these — from real records
+        Your dashboard and recommendations adapt to these, from real records
         only.
       </p>
 
@@ -758,7 +758,7 @@ export function FirstSourceStepForm({
       <GeneralError error={error} />
       <FormField
         label="Link to a first study source"
-        hint="A syllabus page, lecture notes, or a reading — Smart Intake processes it after setup, with your review."
+        hint="A syllabus page, lecture notes, or a reading. Smart Intake processes it after setup, with your review."
         error={error?.fieldError("url")}
       >
         {(control) => (
@@ -783,7 +783,7 @@ export function FirstSourceStepForm({
       </FormField>
       <Alert variant="info" title="Nothing is fetched yet">
         The link is stored as a draft. File uploads and extraction run through
-        Smart Intake once your workspace exists — suggestions only, you confirm
+        Smart Intake once your workspace exists. Suggestions only; you confirm
         everything.
       </Alert>
       <StepActions

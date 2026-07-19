@@ -100,7 +100,7 @@ export function CoverSection({
 
 const INTAKE_STATE_LABELS: Record<string, string> = {
   awaiting_review: "Awaiting your review",
-  failed_retryable: "Failed — can be retried",
+  failed_retryable: "Failed, can be retried",
   failed_final: "Failed",
 };
 
@@ -264,7 +264,7 @@ export function WhatsNextSection({
       <CardContent className="space-y-2.5">
         {whatsNext.tasks.length === 0 ? (
           <p className="text-body text-text-secondary">
-            No open dated tasks. That's real — add work from the{" "}
+            No open dated tasks. That's real. Add work from the{" "}
             <Link
               href="/planner"
               className="text-brand-primary hover:underline"
@@ -353,7 +353,7 @@ export function ToolsSection({
       <CardContent className="space-y-2.5">
         {dashboard.tools.length === 0 ? (
           <p className="text-body text-text-secondary">
-            No reviewed tools are published yet — the catalog fills through
+            No reviewed tools are published yet. The catalog fills through
             human curation, never fabricated entries.
           </p>
         ) : (
@@ -433,7 +433,7 @@ export function TodaySection({ dashboard }: { dashboard: Dashboard }) {
         <CardContent className="space-y-2.5">
           {today.due_tasks.length === 0 ? (
             <p className="text-body text-text-secondary">
-              Nothing due today — honestly.
+              Nothing due today, honestly.
             </p>
           ) : (
             today.due_tasks.map((task) => (
@@ -795,7 +795,7 @@ export function RhythmSection({ dashboard }: { dashboard: Dashboard }) {
         <p className="mt-2 text-caption text-text-muted">
           {rhythm.has_activity
             ? "Focus minutes from your real sessions over the last 7 days."
-            : "No focus activity in the last 7 days — this widget only ever shows real minutes."}
+            : "No focus activity in the last 7 days. This widget only ever shows real minutes."}
         </p>
       </CardContent>
     </Card>

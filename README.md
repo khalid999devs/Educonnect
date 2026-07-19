@@ -57,7 +57,7 @@ The backend is a Laravel modular monolith. Business capabilities remain separate
 
 ## Current Status
 
-EduConnect is under active MVP development. The Laravel 13 REST API, PostgreSQL data foundation, and first-party cookie/session authentication are reconciled. Authorization and product domains remain future phases, and the student web and administration applications are not scaffolded yet.
+EduConnect is a feature-complete MVP in final hardening. The Laravel 13 REST API — PostgreSQL data foundation, first-party cookie/session authentication, deny-by-default authorization, and the full set of student and administration product domains — is implemented alongside the student web application (`apps/web`) and the private administration console (`apps/admin`). The most recent work hardened security, performance, and reliability: measured HTTP latency, an operational-telemetry surface, intake recovery, and AI-provider resilience. Container images and a staging deployment pipeline are the remaining pre-production work.
 
 ## Requirements
 
@@ -117,7 +117,7 @@ pnpm run check
 pnpm run audit
 ```
 
-The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test/build scripts, and PostgreSQL-backed Laravel tests. The JavaScript/TypeScript fan-outs are intentional no-ops until the separate web, admin, or shared packages introduce their own scripts.
+The baseline verifies exact toolchain pins, PHP formatting, Larastan level 6, OpenAPI request/response contracts, all registered workspace lint/type-check/test/build scripts, and PostgreSQL-backed Laravel tests. The web, admin, and shared UI packages each contribute their own lint, type-check, unit-test, and build scripts to these fan-outs.
 
 Useful targeted commands:
 

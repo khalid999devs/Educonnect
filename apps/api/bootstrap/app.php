@@ -22,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
         then: function (): void {
             Route::middleware('api')->group(base_path('routes/health.php'));
+
+            // Local-disk resource transport (dev only, inert in production).
+            // Outside the stateful `api` group so the raw signed PUT/GET carry
+            // no cookies or CSRF token, exactly as an S3 upload would.
+            Route::middleware(['signed', 'throttle:120,1'])
+                ->prefix('api/v1')
+                ->group(base_path('routes/resource-transport.php'));
         },
     )
     ->withSchedule(function (Schedule $schedule): void {

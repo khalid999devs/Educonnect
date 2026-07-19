@@ -94,5 +94,11 @@ final class ListTemplateCopiesRequest extends FormRequest
                 $this->merge([$key => trim((string) $this->input($key))]);
             }
         }
+
+        // Query strings carry booleans as the text "true"/"false", which the
+        // `boolean` rule rejects; normalise to a real boolean before validation.
+        if ($this->has('include_archived')) {
+            $this->merge(['include_archived' => $this->boolean('include_archived')]);
+        }
     }
 }

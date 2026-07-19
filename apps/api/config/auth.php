@@ -107,6 +107,12 @@ return [
 
     'verification' => [
         'expire' => (int) env('AUTH_VERIFICATION_EXPIRE', 60),
+
+        // When false, registration marks the address as verified immediately
+        // instead of queueing a verification link. This is a local-convenience
+        // switch only; production and CI must leave it true so email ownership
+        // is always proven before the account is usable.
+        'required' => filter_var(env('AUTH_REQUIRE_EMAIL_VERIFICATION', true), FILTER_VALIDATE_BOOL),
     ],
 
     /*

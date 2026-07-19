@@ -33,9 +33,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
                 </>
               }
             >
-              <p className="truncate text-body text-text-muted">
-                Student app shell
-              </p>
+              <p className="truncate text-body text-text-muted">Student</p>
             </TopBar>
             <main
               id="main"

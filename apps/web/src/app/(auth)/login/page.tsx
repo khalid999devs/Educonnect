@@ -117,7 +117,7 @@ export default function LoginPage() {
     <AuthShell
       headline="Welcome back to your"
       highlight="student workspace"
-      subtitle="Pick up exactly where you left off — your plan, your materials, your progress."
+      subtitle="Pick up exactly where you left off: your plan, your materials, your progress."
       title="Sign in"
       footer={
         <>

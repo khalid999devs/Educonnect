@@ -150,7 +150,7 @@ export function TaskDialog({
         ) : null}
         {apiError && apiError.status === 409 ? (
           <Alert variant="error" title="This task changed elsewhere">
-            The latest version was reloaded — please review and save again.
+            The latest version was reloaded. Please review and save again.
           </Alert>
         ) : null}
 

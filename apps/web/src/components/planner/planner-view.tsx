@@ -160,7 +160,7 @@ export function PlannerView() {
       if (error instanceof ApiError && error.status === 409) {
         invalidatePlanner();
         setNotice(
-          "That task changed somewhere else, so the plan was refreshed — try again.",
+          "That task changed somewhere else, so the plan was refreshed. Try again.",
         );
       } else {
         setNotice("The task could not be updated. Please try again.");
@@ -297,7 +297,7 @@ export function PlannerView() {
       {windowsFailed ? (
         <ErrorState
           title="The planner could not load"
-          description="Your plan is safe — this is a loading problem, not a data problem."
+          description="Your plan is safe. This is a loading problem, not a data problem."
           onRetry={() => {
             void weeklyQuery.refetch();
             void agendaQuery.refetch();
@@ -445,7 +445,7 @@ export function PlannerView() {
             confirm.kind === "task-delete" &&
             removeTaskMutation.error instanceof ApiError &&
             removeTaskMutation.error.status === 409
-              ? "This task has focus sessions attached (or changed elsewhere) — archive it instead."
+              ? "This task has focus sessions attached (or changed elsewhere). Archive it instead."
               : (removeTaskMutation.error?.message ??
                 removeSessionMutation.error?.message ??
                 null)

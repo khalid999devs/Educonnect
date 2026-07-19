@@ -19,6 +19,12 @@ return [
         'base_url' => rtrim((string) env('OPENAI_BASE_URL', 'https://api.openai.com/v1'), '/'),
         'timeout_seconds' => (int) env('AI_REQUEST_TIMEOUT_SECONDS', 30),
         'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 900),
+        // Reasoning models (gpt-5 family) spend the completion budget on hidden
+        // reasoning tokens before any visible output. Without a bound they can
+        // consume the whole budget and return an empty completion. "minimal"
+        // keeps these bounded intake/copilot calls fast and always-answering.
+        // Set blank for non-reasoning models that reject the parameter.
+        'reasoning_effort' => (string) env('AI_REASONING_EFFORT', 'minimal'),
     ],
 
     /*

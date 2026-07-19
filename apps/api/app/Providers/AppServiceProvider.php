@@ -15,6 +15,7 @@ use App\Domains\Intake\Contracts\IntakeContentExtractor;
 use App\Domains\Intake\Support\DnsHostResolver;
 use App\Domains\Intake\Support\PlainTextExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
+use App\Domains\Resources\Support\LocalResourceUploadSigner;
 use App\Domains\Resources\Support\S3StrictPutUploadSigner;
 use App\Domains\Templates\Models\Template;
 use App\Domains\Templates\Models\TemplateVersion;
@@ -34,7 +35,17 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(ResourceUploadSigner::class, S3StrictPutUploadSigner::class);
+        // The strict S3 signer is used in production; when the resource disk is
+        // a local driver (development), uploads are signed for the local
+        // transport route instead so no object store is required.
+        $this->app->bind(ResourceUploadSigner::class, function (): ResourceUploadSigner {
+            $disk = config('resources.disk', 's3');
+            $driver = is_string($disk) ? config("filesystems.disks.{$disk}.driver") : null;
+
+            return $driver === 'local'
+                ? $this->app->make(LocalResourceUploadSigner::class)
+                : $this->app->make(S3StrictPutUploadSigner::class);
+        });
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
         $this->app->bind(IntakeContentExtractor::class, PlainTextExtractor::class);
         /*

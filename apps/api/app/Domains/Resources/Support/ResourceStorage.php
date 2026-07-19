@@ -10,6 +10,7 @@ use App\Domains\Resources\Exceptions\ResourceStorageFailure;
 use Carbon\CarbonImmutable;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Throwable;
 
@@ -36,6 +37,14 @@ final class ResourceStorage
         string $mimeType,
     ): string {
         try {
+            if (LocalResourceDisk::isActive()) {
+                return URL::temporarySignedRoute('resources.local-download', $expiresAt, [
+                    'key' => $key,
+                    'mime' => $mimeType,
+                    'name' => 'resource-file.'.$this->extensionForMimeType($mimeType),
+                ]);
+            }
+
             return $this->disk()->temporaryUrl($key, $expiresAt, [
                 'ResponseContentDisposition' => HeaderUtils::makeDisposition(
                     HeaderUtils::DISPOSITION_ATTACHMENT,

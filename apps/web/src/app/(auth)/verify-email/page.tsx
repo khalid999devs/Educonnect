@@ -150,7 +150,7 @@ function VerifyEmailContent() {
         <p className="text-body text-text-secondary">
           We sent a verification link to{" "}
           <span className="font-medium text-text-primary">{user?.email}</span>.
-          Open it on this device to continue — the link expires after a short
+          Open it on this device to continue. The link expires after a short
           time.
         </p>
       </div>

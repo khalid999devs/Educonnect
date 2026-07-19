@@ -55,6 +55,12 @@ final readonly class OpenAiClient
             'max_completion_tokens' => max(1, (int) config('ai.openai.max_output_tokens')),
         ];
 
+        $reasoningEffort = trim((string) config('ai.openai.reasoning_effort', ''));
+
+        if ($reasoningEffort !== '') {
+            $payload['reasoning_effort'] = $reasoningEffort;
+        }
+
         if ($jsonObject) {
             $payload['response_format'] = ['type' => 'json_object'];
         }

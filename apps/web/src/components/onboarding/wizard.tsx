@@ -62,7 +62,7 @@ const STEP_META: Record<
   program: {
     headline: "Your",
     highlight: "academic setup",
-    subtitle: "Help us shape your dashboard — every field is optional.",
+    subtitle: "Help us shape your dashboard. Every field is optional.",
     optional: true,
   },
   study_stage: {
@@ -86,7 +86,7 @@ const STEP_META: Record<
   first_source: {
     headline: "Add your first",
     highlight: "study source",
-    subtitle: "Optional — paste a link and Smart Intake will propose a plan.",
+    subtitle: "Optional. Paste a link and Smart Intake will propose a plan.",
     optional: true,
   },
 };
@@ -280,7 +280,7 @@ export function OnboardingWizard() {
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pb-10">
         {conflictNote ? (
           <Alert variant="warning" title="Setup changed in another tab">
-            We reloaded the latest state — review it and continue.
+            We reloaded the latest state. Review it and continue.
           </Alert>
         ) : null}
 
@@ -344,7 +344,7 @@ export function OnboardingWizard() {
 
       <p className="flex items-center justify-center gap-1.5 px-6 pb-6 text-caption text-text-muted">
         <ShieldCheck aria-hidden="true" className="size-3.5" />
-        Private by default — your academic data belongs to you.
+        Private by default. Your academic data belongs to you.
       </p>
     </div>
   );
@@ -393,7 +393,7 @@ function WelcomePanel({
             <span className="text-brand-primary">student workspace</span>
           </h1>
           <p className="max-w-md text-body-lg text-text-secondary">
-            From admission to research — six quick steps shape a workspace that
+            From admission to research, six quick steps shape a workspace that
             fits your student life. Only your institution is required;
             everything else can be skipped and finished later.
           </p>
@@ -440,7 +440,7 @@ function WelcomePanel({
           </Link>
           <p className="text-caption tabular-nums text-text-muted">
             {onboarding.status === "in_progress"
-              ? "You have saved progress — we'll pick up where you left off."
+              ? "You have saved progress. We'll pick up where you left off."
               : "Nothing is created until you confirm each step."}
           </p>
         </div>
@@ -561,7 +561,7 @@ function ReviewPanel({
       {!onboarding.can_complete ? (
         <Alert variant="info" title="Almost there" className="mt-4">
           To finish, complete your institution and add at least one course,
-          goal, or problem — that's what powers a truthful starter workspace.
+          goal, or problem. That's what powers a truthful starter workspace.
         </Alert>
       ) : null}
 

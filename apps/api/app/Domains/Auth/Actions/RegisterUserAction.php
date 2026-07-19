@@ -38,7 +38,11 @@ final class RegisterUserAction
             throw $exception;
         }
 
-        $user->sendEmailVerificationNotification();
+        if (config('auth.verification.required')) {
+            $user->sendEmailVerificationNotification();
+        } else {
+            $user->markEmailAsVerified();
+        }
 
         return $user;
     }

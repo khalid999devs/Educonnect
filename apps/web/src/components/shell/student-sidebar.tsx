@@ -28,7 +28,7 @@ export function StudentSidebar() {
       }
       footer={
         <p className="text-caption text-text-muted">
-          Application shell (Phase 18). Marked areas unlock in later phases.
+          Your university life, organized in one place.
         </p>
       }
     >

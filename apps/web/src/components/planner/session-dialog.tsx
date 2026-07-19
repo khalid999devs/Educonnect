@@ -147,7 +147,7 @@ export function SessionDialog({
         ) : null}
         {apiError && apiError.status === 409 ? (
           <Alert variant="error" title="This session changed elsewhere">
-            The latest version was reloaded — please review and save again.
+            The latest version was reloaded. Please review and save again.
           </Alert>
         ) : null}
         {localError ? (
@@ -265,7 +265,7 @@ export function SessionDialog({
               value={note}
               maxLength={2000}
               onChange={(event) => setNote(event.target.value)}
-              placeholder="Optional — what will you focus on?"
+              placeholder="What will you focus on? (optional)"
             />
           )}
         </FormField>

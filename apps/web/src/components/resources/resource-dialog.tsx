@@ -131,7 +131,7 @@ export function ResourceDialog({
           </FormField>
         ) : (
           <p className="text-caption text-text-muted">
-            {resource.file?.original_name} — the stored file itself cannot be
+            {resource.file?.original_name}. The stored file itself cannot be
             swapped; add a new resource for a different file.
           </p>
         )}

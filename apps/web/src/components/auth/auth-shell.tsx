@@ -135,7 +135,7 @@ export function AuthShell({
 
       <p className="flex items-center justify-center gap-1.5 px-6 pb-6 text-caption text-text-muted">
         <ShieldCheck aria-hidden="true" className="size-3.5" />
-        Private by default — your academic data belongs to you.
+        Private by default. Your academic data belongs to you.
       </p>
     </div>
   );

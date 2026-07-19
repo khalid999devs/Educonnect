@@ -61,7 +61,7 @@ export default function RegisterPage() {
     <AuthShell
       headline="Let's build your"
       highlight="student workspace"
-      subtitle="From admission to research — a workspace that fits your student life."
+      subtitle="From admission to research, a workspace that fits your student life."
       title="Create your account"
       footer={
         <>

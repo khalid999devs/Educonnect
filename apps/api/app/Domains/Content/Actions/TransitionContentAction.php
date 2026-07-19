@@ -24,7 +24,7 @@ final readonly class TransitionContentAction
     /**
      * Move one platform-owned catalog record through the curation lifecycle. The
      * database transition trigger and the published-content-complete CHECK are
-     * authoritative — an illegal transition or an incomplete record surfaces as a
+     * authoritative - an illegal transition or an incomplete record surfaces as a
      * conflict. Publishing/archiving stamps the review/publication/archive times;
      * returning to draft clears the publication timestamps so the record becomes
      * editable again.

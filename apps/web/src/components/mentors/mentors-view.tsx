@@ -97,7 +97,7 @@ export function MentorsView() {
         <h1 className="text-h2 text-text-primary">Mentors</h1>
         <p className="mt-1 max-w-2xl text-body-lg text-text-secondary">
           When tools, prompts, and your community aren&apos;t enough, ask a
-          mentor for help. Request help directly — no bookings or payments.
+          mentor for help. Request help directly. No bookings or payments.
         </p>
       </header>
 

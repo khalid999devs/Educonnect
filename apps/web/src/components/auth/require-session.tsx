@@ -8,7 +8,7 @@ import { useSession } from "@/providers/session-provider";
 
 /**
  * Client route guard for authenticated areas. Server-side authorization
- * always remains authoritative — this only shapes navigation.
+ * always remains authoritative - this only shapes navigation.
  */
 export function RequireSession({
   children,

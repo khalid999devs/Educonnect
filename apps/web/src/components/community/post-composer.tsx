@@ -122,7 +122,7 @@ export function PostComposer({
           <FormField
             id="composer-resource"
             label="Attach a saved link"
-            hint="Optional — shares one of your link resources."
+            hint="Optional: shares one of your link resources."
           >
             {(control) => (
               <Select

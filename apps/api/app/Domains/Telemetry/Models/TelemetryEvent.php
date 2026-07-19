@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * A single durable operational telemetry row. Diagnostic, not compliance
- * evidence — it never carries an actor, a reason, or private academic content.
+ * evidence - it never carries an actor, a reason, or private academic content.
  */
 final class TelemetryEvent extends Model
 {

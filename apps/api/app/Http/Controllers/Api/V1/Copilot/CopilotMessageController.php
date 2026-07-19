@@ -19,7 +19,7 @@ use Throwable;
 
 final class CopilotMessageController
 {
-    private const DISCLAIMER = 'AI-generated — verify important details against your own records.';
+    private const DISCLAIMER = 'AI-generated. Verify important details against your own records.';
 
     public function __invoke(
         CopilotMessageRequest $request,

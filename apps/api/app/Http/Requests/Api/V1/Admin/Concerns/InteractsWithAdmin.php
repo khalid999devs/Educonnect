@@ -43,7 +43,7 @@ trait InteractsWithAdmin
 
     /**
      * Every sensitive admin action records an immutable reason (doc 08). The
-     * bounds mirror the audit store's own constraint (1–2000 characters); the
+     * bounds mirror the audit store's own constraint (1 - 2000 characters); the
      * text is plain (no markup or control characters).
      *
      * @return list<mixed>

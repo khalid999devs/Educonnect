@@ -8,7 +8,7 @@ import { useSession } from "@/providers/session-provider";
 
 /**
  * Client route guard for the authenticated console. Server-side authorization
- * on every admin endpoint remains authoritative — this only shapes navigation
+ * on every admin endpoint remains authoritative - this only shapes navigation
  * so a guest never sees the shell. A signed-out or demoted operator is sent to
  * the sign-in page with a `next` hint back to where they were.
  */

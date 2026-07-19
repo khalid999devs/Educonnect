@@ -16,7 +16,7 @@ type SearchHit = {
 /**
  * Working demo search: filters the live demo state (tasks, notes,
  * resources, tools, templates) and navigates to the owning view. ⌘K / Ctrl+K
- * focuses it — a real control, not a decorative input.
+ * focuses it - a real control, not a decorative input.
  */
 export function DemoSearch() {
   const { state, dispatch } = useDemo();

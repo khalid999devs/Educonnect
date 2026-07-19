@@ -136,7 +136,7 @@ export function CommunityView() {
     onMutate: () => setReportError(null),
     onSuccess: () => {
       setReporting(null);
-      flashNotice("Thanks — the moderators will review this.");
+      flashNotice("Thanks. The moderators will review this.");
     },
     onError: (error) => setReportError(messageFrom(error)),
   });

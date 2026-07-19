@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class UpdateToolAction
 {
     /**
-     * Edit a tool's content. Only a draft is editable — the database enforces
+     * Edit a tool's content. Only a draft is editable - the database enforces
      * this too, but the app surfaces a clear conflict. Optimistic concurrency via
      * expected_version.
      *

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 final class ListMentorProfilesForAdmin
 {
     /**
-     * Every mentor profile for curation — unlike the student directory this
+     * Every mentor profile for curation - unlike the student directory this
      * includes unverified profiles and those not accepting requests. Newest
      * first, filterable by verification state. Authorization is enforced at the
      * route (mentors.curate).

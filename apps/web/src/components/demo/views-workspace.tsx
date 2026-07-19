@@ -160,7 +160,7 @@ export function PlannerView() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle as="h3">Weekly schedule</CardTitle>
                 <p className="text-caption tabular-nums text-text-muted">
-                  Sep 21 – Sep 27 · sample week
+                  Sep 21 to Sep 27 · sample week
                 </p>
               </div>
             </CardHeader>
@@ -185,7 +185,7 @@ export function PlannerView() {
                           <button
                             key={task.id}
                             type="button"
-                            title={`${task.title} — tap to toggle`}
+                            title={`${task.title} (tap to toggle)`}
                             onClick={() =>
                               dispatch({ type: "toggleTask", id: task.id })
                             }
@@ -263,13 +263,13 @@ export function PlannerView() {
                           : "text-text-muted",
                       )}
                     >
-                      {entry.hobby ?? "—"}
+                      {entry.hobby ?? "-"}
                     </p>
                   </div>
                 ))}
               </div>
               <p className="mt-2 text-caption text-text-muted">
-                Optional and private in the product — never part of progress
+                Optional and private in the product, never part of progress
                 math.
               </p>
             </CardContent>
@@ -308,7 +308,7 @@ export function PlannerView() {
               ))}
               {open.length === 0 ? (
                 <p className="text-body text-text-secondary">
-                  Everything is done — a real empty state.
+                  Everything is done. A real empty state.
                 </p>
               ) : null}
             </CardContent>
@@ -373,7 +373,7 @@ export function PlannerView() {
                 </Button>
               ) : (
                 <p className="mt-2 text-caption font-medium text-status-success">
-                  Completed — {FOCUS_SESSION.minutes} real minutes counted.
+                  Completed: {FOCUS_SESSION.minutes} real minutes counted.
                 </p>
               )}
             </div>
@@ -404,7 +404,7 @@ export function ResourcesView() {
         photo="/marketing/shelf-books.jpg"
         eyebrow="Resources"
         title="One private library"
-        subtitle="Notes, files, and links organized by course — captured through Smart Intake, reviewed by you."
+        subtitle="Notes, files, and links organized by course, captured through Smart Intake, reviewed by you."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -436,7 +436,7 @@ export function ResourcesView() {
                 Capture a sample
               </Button>
             </div>
-            <PrivacyFootnote text="Private by default — the demo stores nothing at all." />
+            <PrivacyFootnote text="Private by default. The demo stores nothing at all." />
           </CardContent>
         </Card>
 
@@ -450,8 +450,8 @@ export function ResourcesView() {
           <CardContent className="space-y-2.5">
             {state.resources.length === 0 ? (
               <p className="text-body text-text-secondary">
-                Nothing here yet — honest empty state. Confirmed captures show
-                up with their course and type.
+                Nothing here yet. Honest empty state. Confirmed captures show up
+                with their course and type.
               </p>
             ) : (
               state.resources.map((resource) => (
@@ -583,7 +583,7 @@ export function BrainView() {
         photo="/marketing/library-curve.jpg"
         eyebrow="Second Brain"
         title="Keep what you learn"
-        subtitle="Every note stays connected to its source — search it all, instantly."
+        subtitle="Every note stays connected to its source. Search it all, instantly."
       />
 
       <div className="relative max-w-md">
@@ -603,7 +603,7 @@ export function BrainView() {
 
       {notes.length === 0 ? (
         <p className="text-body text-text-secondary">
-          Nothing matches "{query.trim()}" — real search over your demo notes.
+          Nothing matches "{query.trim()}". Real search over your demo notes.
         </p>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
@@ -707,7 +707,7 @@ export function ProgressView() {
         photo="/marketing/minimal-desk.jpg"
         eyebrow="Progress"
         title="Real momentum only"
-        subtitle="Every number below comes from what you actually did in this demo — no streaks, no percentiles."
+        subtitle="Every number below comes from what you actually did in this demo. No streaks, no percentiles."
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
@@ -787,13 +787,13 @@ export function ProgressView() {
 
         <Card>
           <CardHeader className="mb-3">
-            <CardTitle as="h3">Milestones — real events</CardTitle>
+            <CardTitle as="h3">Milestones: real events</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2.5">
             {milestones.length === 0 ? (
               <p className="text-body text-text-secondary">
-                Do things in the demo — complete a task, confirm a capture, use
-                a template — and they appear here. Nothing is invented.
+                Do things in the demo (complete a task, confirm a capture, use a
+                template) and they appear here. Nothing is invented.
               </p>
             ) : (
               milestones.map((milestone) => (
@@ -848,8 +848,8 @@ export function ProgressView() {
             ) : null}
             .{" "}
             {progress.nextTask
-              ? `Specific next action: ${progress.nextTask.title} — due ${progress.nextTask.due} (${progress.nextTask.courseCode}).`
-              : "Everything is done — a real empty state, not a badge."}
+              ? `Specific next action: ${progress.nextTask.title}, due ${progress.nextTask.due} (${progress.nextTask.courseCode}).`
+              : "Everything is done. A real empty state, not a badge."}
           </p>
         </CardContent>
       </Card>
@@ -869,7 +869,7 @@ export function CommunityView() {
         description="Curated communities and mentor help arrive later in the MVP. The demo doesn't fake posts, members, or mentors."
       />
       <p className="text-center text-caption text-text-muted">
-        Feed-first, moderated, and honest — when it ships.
+        Feed-first, moderated, and honest, once it ships.
       </p>
     </div>
   );

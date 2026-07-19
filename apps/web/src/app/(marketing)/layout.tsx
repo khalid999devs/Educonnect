@@ -65,7 +65,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <EduConnectThemedLogo width={140} />
             <p className="max-w-sm text-body text-text-secondary">
               The academic workspace that guides university students from need
-              to action — built on real records, never fabricated numbers.
+              to action, built on real records, never fabricated numbers.
             </p>
           </div>
           <nav aria-label="Product" className="space-y-2">
@@ -121,7 +121,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="border-t border-border-subtle">
           <p className="mx-auto w-full max-w-6xl px-6 py-5 text-caption text-text-muted">
-            © 2026 EduConnect. In active development — the Live Demo runs on
+            © 2026 EduConnect. In active development. The Live Demo runs on
             sample data only.
           </p>
         </div>

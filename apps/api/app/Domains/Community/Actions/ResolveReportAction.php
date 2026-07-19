@@ -82,7 +82,7 @@ final readonly class ResolveReportAction
 
                 // Every moderation decision is an immutable, reason-bearing audit
                 // record (doc 08). The state captures only the status transition and
-                // whether content was hidden — never the reported body.
+                // whether content was hidden - never the reported body.
                 $afterState = ['report_status' => [$resolution]];
 
                 if ($contentHidden) {

@@ -12,7 +12,7 @@ export type EduConnectThemedLogoProps = Omit<
  * Measured alpha bounds of the horizontal logo assets (866x288): the artwork
  * starts 13.2% in from the left and ends 9.5% short of the right. The raw
  * render is scaled up so `width` means the VISIBLE artwork width, and the
- * transparent padding is cropped with negative margins — the source PNGs
+ * transparent padding is cropped with negative margins - the source PNGs
  * stay untouched and the logo optically aligns at its intended size.
  */
 const TRIM_LEFT = 0.132;

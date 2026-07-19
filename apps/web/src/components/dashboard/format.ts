@@ -2,7 +2,7 @@ import type { Dashboard } from "@/lib/api/dashboard";
 
 /**
  * All time math anchors on the aggregate's own timeframe (server truth in
- * the requested timezone) — never the client clock.
+ * the requested timezone) - never the client clock.
  */
 
 export function browserTimezone(): string {
@@ -30,7 +30,7 @@ export function formatDueAt(dueAt: string | null, timezone: string): string {
 
 export function formatTime(value: string | null, timezone: string): string {
   if (value === null) {
-    return "—";
+    return "-";
   }
 
   return new Intl.DateTimeFormat("en-US", {

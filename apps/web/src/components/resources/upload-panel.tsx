@@ -38,7 +38,7 @@ function formatBytes(size: number): string {
   return `${Math.max(1, Math.round(size / 1024))} KB`;
 }
 
-/** Live view of the real upload lifecycle — every state here is a genuine
+/** Live view of the real upload lifecycle - every state here is a genuine
  * transport state with a working cancel/retry, never a simulation. */
 export function UploadPanel({
   jobs,

@@ -18,7 +18,7 @@ materials, curated tools, communities, and research into one focused, honest das
 
 ## Overview
 
-Students already have a dozen tools — flashcard apps, citation managers, AI assistants, drives,
+Students already have a dozen tools: flashcard apps, citation managers, AI assistants, drives,
 and group chats. What they lack is a single place that turns _"I need to do this"_ into
 _"it's done and stored where I'll find it."_ **EduConnect** closes that gap.
 
@@ -29,12 +29,12 @@ files, links, emails, and chats.
 
 The project is built on three principles:
 
-- **Academic integrity first** — every recommendation carries its reasoning, and every AI
+- **Academic integrity first.** Every recommendation carries its reasoning, and every AI
   suggestion is _review-first_: nothing is written to a student's workspace without explicit
   confirmation.
-- **No fabricated numbers** — all progress is computed from the student's own real records.
+- **No fabricated numbers.** All progress is computed from the student's own real records.
   There are no streaks, badges, or vanity metrics; an empty week honestly says so.
-- **Private by default** — academic data is isolated per student, private files use signed
+- **Private by default.** Academic data is isolated per student, private files use signed
   access, and authorization is always enforced by the backend.
 
 The system ships as three independently deployable surfaces: a **public marketing site with a
@@ -44,18 +44,18 @@ live demo**, the **student application**, and a separate **administration consol
 
 ## Key Features
 
-| Area                                      | What it does                                                                                                                                                  |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Registration & Onboarding**             | Email registration and a guided six-step wizard (institution → program → term → courses → goals → first source) that shapes a real workspace.                 |
-| **Truthful Dashboard**                    | A personalized home composed from real records — today's classes, open tasks, what's next, and honest progress.                                               |
-| **Smart Intake**                          | Upload a file or paste a link; a background pipeline extracts text and proposes tasks and resources _with reasons_ — you review and confirm every suggestion. |
-| **Planner**                               | Weekly schedule, deadlines, and focus sessions in a timezone-correct private workspace.                                                                       |
-| **Resources**                             | A private library for PDFs, images, notes, and links, with a strict upload lifecycle and signed downloads.                                                    |
-| **Second Brain & Research**               | Searchable knowledge base and research-topic tracking with reading progress.                                                                                  |
-| **Tools, Prompts, Workflows & Templates** | Goal-based guidance — curated tools, editable prompts, step-by-step workflow recipes, and copyable templates, each with academic-integrity notes.             |
-| **Communities & Mentors**                 | Curated academic communities and mentor discovery with help requests.                                                                                         |
-| **AI Copilot**                            | An advisory assistant that reads a summary of your workspace, explains what you're seeing, and suggests a real next step — it never changes your records.     |
-| **Administration Console**                | Users & roles, content curation (draft → review → publish), moderation, and a live operational analytics dashboard.                                           |
+| Area                                      | What it does                                                                                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Registration & Onboarding**             | Email registration and a guided six-step wizard (institution → program → term → courses → goals → first source) that shapes a real workspace.                |
+| **Truthful Dashboard**                    | A personalized home composed from real records: today's classes, open tasks, what's next, and honest progress.                                               |
+| **Smart Intake**                          | Upload a file or paste a link; a background pipeline extracts text and proposes tasks and resources _with reasons_. You review and confirm every suggestion. |
+| **Planner**                               | Weekly schedule, deadlines, and focus sessions in a timezone-correct private workspace.                                                                      |
+| **Resources**                             | A private library for PDFs, images, notes, and links, with a strict upload lifecycle and signed downloads.                                                   |
+| **Second Brain & Research**               | Searchable knowledge base and research-topic tracking with reading progress.                                                                                 |
+| **Tools, Prompts, Workflows & Templates** | Goal-based guidance: curated tools, editable prompts, step-by-step workflow recipes, and copyable templates, each with academic-integrity notes.             |
+| **Communities & Mentors**                 | Curated academic communities and mentor discovery with help requests.                                                                                        |
+| **AI Copilot**                            | An advisory assistant that reads a summary of your workspace, explains what you're seeing, and suggests a real next step. It never changes your records.     |
+| **Administration Console**                | Users & roles, content curation (draft → review → publish), moderation, and a live operational analytics dashboard.                                          |
 
 > **Excluded from scope (by design):** paid marketplaces, mentor payments, full email/drive
 > synchronization, unlimited AI chat, and native mobile apps.
@@ -68,12 +68,12 @@ live demo**, the **student application**, and a separate **administration consol
 
 <table>
 <tr>
-<td width="50%"><img src="ss/marketing-home-hero.png" alt="Marketing home page"><br><sub><b>Home</b> — the landing page with a real product preview.</sub></td>
-<td width="50%"><img src="ss/marketing-features.png" alt="Feature grid"><br><sub><b>Features</b> — every capability is walkable in the live demo.</sub></td>
+<td width="50%"><img src="ss/marketing-home-hero.png" alt="Marketing home page"><br><sub><b>Home</b>: the landing page with a real product preview.</sub></td>
+<td width="50%"><img src="ss/marketing-features.png" alt="Feature grid"><br><sub><b>Features</b>: every capability is walkable in the live demo.</sub></td>
 </tr>
 </table>
 
-### Onboarding — a six-step academic setup
+### Onboarding: a six-step academic setup
 
 <table>
 <tr>
@@ -87,20 +87,20 @@ live demo**, the **student application**, and a separate **administration consol
 
 <table>
 <tr>
-<td width="50%"><img src="ss/student-dashboard-populated.png" alt="Student dashboard"><br><sub><b>Dashboard</b> — real records, truthful progress.</sub></td>
-<td width="50%"><img src="ss/student-dashboard-copilot.png" alt="AI Copilot"><br><sub><b>AI Copilot</b> — advisory only; never changes records.</sub></td>
+<td width="50%"><img src="ss/student-dashboard-populated.png" alt="Student dashboard"><br><sub><b>Dashboard</b>: real records, truthful progress.</sub></td>
+<td width="50%"><img src="ss/student-dashboard-copilot.png" alt="AI Copilot"><br><sub><b>AI Copilot</b>: advisory only; never changes records.</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="ss/student-smart-intake.png" alt="Smart Intake"><br><sub><b>Smart Intake</b> — extract, suggest, review, confirm.</sub></td>
-<td width="50%"><img src="ss/student-planner.png" alt="Planner"><br><sub><b>Planner</b> — weekly schedule, deadlines, focus.</sub></td>
+<td width="50%"><img src="ss/student-smart-intake.png" alt="Smart Intake"><br><sub><b>Smart Intake</b>: extract, suggest, review, confirm.</sub></td>
+<td width="50%"><img src="ss/student-planner.png" alt="Planner"><br><sub><b>Planner</b>: weekly schedule, deadlines, focus.</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="ss/student-resources-library.png" alt="Resources library"><br><sub><b>Resources</b> — private library, files & links.</sub></td>
-<td width="50%"><img src="ss/student-templates.png" alt="Templates"><br><sub><b>Templates</b> — copy into your own library and edit.</sub></td>
+<td width="50%"><img src="ss/student-resources-library.png" alt="Resources library"><br><sub><b>Resources</b>: private library, files & links.</sub></td>
+<td width="50%"><img src="ss/student-templates.png" alt="Templates"><br><sub><b>Templates</b>: copy into your own library and edit.</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="ss/student-second-brain.png" alt="Second Brain"><br><sub><b>Second Brain</b> — searchable knowledge base.</sub></td>
-<td width="50%"><img src="ss/student-community.png" alt="Community"><br><sub><b>Community</b> — curated academic spaces.</sub></td>
+<td width="50%"><img src="ss/student-second-brain.png" alt="Second Brain"><br><sub><b>Second Brain</b>: searchable knowledge base.</sub></td>
+<td width="50%"><img src="ss/student-community.png" alt="Community"><br><sub><b>Community</b>: curated academic spaces.</sub></td>
 </tr>
 </table>
 
@@ -108,8 +108,8 @@ live demo**, the **student application**, and a separate **administration consol
 
 <table>
 <tr>
-<td width="50%"><img src="ss/admin-users.png" alt="Admin users"><br><sub><b>Users</b> — roles, status, suspend/reactivate with a reason.</sub></td>
-<td width="50%"><img src="ss/admin-content-prompts.png" alt="Admin content curation"><br><sub><b>Content curation</b> — draft → review → publish.</sub></td>
+<td width="50%"><img src="ss/admin-users.png" alt="Admin users"><br><sub><b>Users</b>: roles, status, suspend/reactivate with a reason.</sub></td>
+<td width="50%"><img src="ss/admin-content-prompts.png" alt="Admin content curation"><br><sub><b>Content curation</b>: draft → review → publish.</sub></td>
 </tr>
 </table>
 
@@ -126,7 +126,7 @@ one PostgreSQL database.
 ```text
 educonnect/
 ├── apps/
-│   ├── api/          Laravel 13 REST API — domains, policies, queued jobs
+│   ├── api/          Laravel 13 REST API - domains, policies, queued jobs
 │   │   ├── app/Domains/     Auth, Users, Courses, Planner, Resources, Intake,
 │   │   │                    Guidance, Templates, Community, Mentor, Admin, Copilot …
 │   │   ├── database/        Migrations, seeders (incl. DemoSeeder), factories
@@ -137,7 +137,7 @@ educonnect/
 │   └── admin/        Private administration console (Next.js 16)
 │       └── src/{app,components,lib,providers}
 ├── packages/
-│   ├── ui/           @educonnect/ui — shared, source-shipped design system
+│   ├── ui/           @educonnect/ui - shared, source-shipped design system
 │   └── config/       Shared TypeScript / ESLint / Prettier config
 ├── ss/               Screenshots of every screen (used in this README)
 └── .github/          CI workflows (API CI + security scanning)
@@ -150,7 +150,7 @@ educonnect/
   boundary.
 - Slow or unreliable work (extraction, AI classification, notifications) runs on **queues**;
   private academic files live in **object storage** behind signed URLs.
-- **Authorization is deny-by-default** and enforced by backend policies — the frontends only
+- **Authorization is deny-by-default** and enforced by backend policies. The frontends only
   _shape_ navigation.
 
 ### Technology Stack

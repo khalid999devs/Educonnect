@@ -33,7 +33,7 @@ const PILLARS = [
     icon: GraduationCap,
     title: "Learn smarter",
     description:
-      "Goal-based tools, editable prompts, and workflow recipes that explain their reasoning — so you always know why, not just what.",
+      "Goal-based tools, editable prompts, and workflow recipes that explain their reasoning, so you always know the why behind each recommendation.",
   },
   {
     icon: CalendarDays,
@@ -45,7 +45,7 @@ const PILLARS = [
     icon: Users,
     title: "Grow together",
     description:
-      "Curated communities and mentor help join the platform as the MVP completes — built deliberately, not bolted on.",
+      "Curated communities and mentor help join the platform as the MVP completes, built deliberately rather than bolted on.",
   },
 ] as const;
 
@@ -54,7 +54,7 @@ const VALUES = [
     icon: Heart,
     title: "Student first",
     description:
-      "Every decision is guided by what helps students learn, plan, and finish — never by engagement metrics.",
+      "Every decision is guided by what helps students learn, plan, and finish, never by engagement metrics.",
   },
   {
     icon: ShieldCheck,
@@ -72,7 +72,7 @@ const VALUES = [
     icon: Globe,
     title: "Truth over theater",
     description:
-      "Real numbers with explicit timeframes — in the product and in this website's marketing. No invented anything.",
+      "Real numbers with explicit timeframes, in the product and in this website's marketing. No invented anything.",
   },
 ] as const;
 
@@ -97,11 +97,11 @@ export default function AboutPage() {
               id="about-title"
               className="text-display text-text-primary motion-safe:animate-fade-up motion-safe:[animation-delay:80ms]"
             >
-              Empowering every{" "}
+              Built for every{" "}
               <span className="text-brand-primary">university journey</span>
             </h1>
             <p className="text-body-lg text-text-secondary motion-safe:animate-fade-up motion-safe:[animation-delay:160ms]">
-              EduConnect helps university students succeed at every stage — from
+              EduConnect helps university students succeed at every stage, from
               getting oriented, through daily coursework, to research and longer
               plans. This page tells you what it is, what it refuses to be, and
               exactly where it stands.
@@ -196,14 +196,14 @@ export default function AboutPage() {
             <p className="text-body-lg text-text-secondary">
               Students operate across files, LMS pages, messaging groups, AI
               tools, calendars, templates, and research links. Most know that
-              helpful tools exist — far fewer know which one fits the task in
+              helpful tools exist. Far fewer know which one fits the task in
               front of them, how to use it responsibly, where to store the
               result, or what to do next.
             </p>
             <p className="text-body-lg text-text-secondary">
               EduConnect closes the gap between knowing and doing: identify the
               goal, get the right tool with the reasoning attached, capture and
-              organize the material, and end every path with a destination — the
+              organize the material, and end every path with a destination: the
               course, task, or research topic where the result belongs.
             </p>
           </div>
@@ -244,10 +244,10 @@ export default function AboutPage() {
             In development, and honest about it
           </h2>
           <p className="mt-3 max-w-3xl text-body-lg text-text-secondary">
-            The product backend — accounts, onboarding, courses, tasks and
+            The product backend (accounts, onboarding, courses, tasks and
             planner, private file storage, the tools/prompts/workflow guide,
             templates, Smart Intake with review-first extraction, the Second
-            Brain, and the truthful dashboard — is built and tested. The student
+            Brain, and the truthful dashboard) is built and tested. The student
             and admin interfaces are being assembled on a shared design system
             now. Registration opens when the product interface is complete;
             until then, the Live Demo shows the real loop with clearly labeled

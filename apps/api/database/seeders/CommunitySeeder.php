@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Seeds the curated launch communities. These are real, platform-owned spaces —
+ * Seeds the curated launch communities. These are real, platform-owned spaces - 
  * not fabricated social proof. Communities start with no members and no posts;
  * the honest empty-community state is the truthful launch boundary. Community
  * curation moves to the admin console in a later phase.

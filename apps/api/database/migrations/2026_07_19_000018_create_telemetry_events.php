@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * The operational metrics substrate (Phase 28, observability increment).
  *
  * Unlike `audit_events`, telemetry is diagnostic, not compliance evidence: it
- * carries no actor, no reason, and no private academic content — only bounded,
+ * carries no actor, no reason, and no private academic content - only bounded,
  * redacted operational facts (provider/job/error names, outcomes, latency). It
  * is prunable by retention, so it is a plain append-and-prune table (no
  * immutability trigger, no ULID) with CHECK-constrained enum columns.

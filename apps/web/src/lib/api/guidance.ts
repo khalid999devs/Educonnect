@@ -4,7 +4,7 @@ import { apiFetch, envelopeData, toQueryString } from "./http";
 
 export { saveTool, unsaveTool, dismissTool, undismissTool } from "./tools";
 
-/** Exact runtime shapes of the goal-based guidance contract — tools, prompt
+/** Exact runtime shapes of the goal-based guidance contract - tools, prompt
  * templates, workflow recipes, and the combined guidance bundle (openapi.yaml).
  * All content is admin-curated and published-only; nothing is generated here. */
 

@@ -440,7 +440,7 @@ export function ToolsPromptsView() {
       <p className="flex items-center gap-1.5 text-caption text-text-muted">
         <Sparkles aria-hidden="true" className="size-3.5" />
         Every tool, prompt, and workflow here is curated and reviewed by our
-        team — never auto-generated or ranked by ads.
+        team, never auto-generated or ranked by ads.
       </p>
     </div>
   );

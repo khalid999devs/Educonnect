@@ -38,7 +38,7 @@ const STATE_LABELS: Record<IntakeState, string> = {
   awaiting_review: "Awaiting your review",
   confirmed: "Confirmed",
   saved: "Saved",
-  failed_retryable: "Failed — can retry",
+  failed_retryable: "Failed (can retry)",
   failed_final: "Failed",
   cancelled: "Cancelled",
 };
@@ -207,7 +207,7 @@ export function IntakeDetail({
             Organized by {item.classification.provider} ·{" "}
             {item.classification.model} · schema{" "}
             {item.classification.schema_version} ·{" "}
-            {item.classification.latency_ms} ms. AI can be wrong — review below.
+            {item.classification.latency_ms} ms. AI can be wrong. Review below.
           </p>
         ) : null}
 
@@ -226,7 +226,7 @@ export function IntakeDetail({
                   </span>
                   <span className="text-text-secondary">
                     {event.detail ??
-                      `${event.from_state ?? "—"} → ${event.to_state ?? "—"}`}
+                      `${event.from_state ?? "-"} → ${event.to_state ?? "-"}`}
                   </span>
                 </li>
               ))}

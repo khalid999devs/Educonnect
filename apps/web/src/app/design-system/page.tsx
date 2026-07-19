@@ -133,7 +133,7 @@ export default function DesignSystemPage() {
       <Section
         id="colors"
         title="Color tokens"
-        description="Semantic tokens only — components never use raw palette classes. Each swatch reads from the active theme."
+        description="Semantic tokens only. Components never use raw palette classes. Each swatch reads from the active theme."
       >
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {COLOR_TOKENS.map((token) => (
@@ -325,7 +325,7 @@ export default function DesignSystemPage() {
       <Section
         id="badges-alerts"
         title="Badges and alerts"
-        description="Status is never color-only — the label carries the meaning. Warnings and errors announce as alerts; the rest as status."
+        description="Status is never color-only. The label carries the meaning. Warnings and errors announce as alerts; the rest as status."
       >
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
@@ -362,7 +362,7 @@ export default function DesignSystemPage() {
       <Section
         id="states"
         title="Loading, empty, and error states"
-        description="Every route defines loading, empty, error, and success behavior. Empty states are honest — no fake metrics or placeholder activity."
+        description="Every route defines loading, empty, error, and success behavior. Empty states are honest. No fake metrics or placeholder activity."
       >
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-6">
@@ -392,7 +392,7 @@ export default function DesignSystemPage() {
       <Section
         id="navigation"
         title="Navigation"
-        description="Sidebar rail (240px) with active glow, and the core bottom navigation used under 768px. Planned destinations are disabled with a Soon marker — never presented as available."
+        description="Sidebar rail (240px) with active glow, and the core bottom navigation used under 768px. Planned destinations are disabled with a Soon marker, never presented as available."
       >
         <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           <div className="h-105 overflow-hidden rounded-lg border border-border-default">

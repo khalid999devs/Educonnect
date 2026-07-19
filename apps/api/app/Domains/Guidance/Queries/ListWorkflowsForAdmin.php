@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 final class ListWorkflowsForAdmin
 {
     /**
-     * Every workflow recipe for curation — all lifecycle states, newest first.
+     * Every workflow recipe for curation - all lifecycle states, newest first.
      * Authorization is enforced at the route (content.curate).
      *
      * @return CursorPaginator<int, WorkflowRecipe>

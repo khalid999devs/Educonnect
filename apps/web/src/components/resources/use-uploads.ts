@@ -91,7 +91,7 @@ export function uploadsReducer(
           : job,
       );
     case "failed":
-      /* A cancelled or completed job can never regress to failed — the
+      /* A cancelled or completed job can never regress to failed - the
          abort path may reject transport promises after cancellation. */
       return jobs.map((job) =>
         job.key === action.key &&
@@ -272,7 +272,7 @@ export function useUploads({ onSettled }: { onSettled: () => void }) {
 
       try {
         if (job.resource === null) {
-          /* Initiate never succeeded — start the lifecycle from scratch. */
+          /* Initiate never succeeded - start the lifecycle from scratch. */
           filesRef.current.delete(job.key);
           dispatch({ type: "dismissed", key: job.key });
           await startUpload(entry.file, entry.meta);

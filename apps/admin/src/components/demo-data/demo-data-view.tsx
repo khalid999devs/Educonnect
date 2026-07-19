@@ -35,8 +35,8 @@ export function DemoDataView() {
         <h1 className="text-h2 text-text-primary">Demo data</h1>
         <p className="text-body text-text-secondary">
           Seed the deterministic guidance launch catalog. This is additive and
-          idempotent — it only fills in the curated catalog when it is absent
-          and never deletes existing data.
+          idempotent. It only fills in the curated catalog when it is absent and
+          never deletes existing data.
         </p>
       </header>
 

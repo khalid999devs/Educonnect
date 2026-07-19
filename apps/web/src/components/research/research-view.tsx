@@ -82,7 +82,7 @@ export function ResearchView() {
           <h1 className="text-h2 text-text-primary">Research</h1>
           <p className="text-body-lg text-text-secondary">
             Track research topics with keywords and a reading list built from
-            your Second Brain — to read, reading, and read.
+            your Second Brain, tracked as to read, reading, and read.
           </p>
           <div>
             <Button onClick={() => setCreating(true)}>

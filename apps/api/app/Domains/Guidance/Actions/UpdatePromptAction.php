@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class UpdatePromptAction
 {
     /**
-     * Edit a prompt template's content. Only a draft is editable — the database
+     * Edit a prompt template's content. Only a draft is editable - the database
      * enforces this too, but the app surfaces a clear conflict. Related tools are
      * re-synced from their public ids. Optimistic concurrency via expected_version.
      *

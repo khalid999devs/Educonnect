@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 final class ListTemplatesForAdmin
 {
     /**
-     * Every template for curation — all lifecycle states, newest first, with the
+     * Every template for curation - all lifecycle states, newest first, with the
      * latest version. Authorization is enforced at the route (content.curate).
      *
      * @return CursorPaginator<int, Template>

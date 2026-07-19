@@ -21,7 +21,7 @@ import {
   localDateOf,
 } from "./time";
 
-/** Next uncompleted deadline within the loaded week — honestly scoped. */
+/** Next uncompleted deadline within the loaded week - honestly scoped. */
 export function UpcomingDeadlineCard({
   tasks,
   timezone,
@@ -97,7 +97,7 @@ export function UpcomingDeadlineCard({
 }
 
 /** The running or next focus session today, plus the honest way to plan
- * one — sessions are records with real start and end times. */
+ * one - sessions are records with real start and end times. */
 export function FocusSessionCard({
   sessions,
   timezone,

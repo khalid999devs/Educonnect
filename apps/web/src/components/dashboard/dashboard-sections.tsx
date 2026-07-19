@@ -353,8 +353,8 @@ export function ToolsSection({
       <CardContent className="space-y-2.5">
         {dashboard.tools.length === 0 ? (
           <p className="text-body text-text-secondary">
-            No reviewed tools are published yet. The catalog fills through
-            human curation, never fabricated entries.
+            No reviewed tools are published yet. The catalog fills through human
+            curation, never fabricated entries.
           </p>
         ) : (
           dashboard.tools.map((tool) => (
@@ -486,7 +486,7 @@ export function TodaySection({ dashboard }: { dashboard: Dashboard }) {
                 ) : null}
               </p>
               <p className="text-caption tabular-nums text-text-secondary">
-                {formatTime(session.starts_at, dashboard.timeframe.timezone)} –{" "}
+                {formatTime(session.starts_at, dashboard.timeframe.timezone)} to{" "}
                 {formatTime(session.ends_at, dashboard.timeframe.timezone)}
                 {session.course_title ? ` · ${session.course_title}` : ""}
               </p>
@@ -670,7 +670,7 @@ export function ProgressSection({ dashboard }: { dashboard: Dashboard }) {
             My progress
           </CardTitle>
           <Badge variant="neutral">
-            {progress.timeframe.starts_on} – {progress.timeframe.ends_on}
+            {progress.timeframe.starts_on} to {progress.timeframe.ends_on}
           </Badge>
         </div>
       </CardHeader>
@@ -787,7 +787,7 @@ export function RhythmSection({ dashboard }: { dashboard: Dashboard }) {
                     : "text-text-muted",
                 )}
               >
-                {day.focus_minutes > 0 ? `${day.focus_minutes}m` : "—"}
+                {day.focus_minutes > 0 ? `${day.focus_minutes}m` : "-"}
               </p>
             </li>
           ))}

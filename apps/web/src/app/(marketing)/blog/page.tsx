@@ -103,7 +103,7 @@ export default function BlogIndexPage() {
               Blog
             </h1>
             <p className="text-body-lg text-text-secondary motion-safe:animate-fade-up motion-safe:[animation-delay:100ms]">
-              Notes from building EduConnect — how features work, the decisions
+              Notes from building EduConnect: how features work, the decisions
               behind them, and the principles we hold while shipping.
             </p>
           </div>

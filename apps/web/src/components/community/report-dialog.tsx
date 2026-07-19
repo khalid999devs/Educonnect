@@ -95,7 +95,7 @@ export function ReportDialog({
         <FormField
           id="report-detail"
           label="Add context"
-          hint="Optional — up to 1000 characters."
+          hint="Optional: up to 1000 characters."
         >
           {(control) => (
             <Textarea

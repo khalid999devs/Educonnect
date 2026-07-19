@@ -97,7 +97,7 @@ export function TemplatesCuration() {
                   <StateBadge state={template.state} />
                 </span>
                 <span className="text-caption text-text-muted">
-                  v{template.latest_version?.number ?? "—"} · updated{" "}
+                  v{template.latest_version?.number ?? "-"} · updated{" "}
                   {formatDateTime(template.updated_at)}
                 </span>
               </div>

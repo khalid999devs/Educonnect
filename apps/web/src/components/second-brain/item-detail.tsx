@@ -115,7 +115,7 @@ export function ItemDetail({ itemId }: { itemId: string }) {
           <Card>
             <CardHeader className="space-y-2">
               {/* All text below is source-derived and rendered as escaped
-                  React text — a prompt-injection payload cannot execute. */}
+                  React text - a prompt-injection payload cannot execute. */}
               <CardTitle className="text-h3">{item.title}</CardTitle>
               {item.citation.authors ||
               item.citation.venue ||

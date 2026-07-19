@@ -40,7 +40,7 @@ final class GuidanceCacheTest extends TestCase
             ->assertOk();
 
         // The bundle content is cached on Alice's read; Bob's read hits the same
-        // cached content but sees his own (empty) viewer state — no state leaks.
+        // cached content but sees his own (empty) viewer state - no state leaks.
         $guidance = app(BuildCategoryGuidance::class);
 
         $forAlice = $guidance->execute($alice, 'research-support');

@@ -31,7 +31,7 @@ trait InteractsWithAdminApi
 
     /**
      * Establishes a real admin session (setting the session password hash the
-     * operational routes require). Only one sign-in per test — the web session
+     * operational routes require). Only one sign-in per test - the web session
      * guard caches the first authenticated user.
      */
     private function signInAsAdmin(User $admin, string $password = 'secret123'): void

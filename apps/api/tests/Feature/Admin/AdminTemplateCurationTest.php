@@ -74,7 +74,7 @@ final class AdminTemplateCurationTest extends TestCase
             'reason' => 'Reviewed.',
         ])->assertOk()->assertJsonPath('data.state', 'published');
 
-        // Return to draft and revise the body — a new version is appended.
+        // Return to draft and revise the body - a new version is appended.
         $this->adminPatch("/api/v1/admin/content/templates/{$templateId}/lifecycle", [
             'transition' => 'return_to_draft',
             'expected_version' => 3,

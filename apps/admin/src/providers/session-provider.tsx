@@ -31,7 +31,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 /**
  * Client-side mirror of the admin session. The API guard is always
- * authoritative — this context only shapes navigation and affordances. Both
+ * authoritative - this context only shapes navigation and affordances. Both
  * 401 (no session) and 403 (capability revoked while signed in) collapse to
  * the guest state so a demoted operator is treated as signed out.
  */

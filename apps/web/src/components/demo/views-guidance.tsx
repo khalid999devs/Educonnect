@@ -57,7 +57,7 @@ export function ToolsView() {
         photo="/marketing/study-desk.jpg"
         eyebrow="AI Tools"
         title="The right tool, with the reasoning"
-        subtitle="Start from a goal — every recommendation explains why it fits and how to use it responsibly."
+        subtitle="Start from a goal. Every recommendation explains why it fits and how to use it responsibly."
       />
 
       <div
@@ -130,7 +130,7 @@ export function ToolsView() {
                 ))}
               </div>
               <p className="mt-3 text-caption text-text-muted">
-                Generic sample categories, not endorsements — the reviewed
+                Generic sample categories, not endorsements. The reviewed
                 catalog is curated by humans with cost and privacy notes.
               </p>
             </CardContent>
@@ -138,7 +138,7 @@ export function ToolsView() {
 
           <FormField
             label="Editable prompt"
-            hint="Edit it right here — in the product you'd copy it into your tool of choice."
+            hint="Edit it right here. In the product you'd copy it into your tool of choice."
           >
             {(control) => (
               <Textarea
@@ -339,7 +339,7 @@ export function TemplatesView() {
                       {used ? (
                         <p className="flex items-center gap-1.5 text-caption text-status-success">
                           <CircleCheck aria-hidden="true" className="size-4" />
-                          Copy created — see the planner.
+                          Copy created. See the planner.
                         </p>
                       ) : (
                         <Button
@@ -371,7 +371,7 @@ export function TemplatesView() {
             <CardContent className="space-y-2.5">
               {usedTemplates.length === 0 ? (
                 <p className="text-body text-text-secondary">
-                  No copies yet — use a template and it appears here as an
+                  No copies yet. Use a template and it appears here as an
                   independent, editable copy.
                 </p>
               ) : (
@@ -409,8 +409,8 @@ export function TemplatesView() {
           <Card className="bg-bg-interactive">
             <CardContent>
               <p className="text-body text-text-primary">
-                Copies never change when the source template updates — your
-                edits are yours.
+                Copies never change when the source template updates. Your edits
+                are yours.
               </p>
             </CardContent>
           </Card>

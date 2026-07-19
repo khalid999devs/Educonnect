@@ -63,7 +63,7 @@ export function MentorProfileForm({
       open={open}
       onClose={onClose}
       title={initial ? "Edit mentor profile" : "Create your mentor profile"}
-      description="Students see this profile in the mentor directory. Keep it honest — no ratings or session counts are shown."
+      description="Students see this profile in the mentor directory. Keep it honest. No ratings or session counts are shown."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
@@ -136,7 +136,7 @@ export function MentorProfileForm({
         <FormField
           id="mentor-availability"
           label="Availability note"
-          hint="Optional — a truthful note, not a guarantee."
+          hint="Optional: a truthful note, not a guarantee."
         >
           {(control) => (
             <Input

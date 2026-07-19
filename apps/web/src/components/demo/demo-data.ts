@@ -1,11 +1,11 @@
 /**
- * Fixed sample dataset for the Live Demo — a simulated product experience
+ * Fixed sample dataset for the Live Demo - a simulated product experience
  * modeled on the approved dashboard hierarchy (doc 04) and the
  * INSPIRATIONAL dashboard reference, translated through the specs: no sync
  * buttons, no invented streaks or vs-last-week math, one progress
  * visualization, and every number derived from demo state.
  *
- * Tool entries are generic categories, not endorsements of real products —
+ * Tool entries are generic categories, not endorsements of real products -
  * the reviewed production catalog is curated separately by humans.
  *
  * Deterministic and isolated: no randomness, no clock dependence, no
@@ -64,7 +64,7 @@ export const INITIAL_TASKS: DemoTaskSeed[] = [
   },
   {
     id: "seed-pset",
-    title: "Problem set 2 — linked lists",
+    title: "Problem set 2: linked lists",
     courseCode: "CS-201",
     due: "Fri, Sep 25",
     dueNote: "4 days left",
@@ -81,7 +81,7 @@ export const JOURNEY_CARD = {
 
 export const NEXT_CLASS = {
   course: "CS-201 Data Structures",
-  time: "Tomorrow, 10:00 – 11:30 AM",
+  time: "Tomorrow, 10:00 to 11:30 AM",
   room: "Room CS-204, Engineering Block",
 } as const;
 
@@ -98,12 +98,12 @@ export type DemoTool = {
   integrityNote?: string;
 };
 
-/** Generic categories with reasons — the guidance format, not vendor picks. */
+/** Generic categories with reasons - the guidance format, not vendor picks. */
 export const RECOMMENDED_TOOLS: DemoTool[] = [
   {
     id: "writing",
     name: "AI writing assistant",
-    blurb: "Draft and refine academic text you started — always labeled.",
+    blurb: "Draft and refine academic text you started, always labeled.",
     integrityNote: "AI-assisted output stays labeled and editable.",
   },
   {
@@ -129,7 +129,7 @@ export type DemoNoteSeed = {
 export const SECOND_BRAIN_SEEDS: DemoNoteSeed[] = [
   {
     id: "brain-notes",
-    title: "Data structures — lecture notes",
+    title: "Data structures: lecture notes",
     courseCode: "CS-201",
     meta: "Heaps, hashing, graph traversal",
     date: "Sep 18",
@@ -183,7 +183,7 @@ export const DEMO_GOALS: DemoGoal[] = [
     prompt:
       "Summarize the key argument, method, and limitations of the attached paper in under 200 words, then list three questions it leaves open.",
     workflow: [
-      "Gather 8–10 candidate sources into your reading list.",
+      "Gather 8 to 10 candidate sources into your reading list.",
       "Skim abstracts and tag each source by theme.",
       "Deep-read the strongest five using the summary prompt.",
       "Fill the review matrix template and draft from it.",
@@ -201,7 +201,7 @@ export const DEMO_GOALS: DemoGoal[] = [
       },
       {
         name: "A focus timer",
-        why: "Bounded sessions make an intimidating topic startable — and give your planner honest minutes to count.",
+        why: "Bounded sessions make an intimidating topic startable, and give your planner honest minutes to count.",
       },
     ],
     prompt:
@@ -381,10 +381,10 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
     name: "CS-201 syllabus (sample).pdf",
     kind: "Course syllabus",
     excerpt: [
-      "CS-201: Data Structures — Fall term (sample)",
+      "CS-201: Data Structures, Fall term (sample)",
       "Week 3: Linked lists, stacks, queues",
       "Assignment 1 due October 2 (10%)",
-      "Midterm examination on October 21, weeks 1–6 inclusive",
+      "Midterm examination on October 21, weeks 1-6 inclusive",
     ],
     suggestions: [
       {
@@ -394,7 +394,7 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
         detail: "Due Fri, Oct 2 · CS-201 Data Structures",
         reason: 'Found "due" next to a date with a weight marker (10%).',
         task: {
-          title: "Assignment 1 — data structures",
+          title: "Assignment 1: data structures",
           courseCode: "CS-201",
           due: "Fri, Oct 2",
           dueNote: "11 days left",
@@ -405,7 +405,7 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
         id: "syllabus-task-2",
         kind: "task",
         label: "Midterm exam",
-        detail: "Wed, Oct 21 · scope weeks 1–6",
+        detail: "Wed, Oct 21 · scope weeks 1-6",
         reason: '"Examination" plus an explicit date on line 4.',
         task: {
           title: "Prepare for CS-201 midterm",
@@ -426,7 +426,7 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
   },
   {
     id: "lecture-notes",
-    name: "Research methods — week 2 notes (sample).docx",
+    name: "Research methods - week 2 notes (sample).docx",
     kind: "Lecture notes",
     excerpt: [
       "RM-110 Research Methods, week 2 (sample)",
@@ -442,7 +442,7 @@ export const DEMO_DOCUMENTS: DemoDocument[] = [
         detail: "Due Fri, Sep 25 · RM-110 Research Methods",
         reason: '"due" with a date beside a named reading.',
         task: {
-          title: "Reading response — Babbie ch. 4",
+          title: "Reading response: Babbie ch. 4",
           courseCode: "RM-110",
           due: "Fri, Sep 25",
           dueNote: "4 days left",

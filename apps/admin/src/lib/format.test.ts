@@ -4,12 +4,12 @@ import { formatDateTime, humanizeKey } from "./format";
 
 describe("formatDateTime", () => {
   it("returns an em dash for null or invalid input", () => {
-    expect(formatDateTime(null)).toBe("—");
-    expect(formatDateTime("not-a-date")).toBe("—");
+    expect(formatDateTime(null)).toBe("-");
+    expect(formatDateTime("not-a-date")).toBe("-");
   });
 
   it("formats a valid ISO timestamp", () => {
-    expect(formatDateTime("2026-07-18T09:00:00Z")).not.toBe("—");
+    expect(formatDateTime("2026-07-18T09:00:00Z")).not.toBe("-");
   });
 });
 

@@ -474,7 +474,7 @@ function ReviewPanel({
   const summaries: Record<OnboardingStepKey, string> = {
     institution: onboarding.profile.institution_name
       ? `${onboarding.profile.institution_name} (${onboarding.profile.institution_country_code})`
-      : "—",
+      : "-",
     program:
       [
         onboarding.profile.degree,
@@ -482,20 +482,20 @@ function ReviewPanel({
         onboarding.profile.major,
       ]
         .filter(Boolean)
-        .join(" · ") || "—",
+        .join(" · ") || "-",
     study_stage:
       [onboarding.profile.year_label, onboarding.profile.term_label]
         .filter(Boolean)
-        .join(" · ") || "—",
+        .join(" · ") || "-",
     courses:
       onboarding.course_drafts.length > 0
         ? `${onboarding.course_drafts.length} course${onboarding.course_drafts.length === 1 ? "" : "s"}`
-        : "—",
+        : "-",
     goals:
       onboarding.goals.length + onboarding.problems.length > 0
         ? `${onboarding.goals.length} goals · ${onboarding.problems.length} problems`
-        : "—",
-    first_source: onboarding.first_source_draft?.url ?? "—",
+        : "-",
+    first_source: onboarding.first_source_draft?.url ?? "-",
   };
 
   return (

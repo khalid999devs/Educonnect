@@ -35,7 +35,7 @@ export function AnalyticsView() {
       <header className="space-y-1">
         <h1 className="text-h2 text-text-primary">Analytics</h1>
         <p className="text-body text-text-secondary">
-          A privacy-safe operational overview — aggregate counts and operational
+          A privacy-safe operational overview: aggregate counts and operational
           telemetry only, never prompts, completions, or private academic
           content.
         </p>
@@ -77,7 +77,7 @@ export function AnalyticsView() {
 }
 
 function formatLatency(value: number | null): string {
-  return value === null ? "—" : `${value} ms`;
+  return value === null ? "-" : `${value} ms`;
 }
 
 function formatRate(value: number): string {

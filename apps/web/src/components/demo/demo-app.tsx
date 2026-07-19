@@ -274,7 +274,7 @@ function demoReducer(state: DemoState, action: DemoAction): DemoState {
         .filter((s) => s.kind === "note" && !noteIds.has(s.id))
         .map((s) => ({
           id: s.id,
-          title: "Key terms — research methods",
+          title: "Key terms: research methods",
           courseCode: "RM-110",
           meta: "validity, reliability, operationalization",
           date: "Today",
@@ -373,7 +373,7 @@ export function useDemo() {
   return context;
 }
 
-/** Truthful progress math — every number derives from demo state. */
+/** Truthful progress math - every number derives from demo state. */
 export function demoProgress(state: DemoState) {
   const total = state.tasks.length;
   const completed = state.tasks.filter((t) => t.completed).length;
@@ -581,8 +581,8 @@ export function DemoApp() {
                       You're all caught up
                     </p>
                     <p className="mt-1 text-caption text-text-muted">
-                      Notifications arrive with the full product — the demo
-                      never fakes an unread badge.
+                      Notifications arrive with the full product. The demo never
+                      fakes an unread badge.
                     </p>
                   </div>
                 ) : null}

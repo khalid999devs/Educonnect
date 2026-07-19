@@ -4,7 +4,7 @@ import { cn } from "@educonnect/ui";
  * Bespoke, license-clean marketing illustrations in the reference art
  * style (deep navy, indigo glow, orbiting accents). Authored as inline SVG
  * on semantic tokens so both themes render correctly; all motion sits on
- * motion-safe utilities. Decorative only — always aria-hidden.
+ * motion-safe utilities. Decorative only - always aria-hidden.
  */
 
 export function CapIllustration({ className }: { className?: string }) {

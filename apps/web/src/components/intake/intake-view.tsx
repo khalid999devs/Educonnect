@@ -105,7 +105,7 @@ export function IntakeView() {
     setUrl("");
     setContext("");
     setResourceId("");
-    setNotice("Submitted — you'll see progress below.");
+    setNotice("Submitted. You'll see progress below.");
   };
 
   const linkMutation = useMutation({
@@ -141,7 +141,7 @@ export function IntakeView() {
     }) => confirmIntake(itemId, decisions),
     onSuccess: () => {
       invalidateAll();
-      setNotice("Saved — applied suggestions are now in your workspace.");
+      setNotice("Saved. Applied suggestions are now in your workspace.");
     },
   });
 
@@ -438,7 +438,7 @@ export function IntakeView() {
                     error={
                       confirmMutation.error instanceof ApiError &&
                       confirmMutation.error.status === 409
-                        ? "This item changed — reload and review again."
+                        ? "This item changed. Reload and review again."
                         : (confirmMutation.error?.message ?? null)
                     }
                     onConfirm={(decisions) =>

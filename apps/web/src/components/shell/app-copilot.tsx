@@ -34,7 +34,7 @@ type Availability = "unknown" | "checking" | "enabled" | "disabled";
 /**
  * The single Copilot mount for the student shell: a bounded advisory chat
  * over the user's own workspace snapshot. It reads; it never changes
- * records — and it says so.
+ * records - and it says so.
  */
 export function AppCopilot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -100,7 +100,7 @@ export function AppCopilot() {
       setError(
         caught instanceof ApiError
           ? caught.status === 503
-            ? "The Copilot provider is unavailable right now — try again shortly."
+            ? "The Copilot provider is unavailable right now. Try again shortly."
             : caught.message
           : "Could not reach the server.",
       );
@@ -139,7 +139,7 @@ export function AppCopilot() {
 
               {availability === "disabled" ? (
                 <p className="text-body text-text-secondary">
-                  The Copilot isn't configured on this server — it needs an AI
+                  The Copilot isn't configured on this server. It needs an AI
                   provider key. Everything else works fully without it.
                 </p>
               ) : null}
@@ -237,7 +237,7 @@ export function AppCopilot() {
                     </Button>
                   </form>
                   <p className="mt-1.5 text-caption text-text-muted">
-                    AI-generated — verify important details. It reads a summary
+                    AI-generated. Verify important details. It reads a summary
                     of your workspace and never changes records.
                   </p>
                 </>

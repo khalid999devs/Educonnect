@@ -18,7 +18,7 @@ final readonly class CreatePromptAction
     /**
      * Create a prompt template as a draft. Content is complete on creation (so a
      * draft is always publishable); the lifecycle is advanced separately. Related
-     * tools are synced from their public ids — publication then requires at least
+     * tools are synced from their public ids - publication then requires at least
      * one, which the database enforces on the publish transition.
      *
      * @param  array<string, mixed>  $data

@@ -31,8 +31,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | An item that sits in a transient state (queued/extracting/organizing)
-    | longer than `stranded_after_seconds` is treated as stranded — its worker
-    | was lost or hard-killed without a graceful `failed()` — and recovered by
+    | longer than `stranded_after_seconds` is treated as stranded - its worker
+    | was lost or hard-killed without a graceful `failed()` - and recovered by
     | the `intake:recover-stranded` scheduler. Retryable failures are then
     | auto-requeued with exponential backoff, bounded by the attempt budget.
     |

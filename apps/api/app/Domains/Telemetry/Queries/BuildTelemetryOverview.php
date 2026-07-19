@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * The privacy-safe operational-telemetry overview for administrators (ADM-004):
  * AI-provider health, background-job health, captured server errors, and HTTP
- * latency — aggregate facts only, never prompts, completions, or private
+ * latency - aggregate facts only, never prompts, completions, or private
  * content. This is the surface the metrics substrate was built to enable.
  */
 final class BuildTelemetryOverview

@@ -13,7 +13,7 @@ final class ListUsers
     /**
      * The admin user directory, newest-first. Search matches name or email;
      * filters narrow by role membership and account status. No private academic
-     * content is exposed — only account-level fields (doc 08).
+     * content is exposed - only account-level fields (doc 08).
      *
      * @return CursorPaginator<int, User>
      */

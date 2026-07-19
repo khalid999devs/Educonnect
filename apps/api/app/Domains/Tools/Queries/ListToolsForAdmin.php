@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 final class ListToolsForAdmin
 {
     /**
-     * Every tool for curation — all lifecycle states, newest first (ULID order).
+     * Every tool for curation - all lifecycle states, newest first (ULID order).
      * Authorization is enforced at the route (content.curate).
      *
      * @return CursorPaginator<int, Tool>

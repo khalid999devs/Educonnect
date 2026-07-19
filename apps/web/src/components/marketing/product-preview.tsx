@@ -6,7 +6,7 @@ import Image from "next/image";
  * Marketing hero preview: a real screenshot of the EduConnect student
  * dashboard, framed as a browser window. It runs on the same labeled
  * sample-data workspace the Live Demo uses, so the "Sample data" badge stays
- * for honesty — no fabricated numbers.
+ * for honesty - no fabricated numbers.
  */
 export function ProductPreview({ className }: { className?: string }) {
   return (

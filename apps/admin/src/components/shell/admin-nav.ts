@@ -26,7 +26,7 @@ export type AdminNavItem = {
   available: boolean;
   /**
    * Capability (or any-of list) required to use the module. An available module
-   * the signed-in admin lacks the capability for renders disabled — the API
+   * the signed-in admin lacks the capability for renders disabled - the API
    * remains authoritative regardless.
    */
   capability?: string | string[];
@@ -39,7 +39,7 @@ export type AdminNavSection = {
 
 /**
  * A module is usable when it has shipped AND the signed-in admin holds one of
- * its required capabilities. Navigation shaping only — the API re-checks every
+ * its required capabilities. Navigation shaping only - the API re-checks every
  * request.
  */
 export function navItemEnabled(

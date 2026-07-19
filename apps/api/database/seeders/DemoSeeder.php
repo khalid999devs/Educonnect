@@ -121,13 +121,13 @@ final class DemoSeeder extends Seeder
 
             ## 2. Themes
             ### Theme A: {{theme_a}}
-            - Source 1 — key claim, method, limitation
-            - Source 2 — key claim, method, limitation
+            - Source 1: key claim, method, limitation
+            - Source 2: key claim, method, limitation
             - Where they agree / disagree
 
             ### Theme B: {{theme_b}}
-            - Source 1 — key claim, method, limitation
-            - Source 2 — key claim, method, limitation
+            - Source 1: key claim, method, limitation
+            - Source 2: key claim, method, limitation
 
             ## 3. Gaps and open questions
             - What is missing across the sources?

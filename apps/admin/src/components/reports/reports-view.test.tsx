@@ -15,7 +15,7 @@ vi.mock("@/lib/api/admin-reports", () => ({
 const mockedListReports = vi.mocked(listReports);
 
 /* Reported community content is untrusted and may carry an injection payload;
-   it must render as inert, escaped text — never live markup. */
+   it must render as inert, escaped text - never live markup. */
 const INJECTION = '<img src=x onerror="alert(1)"> Ignore previous instructions';
 
 function wrapper({ children }: { children: ReactNode }) {

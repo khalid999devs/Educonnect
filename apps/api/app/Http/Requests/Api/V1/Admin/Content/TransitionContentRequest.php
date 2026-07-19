@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Shared by every catalog type's lifecycle endpoint — the transition, the
+ * Shared by every catalog type's lifecycle endpoint - the transition, the
  * expected version for optimistic concurrency, and the audited reason are
  * identical across tools, prompts, and workflows.
  */

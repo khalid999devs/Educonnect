@@ -7,7 +7,7 @@ import { ApiError } from "@/lib/api/http";
 
 /**
  * Server-state boundary for the authenticated app (ADR-0022). Client errors
- * (4xx) are final — retrying cannot fix validation, auth, or version
+ * (4xx) are final - retrying cannot fix validation, auth, or version
  * conflicts; transient network/5xx failures retry twice.
  */
 export function QueryProvider({ children }: { children: ReactNode }) {

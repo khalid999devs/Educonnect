@@ -56,7 +56,7 @@ return [
     |
     | After `failure_threshold` consecutive failures the breaker opens for
     | `cooldown_seconds`; while open, calls short-circuit immediately so a
-    | failing provider is not hammered — intake degrades to its deterministic
+    | failing provider is not hammered - intake degrades to its deterministic
     | classifier and the Copilot reports itself briefly unavailable.
     |
     */

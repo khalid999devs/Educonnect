@@ -21,7 +21,7 @@ function describeState(state: Record<string, unknown>): string {
   const entries = Object.entries(state);
 
   if (entries.length === 0) {
-    return "—";
+    return "-";
   }
 
   return entries

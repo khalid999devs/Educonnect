@@ -19,7 +19,7 @@ final readonly class UpdateTemplateAction
 {
     /**
      * Edit a draft template's metadata and, when a new body is supplied, append a
-     * new immutable version. Versions are never edited or removed — a body change
+     * new immutable version. Versions are never edited or removed - a body change
      * is a fresh version. Only a draft is editable.
      *
      * @param  array<string, mixed>  $data

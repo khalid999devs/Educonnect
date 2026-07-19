@@ -70,7 +70,7 @@ export function TemplatePreviewDialog({
         )}
         <p className="text-caption text-text-muted">
           {template.provenance} · Using it creates your own independent editable
-          copy — the original never changes.
+          copy. The original never changes.
         </p>
       </div>
     </Dialog>
@@ -284,7 +284,7 @@ export function CopyEditorDialog({
           )}
         </FormField>
         <p className="text-caption text-text-muted">
-          The source template and its version never change — this is your own
+          The source template and its version never change. This is your own
           copy.
         </p>
       </form>

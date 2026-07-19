@@ -3,7 +3,7 @@ import { Lock, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 
 /**
- * Sign-in frame for the console. Deliberately austere — doc 08 asks admin
+ * Sign-in frame for the console. Deliberately austere - doc 08 asks admin
  * surfaces to prioritise accuracy, density, and safety over the decorative
  * covers used on student pages. A single focused card, a restricted-access
  * note, and no marketing copy.

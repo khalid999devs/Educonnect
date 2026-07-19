@@ -102,7 +102,7 @@ export function BrainView() {
           <h1 className="text-h2 text-text-primary">Second Brain</h1>
           <p className="text-body-lg text-text-secondary">
             Everything you've saved, searchable by title, summary, author, or
-            venue — each item keeps its original source.
+            venue. Each item keeps its original source.
           </p>
         </div>
       </header>

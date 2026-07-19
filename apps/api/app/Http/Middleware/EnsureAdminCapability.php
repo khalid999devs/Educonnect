@@ -12,8 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Per-route capability gate for the admin surface. The admin app authenticates
- * on the `admin` guard, so — unlike the student `can:` middleware, which reads
- * the default guard — capability checks here resolve the actor explicitly
+ * on the `admin` guard, so - unlike the student `can:` middleware, which reads
+ * the default guard - capability checks here resolve the actor explicitly
  * through it. Layered after RequireAdminAccess (which already establishes a
  * verified admin-access holder), this narrows a route to a capability. Multiple
  * capabilities are any-of, which covers gates such as "moderate" that any of a

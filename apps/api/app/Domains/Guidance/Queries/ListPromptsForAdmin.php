@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 final class ListPromptsForAdmin
 {
     /**
-     * Every prompt template for curation — all lifecycle states, newest first
+     * Every prompt template for curation - all lifecycle states, newest first
      * (ULID order). Authorization is enforced at the route (content.curate).
      *
      * @return CursorPaginator<int, PromptTemplate>

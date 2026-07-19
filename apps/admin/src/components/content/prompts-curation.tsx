@@ -293,7 +293,7 @@ function PromptForm({
         <Field label="Related published tools (required before publishing)">
           {tools.length === 0 ? (
             <p className="text-caption text-text-muted">
-              No published tools yet — publish a tool first to relate it.
+              No published tools yet. Publish a tool first to relate it.
             </p>
           ) : (
             <div className="space-y-1">

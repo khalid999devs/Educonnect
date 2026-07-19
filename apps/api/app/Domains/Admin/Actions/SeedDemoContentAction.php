@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Populates the deterministic guidance launch catalog on demand. Deliberately
- * additive and idempotent — it seeds the curated catalog only when it is absent
+ * additive and idempotent - it seeds the curated catalog only when it is absent
  * and never deletes existing data, so it is safe to run against a shared
  * environment (a destructive wipe-and-reset belongs to an isolated demo tenant
  * in staging, not this control). The action is recorded in the audit log.

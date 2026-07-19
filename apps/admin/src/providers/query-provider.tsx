@@ -7,7 +7,7 @@ import { ApiError } from "@/lib/api/http";
 
 /**
  * Server-state boundary for the console (ADR-0022 pattern). Client errors
- * (4xx) are final — retrying cannot fix validation, auth, or authorization
+ * (4xx) are final - retrying cannot fix validation, auth, or authorization
  * failures; transient network/5xx failures retry twice.
  */
 export function QueryProvider({ children }: { children: ReactNode }) {

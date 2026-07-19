@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Shared list filter for every catalog type — the four lifecycle states are
+ * Shared list filter for every catalog type - the four lifecycle states are
  * identical across tools, prompts, and workflows.
  */
 final class ListAdminContentRequest extends FormRequest

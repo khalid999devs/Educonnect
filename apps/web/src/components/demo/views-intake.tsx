@@ -77,7 +77,7 @@ export function IntakeView() {
         photo="/marketing/notebook-pens.jpg"
         eyebrow="Smart Intake"
         title={`Welcome back, ${DEMO_PERSONA.name}!`}
-        subtitle="Upload a sample syllabus and let extraction propose a plan — you review and confirm every change."
+        subtitle="Upload a sample syllabus and let extraction propose a plan. You review and confirm every change."
       />
 
       {/* Stepper */}
@@ -155,7 +155,7 @@ export function IntakeView() {
                   Choose a sample document
                 </p>
                 <p className="text-caption text-text-muted">
-                  Drag &amp; drop and links arrive with the product — the demo
+                  Drag &amp; drop and links arrive with the product. The demo
                   uses fixed samples so nothing uploads.
                 </p>
                 <div className="mx-auto mt-4 max-w-sm space-y-2">
@@ -208,7 +208,7 @@ export function IntakeView() {
                 </div>
                 <p className="mt-4 flex items-center justify-center gap-1.5 text-caption text-text-muted">
                   <Lock aria-hidden="true" className="size-3" />
-                  In the product: PDF, DOCX, text, and links with size limits —
+                  In the product: PDF, DOCX, text, and links with size limits,
                   private by default.
                 </p>
               </div>
@@ -259,7 +259,7 @@ export function IntakeView() {
                   aria-hidden="true"
                   className="size-4 text-status-success"
                 />
-                Extraction finished — review the suggestions below.
+                Extraction finished. Review the suggestions below.
               </p>
             ) : null}
 
@@ -269,7 +269,7 @@ export function IntakeView() {
                   aria-hidden="true"
                   className="size-4 text-status-success"
                 />
-                Saved and organized — retrying never duplicates records.
+                Saved and organized. Retrying never duplicates records.
               </p>
             ) : null}
 
@@ -336,8 +336,8 @@ export function IntakeView() {
                   </div>
                 ))}
                 <p className="text-caption text-text-muted">
-                  Nothing is created automatically — you review everything at
-                  the last step.
+                  Nothing is created automatically. You review everything at the
+                  last step.
                 </p>
               </>
             ) : null}
@@ -391,7 +391,7 @@ export function IntakeView() {
                   </div>
                 ) : null}
                 <p className="text-caption text-text-muted">
-                  Each suggestion carries its reason — accept or reject them
+                  Each suggestion carries its reason. Accept or reject them
                   individually below.
                 </p>
               </>
@@ -411,7 +411,7 @@ export function IntakeView() {
             Analyze &amp; organize
           </Button>
           <p className="text-caption text-text-muted">
-            Simulated analysis — a fixed sequence in your browser, not a real
+            Simulated analysis: a fixed sequence in your browser, not a real
             model call.
           </p>
         </div>
@@ -492,7 +492,7 @@ export function IntakeView() {
         <div className="space-y-3">
           <Alert variant="success" title="Saved to your demo workspace">
             You confirmed {acceptedCount} of {doc.suggestions.length}{" "}
-            suggestions — tasks are on the planner, the document is a course
+            suggestions: tasks are on the planner, the document is a course
             resource, and notes landed in the Second Brain.
           </Alert>
           <div className="flex flex-wrap gap-3">

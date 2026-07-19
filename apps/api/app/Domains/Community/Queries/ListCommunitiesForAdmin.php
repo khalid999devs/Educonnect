@@ -10,7 +10,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 final class ListCommunitiesForAdmin
 {
     /**
-     * Every community for management — all visibilities (unlike the student
+     * Every community for management - all visibilities (unlike the student
      * directory, which shows published only), newest first. Authorization is
      * enforced at the route (content.curate).
      *

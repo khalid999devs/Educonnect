@@ -23,9 +23,9 @@ import { ProductPreview } from "@/components/marketing/product-preview";
 
 export const metadata: Metadata = {
   description:
-    "Your university life, organized in one smart platform. EduConnect guides students from need to action — the right tool, organized material, truthful progress. Try the Live Demo, no signup.",
+    "Your university life, organized in one smart platform. EduConnect guides students from need to action: the right tool, organized material, truthful progress. Try the Live Demo, no signup.",
   openGraph: {
-    title: "EduConnect — your university life, organized in one smart platform",
+    title: "EduConnect: your university life, organized in one smart platform",
     description:
       "Plan smarter, learn faster, and stay on track with guided tools, Quick Intake, and truthful progress. Try the Live Demo without an account.",
     type: "website",
@@ -42,7 +42,7 @@ const HOW_IT_WORKS = [
   {
     title: "Tell EduConnect your goal",
     description:
-      "Start from what you actually need to do — write a literature review, plan exam week, summarize a lecture.",
+      "Start from what you actually need to do: write a literature review, plan exam week, summarize a lecture.",
   },
   {
     title: "Get tools, prompts, and workflows with reasons",
@@ -52,7 +52,7 @@ const HOW_IT_WORKS = [
   {
     title: "Capture material with Quick Intake",
     description:
-      "Upload a syllabus or paste a link. Extracted deadlines and topics arrive as suggestions you review — nothing saves itself.",
+      "Upload a syllabus or paste a link. Extracted deadlines and topics arrive as suggestions you review. Nothing saves itself.",
   },
   {
     title: "See today's plan and honest progress",
@@ -66,13 +66,13 @@ const FEATURES = [
     icon: Inbox,
     title: "Smart Intake",
     description:
-      "Capture and organize everything in one place — suggestions with reasons, confirmed by you.",
+      "Capture and organize everything in one place: suggestions with reasons, confirmed by you.",
   },
   {
     icon: Brain,
     title: "Academic Second Brain",
     description:
-      "Connect ideas, notes, and sources effortlessly, with search that finds them again.",
+      "Connect ideas, notes, and sources, with search that finds them again.",
   },
   {
     icon: Sparkles,
@@ -90,7 +90,7 @@ const FEATURES = [
     icon: TrendingUp,
     title: "Truthful progress",
     description:
-      "Real records in an explicit timeframe. Empty weeks say so — no streak tricks.",
+      "Real records in an explicit timeframe. Empty weeks say so. No streak tricks.",
   },
   {
     icon: Compass,
@@ -111,13 +111,13 @@ const PRINCIPLES = [
     icon: Lock,
     title: "Private by default",
     description:
-      "Your courses, files, and notes are yours alone — private storage, signed access, no sharing without you.",
+      "Your courses, files, and notes are yours alone: private storage, signed access, no sharing without you.",
   },
   {
     icon: Sparkles,
     title: "No fabricated numbers",
     description:
-      "No fake testimonials, invented user counts, or motivational math — on this site or inside the product.",
+      "No fake testimonials, invented user counts, or motivational math, on this site or inside the product.",
   },
 ] as const;
 
@@ -183,8 +183,8 @@ export default function LandingPage() {
               ))}
             </ul>
             <p className="text-caption text-text-muted">
-              Free account in seconds — or try the demo first, no signup, in
-              your browser on labeled sample data.
+              Free account in seconds, or try the demo first, no signup, in your
+              browser on labeled sample data.
             </p>
           </div>
 
@@ -240,8 +240,8 @@ export default function LandingPage() {
               Everything you need to succeed
             </h2>
             <p className="text-body-lg text-text-secondary">
-              Every capability below is built and walkable in the Live Demo —
-              nothing here is a mockup promise.
+              Every capability below is built and walkable in the Live Demo.
+              Nothing here is a mockup promise.
             </p>
           </div>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -281,13 +281,13 @@ export default function LandingPage() {
               <span className="text-brand-primary">every day</span>
             </h2>
             <p className="text-body-lg text-text-secondary">
-              From planning and tasks to AI tools and resources — everything you
+              From planning and tasks to AI tools and resources, everything you
               need in one intelligent dashboard, composed from your real records
               at the moment you open it.
             </p>
             <ul className="space-y-2.5">
               {[
-                "One Quick Intake module — never two competing upload surfaces",
+                "One Quick Intake module, never two competing upload surfaces",
                 "What's Next always points at a real task or review item",
                 "Progress you can trust, with an explicit timeframe",
               ].map((line) => (
@@ -384,7 +384,7 @@ export default function LandingPage() {
             </h2>
             <p className="max-w-xl text-body-lg text-text-secondary">
               All the tools. All your courses. All in one place. Walk the full
-              loop in about two minutes — in your browser, on labeled sample
+              loop in about two minutes, in your browser, on labeled sample
               data.
             </p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
@@ -414,7 +414,7 @@ export default function LandingPage() {
         <p className="scroll-reveal flex flex-wrap items-center justify-center gap-2 text-center text-caption text-text-muted">
           <LayoutTemplate aria-hidden="true" className="size-3.5" />
           Curated communities, mentor help, and registration arrive as the MVP
-          completes — nothing on this page pretends otherwise.
+          completes. Nothing on this page pretends otherwise.
         </p>
       </section>
     </div>

@@ -156,7 +156,7 @@ export function TemplatesView() {
     onSuccess: () => {
       void invalidateTemplates();
       setUsing(null);
-      setNotice("Added to your library — edit your copy any time.");
+      setNotice("Added to your library. Edit your copy any time.");
     },
   });
 
@@ -238,7 +238,7 @@ export function TemplatesView() {
           <h1 className="text-h2 text-text-primary">Templates</h1>
           <p className="text-body-lg text-text-secondary">
             Approved, free academic templates you can preview, copy into your
-            own library, and edit — the originals never change.
+            own library, and edit. The originals never change.
           </p>
         </div>
       </header>

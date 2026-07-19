@@ -1,13 +1,13 @@
 /** Formats an ISO timestamp as an absolute, unambiguous UTC-based string. */
 export function formatDateTime(iso: string | null): string {
   if (iso === null) {
-    return "—";
+    return "-";
   }
 
   const date = new Date(iso);
 
   if (Number.isNaN(date.getTime())) {
-    return "—";
+    return "-";
   }
 
   return new Intl.DateTimeFormat(undefined, {

@@ -12,7 +12,7 @@ use Throwable;
  * Versioned structured-output schema. Every provider response passes through
  * this validator before persistence: unknown keys, unbounded text, unsafe
  * URLs, unknown courses, out-of-range confidence, or excess suggestions are
- * rejected — including anything a prompt-injected document convinced a
+ * rejected - including anything a prompt-injected document convinced a
  * provider to emit.
  */
 final class SuggestionSchemaV1

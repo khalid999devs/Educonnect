@@ -78,7 +78,7 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4">
-      {/* 1 — greeting / academic cover (Notion-style photo band) */}
+      {/* 1 - greeting / academic cover (Notion-style photo band) */}
       <div className="relative min-h-52 overflow-hidden rounded-xl border border-border-default lg:min-h-60">
         <Image
           src="/marketing/study-desk.jpg"
@@ -101,7 +101,7 @@ export function DashboardView() {
             Good evening, {DEMO_PERSONA.name} 👋
           </h2>
           <p className="text-body-lg text-text-secondary">
-            Keep going — small steps today, big impact tomorrow.
+            Keep going. Small steps today, big impact tomorrow.
           </p>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/40 bg-bg-canvas/70 px-3 py-1 text-caption font-medium text-brand-primary backdrop-blur-sm">
             <Star aria-hidden="true" className="size-3.5" />
@@ -115,7 +115,7 @@ export function DashboardView() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        {/* 2 — the single Quick Intake module */}
+        {/* 2 - the single Quick Intake module */}
         <Card>
           <CardHeader className="mb-3">
             <CardTitle as="h3" className="flex items-center gap-2.5">
@@ -141,7 +141,7 @@ export function DashboardView() {
                   Capture a sample document
                 </p>
                 <p className="text-caption text-text-muted">
-                  Analysis is simulated — nothing uploads.
+                  Analysis is simulated. Nothing uploads.
                 </p>
                 <div className="mt-3 space-y-2">
                   {DEMO_DOCUMENTS.map((doc) => (
@@ -167,7 +167,7 @@ export function DashboardView() {
             {state.intake.status === "selected" ? (
               <>
                 <p className="text-body text-text-primary">
-                  Sample selected — run the analysis from Smart Intake.
+                  Sample selected. Run the analysis from Smart Intake.
                 </p>
                 <Button
                   size="sm"
@@ -217,7 +217,7 @@ export function DashboardView() {
                   aria-hidden="true"
                   className="size-4 text-status-success"
                 />
-                Suggestions ready — review them in What's Next.
+                Suggestions ready. Review them in What's Next.
               </p>
             ) : null}
 
@@ -247,7 +247,7 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        {/* 3 — What's Next */}
+        {/* 3 - What's Next */}
         <Card>
           <CardHeader className="mb-3">
             <CardTitle as="h3" className="flex items-center gap-2.5">
@@ -276,7 +276,7 @@ export function DashboardView() {
                     </span>
                     <span className="block text-caption text-text-secondary">
                       We drafted {activeDoc.suggestions.length} suggestions from{" "}
-                      {activeDoc.name} — each with its reason.
+                      {activeDoc.name}, each with its reason.
                     </span>
                   </span>
                 </p>
@@ -316,13 +316,13 @@ export function DashboardView() {
             ))}
             {openTasks.length === 0 && state.intake.status !== "ready" ? (
               <p className="text-body text-text-secondary">
-                Nothing open. That's real — no filler tasks here.
+                Nothing open. That's real. No filler tasks here.
               </p>
             ) : null}
           </CardContent>
         </Card>
 
-        {/* 4 — recommended tools, saved-first */}
+        {/* 4 - recommended tools, saved-first */}
         <Card>
           <CardHeader className="mb-3">
             <div className="flex items-center justify-between gap-2">
@@ -404,7 +404,7 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* 5 — today: next class, deadline, focus session */}
+      {/* 5 - today: next class, deadline, focus session */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="flex items-start justify-between gap-3">
           <div>
@@ -481,7 +481,7 @@ export function DashboardView() {
               </Button>
             ) : (
               <p className="mt-2 text-caption font-medium text-status-success">
-                Completed — {FOCUS_SESSION.minutes} real minutes counted.
+                Completed: {FOCUS_SESSION.minutes} real minutes counted.
               </p>
             )}
           </div>
@@ -492,7 +492,7 @@ export function DashboardView() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        {/* 6 — Second Brain recents */}
+        {/* 6 - Second Brain recents */}
         <Card>
           <CardHeader className="mb-3">
             <div className="flex items-center justify-between gap-2">
@@ -555,7 +555,7 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        {/* 7 — one truthful progress region */}
+        {/* 7 - one truthful progress region */}
         <Card>
           <CardHeader className="mb-3">
             <div className="flex items-center justify-between gap-2">
@@ -651,7 +651,7 @@ export function DashboardView() {
             </div>
 
             <p className="text-caption text-text-muted">
-              Every number here is computed from what you did in this demo — no
+              Every number here is computed from what you did in this demo. No
               streaks, no invented percentages.
             </p>
           </CardContent>

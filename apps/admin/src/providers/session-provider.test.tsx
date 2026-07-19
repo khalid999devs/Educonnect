@@ -30,7 +30,7 @@ function Probe() {
   return (
     <div>
       <span data-testid="status">{status}</span>
-      <span data-testid="name">{session?.user.name ?? "—"}</span>
+      <span data-testid="name">{session?.user.name ?? "-"}</span>
       <span data-testid="can-admin">{String(can("admin.access"))}</span>
       <span data-testid="can-other">{String(can("users.manage"))}</span>
     </div>
@@ -73,7 +73,7 @@ describe("SessionProvider", () => {
     await waitFor(() =>
       expect(screen.getByTestId("status")).toHaveTextContent("guest"),
     );
-    expect(screen.getByTestId("name")).toHaveTextContent("—");
+    expect(screen.getByTestId("name")).toHaveTextContent("-");
   });
 
   it("treats a 403 (capability revoked while signed in) as guest", async () => {

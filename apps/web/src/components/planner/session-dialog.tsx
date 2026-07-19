@@ -44,7 +44,7 @@ export type SessionDialogProps = {
 };
 
 /** Create/edit form for a focus session. A session may attach to one owned
- * task, one owned course, or neither — never both (planner contract). */
+ * task, one owned course, or neither - never both (planner contract). */
 export function SessionDialog({
   open,
   session,

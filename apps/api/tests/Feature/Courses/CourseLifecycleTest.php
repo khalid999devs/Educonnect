@@ -54,19 +54,19 @@ final class CourseLifecycleTest extends TestCase
         $updatedTerm = $this->withHeaders($this->mutationHeaders())
             ->putJson("/api/v1/academic-terms/{$termId}", [
                 'expected_version' => 1,
-                'label' => 'Fall 2026 — updated',
+                'label' => 'Fall 2026 (updated)',
                 'starts_on' => '2026-09-01',
                 'ends_on' => '2026-12-20',
             ])
             ->assertOk()
             ->assertJsonPath('data.version', 2)
-            ->assertJsonPath('data.label', 'Fall 2026 — updated');
+            ->assertJsonPath('data.label', 'Fall 2026 (updated)');
         $termUpdatedAt = $updatedTerm->json('data.updated_at');
 
         $this->withHeaders($this->mutationHeaders())
             ->putJson("/api/v1/academic-terms/{$termId}", [
                 'expected_version' => 1,
-                'label' => 'Fall 2026 — updated',
+                'label' => 'Fall 2026 (updated)',
                 'starts_on' => '2026-09-01',
                 'ends_on' => '2026-12-20',
             ])

@@ -1,6 +1,6 @@
 /**
  * Timezone-safe planner date math. Every helper works from IANA-zone local
- * parts of real instants — never from the device clock's UTC offset — so
+ * parts of real instants - never from the device clock's UTC offset - so
  * daylight-saving transitions cannot shift a task or session into the
  * wrong local day (doc 07; same anchoring rule as the dashboard).
  */
@@ -86,13 +86,13 @@ export function localTimeInputValue(instant: string, timezone: string): string {
   return `${hour}:${minute}`;
 }
 
-/** "9:30 AM – 10:20 AM" for a session in the timezone. */
+/** "9:30 AM - 10:20 AM" for a session in the timezone. */
 export function formatLocalTimeRange(
   startsAt: string,
   endsAt: string,
   timezone: string,
 ): string {
-  return `${formatLocalTime(startsAt, timezone)} – ${formatLocalTime(endsAt, timezone)}`;
+  return `${formatLocalTime(startsAt, timezone)} to ${formatLocalTime(endsAt, timezone)}`;
 }
 
 /** "Mon", "Tue", … for a YYYY-MM-DD calendar date. */
@@ -105,7 +105,7 @@ export function weekdayShort(date: string): string {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-/** "Jul 13 – Jul 19, 2026" for a week starting at weekStart. */
+/** "Jul 13 - Jul 19, 2026" for a week starting at weekStart. */
 export function formatWeekRange(weekStart: string): string {
   const end = addDays(weekStart, 6);
   const format = (date: string, withYear: boolean) => {
@@ -119,7 +119,7 @@ export function formatWeekRange(weekStart: string): string {
     }).format(new Date(Date.UTC(year, month - 1, day)));
   };
 
-  return `${format(weekStart, false)} – ${format(end, true)}`;
+  return `${format(weekStart, false)} to ${format(end, true)}`;
 }
 
 /** "Thu, Jul 17" for a YYYY-MM-DD calendar date. */

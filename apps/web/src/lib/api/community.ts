@@ -5,7 +5,7 @@ import { apiFetch, envelopeData, toQueryString } from "./http";
 /** Runtime shapes of the Community contract (openapi.yaml): curated communities,
  * a membership-scoped feed of posts and comments, and an abuse-report ladder that
  * feeds a scoped moderation queue. All source-derived text renders as escaped
- * React text — there is no rich-text/HTML rendering on this path. */
+ * React text - there is no rich-text/HTML rendering on this path. */
 
 const isoDateTime = z.string();
 

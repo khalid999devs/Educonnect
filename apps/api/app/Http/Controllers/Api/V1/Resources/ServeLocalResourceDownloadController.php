@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Streams a stored resource file from the local disk — the local-disk stand-in
+ * Streams a stored resource file from the local disk - the local-disk stand-in
  * for an S3 presigned GET. The URL is a temporary signed route carrying the
  * object key, mime type, and download filename; the endpoint aborts unless the
  * resource disk is a local driver, keeping it inert in production.

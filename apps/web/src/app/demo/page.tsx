@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "EduConnect Live Demo",
     description:
-      "The student workspace simulated full-screen in your browser on sample data — no signup.",
+      "The student workspace simulated full-screen in your browser on sample data. No signup.",
     type: "website",
   },
 };

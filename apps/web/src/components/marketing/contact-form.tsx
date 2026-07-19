@@ -11,7 +11,7 @@ import {
 
 /**
  * The real contact form UI, shipped before a support inbox exists. Sending
- * stays disabled and says so — no fake submission, no invented addresses.
+ * stays disabled and says so - no fake submission, no invented addresses.
  */
 export function ContactForm() {
   return (

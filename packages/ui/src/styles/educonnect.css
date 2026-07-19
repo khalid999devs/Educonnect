@@ -5,7 +5,7 @@
  * the visual authority is the brand PDF v1.1. This file is processed by the
  * consuming app's Tailwind CSS v4 pipeline (import it after `tailwindcss`).
  *
- * Cross-theme parity aliases reuse documented hexes only — a theme that does
+ * Cross-theme parity aliases reuse documented hexes only - a theme that does
  * not document a token aliases the nearest documented value in that theme so
  * semantic utilities resolve in both themes without inventing new colors.
  */

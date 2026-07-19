@@ -25,7 +25,7 @@ export type ResourceDialogProps = {
   error: ApiError | Error | null;
 };
 
-/** Edit a resource's metadata; only link resources may change their URL —
+/** Edit a resource's metadata; only link resources may change their URL -
  * a private file keeps its object identity (resources contract). */
 export function ResourceDialog({
   open,

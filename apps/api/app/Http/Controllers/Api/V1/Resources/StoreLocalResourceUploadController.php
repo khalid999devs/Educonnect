@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Accepts the raw body of a local resource upload — the local-disk stand-in for
- * an S3 presigned PUT — and writes it to the configured resource disk under the
+ * Accepts the raw body of a local resource upload - the local-disk stand-in for
+ * an S3 presigned PUT - and writes it to the configured resource disk under the
  * signed staging key. The URL is a temporary signed route, so key/mime/size
  * cannot be tampered with, and the endpoint aborts unless the resource disk is
  * a local driver, keeping it inert in production. Byte integrity (size and

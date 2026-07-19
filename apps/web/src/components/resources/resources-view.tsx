@@ -169,7 +169,7 @@ export function ResourcesView() {
     },
     onError: () => {
       setNotice(
-        "A download link could not be created — the file may still be processing.",
+        "A download link could not be created. The file may still be processing.",
       );
     },
   });
@@ -273,7 +273,7 @@ export function ResourcesView() {
       {resourcesQuery.isError ? (
         <ErrorState
           title="Your library could not load"
-          description="Your materials are safe — this is a loading problem, not a data problem."
+          description="Your materials are safe. This is a loading problem, not a data problem."
           onRetry={() => void resourcesQuery.refetch()}
         />
       ) : (
@@ -348,7 +348,7 @@ export function ResourcesView() {
           error={
             deleteMutation.error instanceof ApiError &&
             deleteMutation.error.status === 409
-              ? "This resource changed elsewhere — close and try again."
+              ? "This resource changed elsewhere. Close and try again."
               : (deleteMutation.error?.message ?? null)
           }
           onConfirm={() => deleteMutation.mutate({ resource: deleting })}

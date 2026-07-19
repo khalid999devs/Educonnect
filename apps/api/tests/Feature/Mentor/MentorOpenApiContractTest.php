@@ -116,7 +116,7 @@ final class MentorOpenApiContractTest extends TestCase
         $this->withHeaders($this->headers())
             ->patchJson("/api/v1/mentor-requests/{$request->public_id}", [
                 'action' => 'accept',
-                'response_note' => 'Happy to help — send your code.',
+                'response_note' => 'Happy to help. Send your code.',
                 'expected_version' => 1,
             ])
             ->assertOk()

@@ -402,10 +402,10 @@ export function ResourceTable({
                       <td className="max-w-40 truncate py-2.5 pr-3 text-body text-text-secondary">
                         {resource.course
                           ? (resource.course.code ?? resource.course.title)
-                          : "—"}
+                          : "-"}
                       </td>
                       <td className="max-w-40 truncate py-2.5 pr-3 text-body text-text-secondary">
-                        {resource.topic ?? "—"}
+                        {resource.topic ?? "-"}
                       </td>
                       <td className="py-2.5 pr-3 text-body tabular-nums text-text-secondary">
                         {addedLabel(resource.created_at)}

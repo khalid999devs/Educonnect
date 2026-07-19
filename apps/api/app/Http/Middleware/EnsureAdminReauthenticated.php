@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Step-up re-authentication gate for the highest-risk admin actions (account
  * suspension/reactivation, role assignment, shared demo-data seeding). Layered
  * after the capability gate, it requires a password confirmation recorded in
- * the session within a short, fixed TTL — a compromised or unattended live
+ * the session within a short, fixed TTL - a compromised or unattended live
  * session cannot perform these actions without the current password. The grant
  * is a time window (not one-time), so a short burst of related actions does not
  * re-prompt on every click; it is never refreshed by use, so it always expires.

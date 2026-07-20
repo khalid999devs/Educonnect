@@ -458,8 +458,8 @@ export function WeeklyBoard({
 
         {hasMore ? (
           <Badge variant="warning">
-            Showing the first {weekly?.meta.limit} items. Narrow the week to
-            see everything.
+            Showing the first {weekly?.meta.limit} items. Narrow the week to see
+            everything.
           </Badge>
         ) : null}
       </CardContent>

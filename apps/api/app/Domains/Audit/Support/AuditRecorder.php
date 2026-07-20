@@ -69,7 +69,7 @@ final class AuditRecorder
      */
     private function assertSafeState(array $state): void
     {
-        // The allowlist keeps audit payloads to change-descriptive metadata only - 
+        // The allowlist keeps audit payloads to change-descriptive metadata only -
         // never secrets or private academic/content bodies (doc 08). Each value is a
         // short list of stable enum-like strings describing what changed.
         $allowedKeys = [

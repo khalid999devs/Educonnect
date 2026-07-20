@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * A privacy-safe operational overview for administrators: aggregate counts only,
  * never private academic content, prompts, messages, or per-user detail (doc 08,
- * ADM-004). AI-usage, job-health, and error telemetry are intentionally absent - 
+ * ADM-004). AI-usage, job-health, and error telemetry are intentionally absent -
  * they require a metrics substrate that is hardening-phase (28) work - so this
  * reports the counts the current schema can answer honestly.
  */

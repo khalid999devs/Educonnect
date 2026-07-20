@@ -80,7 +80,7 @@ final readonly class SafeIntakeUrl
      * connection dials only the addresses that just passed this guard. Without
      * it, libcurl re-resolves the hostname independently at connect time, so a
      * low-TTL attacker domain could pass the guard on a public IP and then
-     * resolve to a private/link-local IP (e.g. a cloud metadata endpoint) - 
+     * resolve to a private/link-local IP (e.g. a cloud metadata endpoint) -
      * a DNS-rebinding/TOCTOU SSRF. The https default port (443) is enforced by
      * assertSafe(), so the pin is fixed to it.
      *

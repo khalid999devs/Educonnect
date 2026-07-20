@@ -14,11 +14,11 @@ import { ContactForm } from "@/components/marketing/contact-form";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "How to reach EduConnect. Support channels open at public launch; the Live Demo and blog are available now.",
+    "Get in touch with EduConnect. Send a message about the product, privacy, or working together.",
   openGraph: {
     title: "Contact EduConnect",
     description:
-      "Support channels open at public launch; the Live Demo and blog are available now.",
+      "Send a message about the product, privacy, or working together.",
     type: "website",
   },
 };
@@ -36,9 +36,8 @@ export default function ContactPage() {
           Contact
         </h1>
         <p className="text-body-lg text-text-secondary motion-safe:animate-fade-up motion-safe:[animation-delay:100ms]">
-          EduConnect is pre-launch, so we're honest about what's open: a
-          monitored support channel arrives with registration. Here's the form
-          it will use, and what you can explore in the meantime.
+          Questions about the product, privacy, or working together? Send a
+          message and we'll reply by email.
         </p>
       </header>
 
@@ -50,7 +49,7 @@ export default function ContactPage() {
         <div className="space-y-4">
           <Card className="scroll-reveal">
             <CardHeader className="mb-2">
-              <CardTitle as="h2">In the meantime</CardTitle>
+              <CardTitle as="h2">Explore first</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
@@ -83,9 +82,8 @@ export default function ContactPage() {
           <Card className="scroll-reveal bg-bg-interactive">
             <CardContent>
               <p className="text-body text-text-primary">
-                Why no email address here? Because we won't publish a channel
-                nobody monitors yet. When support opens, this page gets the real
-                thing.
+                For anything about your account, send the message from the email
+                you signed up with so we can find it quickly.
               </p>
             </CardContent>
           </Card>

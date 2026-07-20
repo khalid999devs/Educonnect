@@ -69,6 +69,7 @@ use App\Http\Controllers\Api\V1\Community\ResolveReportController;
 use App\Http\Controllers\Api\V1\Community\ShowCommunityController;
 use App\Http\Controllers\Api\V1\Community\ShowPostController;
 use App\Http\Controllers\Api\V1\Community\UpdatePostController;
+use App\Http\Controllers\Api\V1\Contact\StoreContactMessageController;
 use App\Http\Controllers\Api\V1\Copilot\CopilotAvailabilityController;
 use App\Http\Controllers\Api\V1\Copilot\CopilotMessageController;
 use App\Http\Controllers\Api\V1\Courses\ArchiveCourseController;
@@ -202,6 +203,12 @@ Route::middleware([
     RequireBrowserSurface::class.':'.RequireBrowserSurface::STUDENT,
 ])
     ->group(function (): void {
+        // Public marketing contact form: unauthenticated, rate limited per
+        // sender address and IP.
+        Route::post('/contact', StoreContactMessageController::class)
+            ->middleware('throttle:contact')
+            ->name('contact.store');
+
         Route::prefix('auth')
             ->name('auth.')
             ->group(function (): void {

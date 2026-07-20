@@ -288,6 +288,14 @@ class AppServiceProvider extends ServiceProvider
             actorAttempts: 5,
             ipAttempts: 30,
         ));
+        // Public contact form: bounded per sender address and per IP so an
+        // unauthenticated endpoint cannot be used to flood the support inbox.
+        RateLimiter::for('contact', fn (Request $request): array => $this->emailAndIpLimits(
+            request: $request,
+            scope: 'contact',
+            emailAttempts: 3,
+            ipAttempts: 10,
+        ));
     }
 
     private function registerOnboardingRateLimiters(): void

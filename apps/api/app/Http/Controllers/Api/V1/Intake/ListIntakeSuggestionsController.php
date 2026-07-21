@@ -16,7 +16,7 @@ final class ListIntakeSuggestionsController
     {
         $ownedItem = $items->execute($request->authenticatedUser(), $item);
         $suggestions = $ownedItem->suggestions()
-            ->with(['createdTask', 'createdResource'])
+            ->with(['createdTask', 'createdResource', 'createdKnowledgeItem'])
             ->get();
 
         return ApiResponse::success(

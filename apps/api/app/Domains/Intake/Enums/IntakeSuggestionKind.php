@@ -8,4 +8,5 @@ enum IntakeSuggestionKind: string
 {
     case Task = 'task';
     case Resource = 'resource';
+    case KnowledgeItem = 'knowledge_item';
 }

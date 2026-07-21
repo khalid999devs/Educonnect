@@ -27,6 +27,7 @@ function suggestion(
     status: "proposed",
     created_task_id: null,
     created_resource_id: null,
+    created_knowledge_item_id: null,
     created_at: null,
     ...overrides,
   };
@@ -68,6 +69,38 @@ describe("IntakeReview injection safety", () => {
     expect(
       screen.getByText(/Because the syllabus says so\./),
     ).toBeInTheDocument();
+  });
+
+  it("labels a knowledge suggestion as its own kind, not a resource", () => {
+    render(
+      <IntakeReview
+        suggestions={[
+          suggestion({
+            kind: "knowledge_item",
+            schema_version: "v2",
+            proposal: {
+              title: "Spectral methods",
+              description: INJECTION,
+              due_at: null,
+              course_id: null,
+              url: "https://example.edu/chapter.pdf",
+            },
+          }),
+        ]}
+        courses={[]}
+        busy={false}
+        error={null}
+        onConfirm={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Suggested knowledge item")).toBeInTheDocument();
+    expect(screen.queryByText("Suggested resource")).toBeNull();
+    /* A knowledge suggestion keeps both a summary and an optional link. */
+    expect(screen.getByLabelText(/Summary/)).toHaveValue(INJECTION);
+    expect(screen.getByLabelText(/Link/)).toHaveValue(
+      "https://example.edu/chapter.pdf",
+    );
   });
 
   it("creates nothing until a decision is made", () => {

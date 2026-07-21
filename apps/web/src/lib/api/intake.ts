@@ -82,7 +82,7 @@ export type IntakeItem = z.infer<typeof intakeItemSchema>;
 
 export const intakeSuggestionSchema = z.object({
   id: z.string(),
-  kind: z.enum(["task", "resource"]),
+  kind: z.enum(["task", "resource", "knowledge_item"]),
   proposal: z.object({
     title: z.string().nullable(),
     description: z.string().nullable(),
@@ -96,6 +96,7 @@ export const intakeSuggestionSchema = z.object({
   status: z.enum(["proposed", "dismissed", "applied"]),
   created_task_id: z.string().nullable(),
   created_resource_id: z.string().nullable(),
+  created_knowledge_item_id: z.string().nullable(),
   created_at: isoDateTime.nullable(),
 });
 
@@ -187,6 +188,42 @@ export async function listIntakeSuggestions(
   return suggestionCollectionSchema.parse(
     await apiFetch(`/api/v1/intake/${itemId}/suggestions`),
   ).data;
+}
+
+/** Extracted text is capped at 200,000 characters server-side, which must
+ * never ship in one payload. Reads are windowed and the client pages with
+ * `offset` against `total_characters`, following `next_offset` verbatim. */
+export const MAX_EXTRACTION_WINDOW_CHARACTERS = 20_000;
+
+export const intakeExtractionSchema = z.object({
+  id: z.string(),
+  /** False while the pipeline has not yet produced an extracted-text
+   * artifact. The endpoint returns a zeroed window rather than a 404. */
+  has_extraction: z.boolean(),
+  content_type: z.string().nullable(),
+  text: z.string(),
+  offset: z.number().int().min(0),
+  limit: z.number().int().min(1),
+  returned_characters: z.number().int().min(0),
+  total_characters: z.number().int().min(0),
+  has_more: z.boolean(),
+  next_offset: z.number().int().min(0).nullable(),
+});
+
+export type IntakeExtraction = z.infer<typeof intakeExtractionSchema>;
+
+export async function getIntakeExtraction(
+  itemId: string,
+  params: { offset?: number; limit?: number } = {},
+): Promise<IntakeExtraction> {
+  const query = toQueryString({
+    offset: params.offset,
+    limit: params.limit,
+  });
+
+  return intakeExtractionSchema.parse(
+    envelopeData(await apiFetch(`/api/v1/intake/${itemId}/extraction${query}`)),
+  );
 }
 
 export type ConfirmDecision = {

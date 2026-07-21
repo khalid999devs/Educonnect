@@ -33,6 +33,8 @@ export type MobileNavItemProps = {
   href?: string;
   isActive?: boolean;
   disabled?: boolean;
+  /** Optional decorative hue for the glyph (section accents). */
+  iconClassName?: string;
 };
 
 export function MobileNavItem({
@@ -41,6 +43,7 @@ export function MobileNavItem({
   href,
   isActive = false,
   disabled = false,
+  iconClassName,
 }: MobileNavItemProps) {
   const baseClasses =
     "flex min-h-14 w-full flex-col items-center justify-center gap-1 py-2 text-caption";
@@ -52,7 +55,7 @@ export function MobileNavItem({
           aria-disabled="true"
           className={cn(baseClasses, "text-text-muted")}
         >
-          <Icon aria-hidden="true" className="size-5" />
+          <Icon aria-hidden="true" className={cn("size-5", iconClassName)} />
           {label}
         </span>
       </li>
@@ -72,7 +75,7 @@ export function MobileNavItem({
             : "text-text-secondary hover:text-text-primary",
         )}
       >
-        <Icon aria-hidden="true" className="size-5" />
+        <Icon aria-hidden="true" className={cn("size-5", iconClassName)} />
         {label}
       </Link>
     </li>

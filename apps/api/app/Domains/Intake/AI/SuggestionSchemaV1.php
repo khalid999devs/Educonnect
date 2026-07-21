@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\Domains\Intake\AI;
 
 use App\Domains\Intake\Exceptions\InvalidSuggestionOutput;
+use App\Support\Ai\BoundedText;
 use Carbon\CarbonImmutable;
+use InvalidArgumentException;
 use Throwable;
 
 /**
- * Versioned structured-output schema. Every provider response passes through
- * this validator before persistence: unknown keys, unbounded text, unsafe
- * URLs, unknown courses, out-of-range confidence, or excess suggestions are
- * rejected - including anything a prompt-injected document convinced a
- * provider to emit.
+ * The v1 structured-output schema, retained only to read intake rows persisted
+ * under schema_version 'v1' and for the tests that pin its behaviour directly.
+ * SuggestionSchemaV2 is the current classification path, and new provider
+ * responses are validated there. The validation here stays authoritative for
+ * those historical rows: unknown keys, unbounded text, unsafe URLs, unknown
+ * courses, out-of-range confidence, or excess suggestions are rejected -
+ * including anything a prompt-injected document convinced a provider to emit.
  */
 final class SuggestionSchemaV1
 {
@@ -100,23 +104,21 @@ final class SuggestionSchemaV1
         return $validated;
     }
 
+    /**
+     * Adapts the shared bounding rule to this schema's field-named rejection
+     * messages. The rule itself lives once, in BoundedText.
+     */
     private function boundedPlainText(mixed $value, int $maxLength, string $field): string
     {
         if (! is_string($value)) {
             throw new InvalidSuggestionOutput("the {$field} must be a string");
         }
 
-        $value = trim($value);
-
-        if ($value === ''
-            || mb_strlen($value) > $maxLength
-            || preg_match('/[\x00-\x1F\x7F]/u', $value) === 1
-            || str_contains($value, '<')
-            || str_contains($value, '>')) {
+        try {
+            return BoundedText::plainText($value, $maxLength);
+        } catch (InvalidArgumentException) {
             throw new InvalidSuggestionOutput("the {$field} must be bounded plain text");
         }
-
-        return $value;
     }
 
     private function validDueDate(mixed $value, string $kind): ?string

@@ -13,6 +13,8 @@ use App\Domains\Onboarding\Models\UserProfile;
 use App\Domains\Planner\Enums\TaskStatus;
 use App\Domains\Planner\Models\FocusSession;
 use App\Domains\Planner\Models\Task;
+use App\Domains\Progress\Queries\BuildActivityRhythm;
+use App\Domains\Progress\Queries\BuildProgressOverview;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\Tools\Enums\ToolPreferenceState;
 use App\Domains\Tools\Enums\ToolReviewState;
@@ -34,6 +36,11 @@ final class BuildDashboard
     private const TODAY_TASK_LIMIT = 3;
 
     private const KNOWLEDGE_LIMIT = 5;
+
+    public function __construct(
+        private readonly BuildProgressOverview $progressOverview,
+        private readonly BuildActivityRhythm $activityRhythm,
+    ) {}
 
     /** @return array<string, mixed> */
     public function execute(User $user, string $timezone): array
@@ -67,8 +74,8 @@ final class BuildDashboard
                     'tools' => $this->tools($user),
                     'today' => $this->today($user, $now, $todayStart, $todayEnd),
                     'second_brain' => $this->secondBrain($user),
-                    'progress' => $this->progress($user, $timezone, $localNow, $weekStart, $weekEnd),
-                    'personal_rhythm' => $this->personalRhythm($user, $timezone, $localNow),
+                    'progress' => $this->progressOverview->dashboardBlock($user, $timezone),
+                    'personal_rhythm' => $this->activityRhythm->dashboardBlock($user, $timezone),
                 ];
             }, 3);
         } catch (QueryException $exception) {
@@ -288,188 +295,6 @@ final class BuildDashboard
                 'updated_at' => $this->timestamp($item->getAttribute('updated_at')),
             ])->values()->all(),
         ];
-    }
-
-    /** @return array<string, mixed> */
-    private function progress(
-        User $user,
-        string $timezone,
-        CarbonImmutable $localNow,
-        CarbonImmutable $weekStart,
-        CarbonImmutable $weekEnd,
-    ): array {
-        $completedRows = Task::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('archived_at')
-            ->where('status', TaskStatus::Completed->value)
-            ->where('completed_at', '>=', $weekStart)
-            ->where('completed_at', '<', $weekEnd)
-            ->get(['completed_at']);
-        $dueThisWeek = Task::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('archived_at')
-            ->where('due_at', '>=', $weekStart)
-            ->where('due_at', '<', $weekEnd)
-            ->count();
-        $focusMinutes = $this->focusMinutesBetween($user, $weekStart, $weekEnd);
-
-        $dailyCompleted = array_fill_keys($this->localDates($weekStart, $timezone, 7), 0);
-        foreach ($completedRows as $row) {
-            $completedAt = $this->instant($row->getAttribute('completed_at'));
-            if ($completedAt !== null) {
-                $key = $completedAt->setTimezone($timezone)->format('Y-m-d');
-                if (array_key_exists($key, $dailyCompleted)) {
-                    $dailyCompleted[$key]++;
-                }
-            }
-        }
-
-        $completedCount = $completedRows->count();
-        $nextAction = $this->nextAction($user);
-
-        return [
-            'timeframe' => [
-                'timezone' => $timezone,
-                'starts_on' => $weekStart->setTimezone($timezone)->format('Y-m-d'),
-                'ends_on' => $weekEnd->setTimezone($timezone)->subDay()->format('Y-m-d'),
-            ],
-            'completed_task_count' => $completedCount,
-            'due_task_count' => $dueThisWeek,
-            'focus_minutes' => $focusMinutes,
-            'daily_completed' => array_map(
-                static fn (string $date, int $count): array => ['date' => $date, 'completed' => $count],
-                array_keys($dailyCompleted),
-                array_values($dailyCompleted),
-            ),
-            'summary' => $this->summary($completedCount, $dueThisWeek, $focusMinutes),
-            'next_action' => $nextAction,
-        ];
-    }
-
-    /** @return array<string, mixed> */
-    private function personalRhythm(User $user, string $timezone, CarbonImmutable $localNow): array
-    {
-        $windowEnd = $localNow->startOfDay()->addDay()->utc();
-        $windowStart = $localNow->startOfDay()->subDays(6)->utc();
-        $sessions = FocusSession::query()
-            ->where('user_id', $user->getKey())
-            ->where('ends_at', '>', $windowStart)
-            ->where('starts_at', '<', $windowEnd)
-            ->get(['starts_at', 'ends_at']);
-
-        $days = array_fill_keys($this->localDates($windowStart, $timezone, 7), 0);
-        foreach ($sessions as $session) {
-            $startsAt = $this->instant($session->getAttribute('starts_at'));
-            $endsAt = $this->instant($session->getAttribute('ends_at'));
-            if ($startsAt === null || $endsAt === null) {
-                continue;
-            }
-
-            $key = $startsAt->setTimezone($timezone)->format('Y-m-d');
-            if (array_key_exists($key, $days)) {
-                $days[$key] += max(0, (int) round($startsAt->diffInMinutes($endsAt)));
-            }
-        }
-
-        return [
-            'has_activity' => array_sum($days) > 0,
-            'days' => array_map(
-                static fn (string $date, int $minutes): array => ['date' => $date, 'focus_minutes' => $minutes],
-                array_keys($days),
-                array_values($days),
-            ),
-        ];
-    }
-
-    /** @return array<string, mixed>|null */
-    private function nextAction(User $user): ?array
-    {
-        $task = Task::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('archived_at')
-            ->where('status', '!=', TaskStatus::Completed->value)
-            ->whereNotNull('due_at')
-            ->orderBy('due_at')
-            ->orderBy('public_id')
-            ->first();
-
-        if ($task instanceof Task) {
-            return [
-                'kind' => 'task',
-                'id' => (string) $task->public_id,
-                'title' => (string) $task->title,
-                'due_at' => $this->timestamp($task->getAttribute('due_at')),
-            ];
-        }
-
-        $reviewItem = IntakeItem::query()
-            ->where('user_id', $user->getKey())
-            ->where('state', 'awaiting_review')
-            ->orderBy('created_at')
-            ->orderBy('id')
-            ->first();
-
-        if ($reviewItem instanceof IntakeItem) {
-            return [
-                'kind' => 'intake_review',
-                'id' => (string) $reviewItem->public_id,
-                'title' => 'Review your Smart Intake suggestions',
-                'due_at' => null,
-            ];
-        }
-
-        return null;
-    }
-
-    private function focusMinutesBetween(User $user, CarbonImmutable $start, CarbonImmutable $end): int
-    {
-        $sessions = FocusSession::query()
-            ->where('user_id', $user->getKey())
-            ->where('ends_at', '>', $start)
-            ->where('starts_at', '<', $end)
-            ->get(['starts_at', 'ends_at']);
-        $minutes = 0;
-
-        foreach ($sessions as $session) {
-            $startsAt = $this->instant($session->getAttribute('starts_at'));
-            $endsAt = $this->instant($session->getAttribute('ends_at'));
-            if ($startsAt !== null && $endsAt !== null) {
-                $minutes += max(0, (int) round($startsAt->diffInMinutes($endsAt)));
-            }
-        }
-
-        return $minutes;
-    }
-
-    private function summary(int $completed, int $due, int $focusMinutes): string
-    {
-        if ($completed === 0 && $due === 0 && $focusMinutes === 0) {
-            return 'No planner activity recorded this week yet.';
-        }
-
-        $parts = [];
-        $parts[] = $due > 0
-            ? sprintf('You completed %d of %d tasks due this week.', $completed, $due)
-            : sprintf('You completed %d %s this week.', $completed, $completed === 1 ? 'task' : 'tasks');
-
-        if ($focusMinutes > 0) {
-            $parts[] = sprintf('You logged %d focus minutes.', $focusMinutes);
-        }
-
-        return implode(' ', $parts);
-    }
-
-    /** @return list<string> */
-    private function localDates(CarbonImmutable $utcStart, string $timezone, int $days): array
-    {
-        $cursor = $utcStart->setTimezone($timezone)->startOfDay();
-        $dates = [];
-
-        for ($index = 0; $index < $days; $index++) {
-            $dates[] = $cursor->addDays($index)->format('Y-m-d');
-        }
-
-        return $dates;
     }
 
     private function instant(mixed $value): ?CarbonImmutable

@@ -91,6 +91,18 @@ final class ResourceOpenApiContractTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data');
 
+        // The unfiled sentinel and the title sorts are part of the same contract.
+        $this->withHeaders($this->readHeaders())
+            ->getJson('/api/v1/resources?course_id=none&sort=title&per_page=5')
+            ->assertOk();
+
+        // Directories: no course exists here, so only the unfiled bucket is returned.
+        $this->withHeaders($this->readHeaders())
+            ->getJson('/api/v1/resources/directories')
+            ->assertOk()
+            ->assertJsonPath('data.0.kind', 'unfiled')
+            ->assertJsonPath('data.0.course', null);
+
         $contents = "%PDF-1.7\ncontract file\n";
         $file = $this->withHeaders($this->mutationHeaders())
             ->postJson('/api/v1/resources/files', [

@@ -11,22 +11,28 @@ import {
 } from "@educonnect/ui";
 import { useState, type FormEvent } from "react";
 
-import type { Course } from "@/lib/api/courses";
 import { ApiError } from "@/lib/api/http";
 import type { Resource, ResourceUpdateInput } from "@/lib/api/resources";
+import {
+  ARCHIVED_DIRECTORY_REASON,
+  type DirectoryCourse,
+} from "./directory-card";
 
 export type ResourceDialogProps = {
   open: boolean;
   resource: Resource;
-  courses: Course[];
+  /** Every course directory. Archived ones render disabled: moving material
+   * into a closed course is refused up front, never as a surfaced 409. */
+  courses: DirectoryCourse[];
   busy: boolean;
   onUpdate: (resource: Resource, input: ResourceUpdateInput) => void;
   onClose: () => void;
   error: ApiError | Error | null;
 };
 
-/** Edit a resource's metadata; only link resources may change their URL -
- * a private file keeps its object identity (resources contract). */
+/** Edit a resource's metadata, including the directory it lives in. Only link
+ * resources may change their URL - a private file keeps its object identity
+ * (resources contract). */
 export function ResourceDialog({
   open,
   resource,
@@ -43,6 +49,9 @@ export function ResourceDialog({
   const [url, setUrl] = useState(resource.url ?? "");
 
   const apiError = error instanceof ApiError ? error : null;
+  const archivedCourseCount = courses.filter(
+    (course) => course.archive_status === "archived",
+  ).length;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -93,6 +102,11 @@ export function ResourceDialog({
           <Alert variant="error" title="Something went wrong">
             {error.message}
           </Alert>
+        ) : null}
+        {archivedCourseCount > 0 ? (
+          <p className="text-caption text-text-muted">
+            {ARCHIVED_DIRECTORY_REASON}
+          </p>
         ) : null}
         {apiError && apiError.status === 409 ? (
           <Alert variant="error" title="This resource changed elsewhere">
@@ -167,18 +181,36 @@ export function ResourceDialog({
               />
             )}
           </FormField>
-          <FormField label="Course" error={apiError?.fieldError("course_id")}>
+          <FormField
+            label="Directory"
+            hint={
+              archivedCourseCount > 0
+                ? "Archived courses cannot receive material"
+                : undefined
+            }
+            error={apiError?.fieldError("course_id")}
+          >
             {(control) => (
               <Select
                 {...control}
                 value={courseId}
                 onChange={(event) => setCourseId(event.target.value)}
               >
-                <option value="">No course</option>
+                <option value="">Unfiled</option>
                 {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
+                  <option
+                    key={course.id}
+                    value={course.id}
+                    disabled={
+                      course.archive_status === "archived" &&
+                      course.id !== resource.course?.id
+                    }
+                  >
                     {course.code ? `${course.code} · ` : ""}
                     {course.title}
+                    {course.archive_status === "archived"
+                      ? " (archived, read only)"
+                      : ""}
                   </option>
                 ))}
               </Select>

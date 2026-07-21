@@ -6,7 +6,6 @@ namespace Tests\Feature\SecondBrain;
 
 use App\Domains\Resources\Models\Resource;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use App\Domains\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Kirschbaum\OpenApiValidator\ValidatesOpenApiSpec;
@@ -138,61 +137,29 @@ final class SecondBrainOpenApiContractTest extends TestCase
             ->assertJsonPath('data.id', $itemId)
             ->assertJsonPath('data.notes.0.id', $noteId);
 
-        // Research topics.
-        $topicId = $this->withHeaders($this->headers())
-            ->postJson('/api/v1/research-topics', [
-                'title' => 'Contract research topic',
-                'description' => 'Reading list for the contract.',
-                'keywords' => ['contracts', 'testing'],
-            ])
-            ->assertCreated()
-            ->json('data.id');
-
+        // Saved bookmark: an idempotent save, a saved-only listing, an
+        // idempotent clear.
         $this->withHeaders($this->headers())
-            ->putJson("/api/v1/research-topics/{$topicId}", [
-                'title' => 'Contract research topic',
-                'description' => 'Reading list for the live contract.',
-                'keywords' => ['contracts'],
-                'expected_version' => 1,
-            ])
+            ->putJson("/api/v1/knowledge/{$itemId}/saved")
             ->assertOk()
-            ->assertJsonPath('data.version', 2);
-
-        $this->withHeaders($this->headers())
-            ->postJson("/api/v1/research-topics/{$topicId}/sources", [
-                'knowledge_item_id' => $itemId,
-                'reading_status' => 'reading',
-            ])
-            ->assertCreated()
-            ->assertJsonPath('data.sources.0.reading_status', 'reading');
-
-        $this->withHeaders($this->headers())
-            ->putJson("/api/v1/research-topics/{$topicId}/sources/{$itemId}", ['reading_status' => 'read'])
-            ->assertOk()
-            ->assertJsonPath('data.sources.0.reading_status', 'read');
+            ->assertJsonPath('data.saved', true);
 
         $this->withHeaders($this->readHeaders())
-            ->getJson('/api/v1/research-topics?search=contract&per_page=10')
+            ->getJson('/api/v1/knowledge?saved=true&per_page=10')
             ->assertOk()
-            ->assertJsonCount(1, 'data');
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.saved', true);
 
-        $this->withHeaders($this->readHeaders())
-            ->getJson("/api/v1/research-topics/{$topicId}")
-            ->assertOk()
-            ->assertJsonPath('data.source_count', 1);
+        $this->withHeaders($this->headers())
+            ->deleteJson("/api/v1/knowledge/{$itemId}/saved")
+            ->assertNoContent();
 
         // Destructive paths.
-        $this->withHeaders($this->headers())
-            ->deleteJson("/api/v1/research-topics/{$topicId}/sources/{$itemId}")
-            ->assertNoContent();
         $this->withHeaders($this->headers())
             ->deleteJson("/api/v1/knowledge/{$itemId}/links/{$linkId}")
             ->assertNoContent();
         $this->withHeaders($this->headers())
             ->deleteJson("/api/v1/knowledge/{$itemId}/notes/{$noteId}", ['expected_version' => 2])
-            ->assertNoContent();
-        $this->withHeaders($this->headers())
-            ->deleteJson("/api/v1/research-topics/{$topicId}", ['expected_version' => 2])
             ->assertNoContent();
         $this->withHeaders($this->headers())
             ->deleteJson("/api/v1/knowledge/{$itemId}", ['expected_version' => 2])
@@ -222,7 +189,6 @@ final class SecondBrainOpenApiContractTest extends TestCase
     public function test_empty_second_brain_states_match_the_contract(): void
     {
         $user = User::factory()->create();
-        ResearchTopic::factory()->for($user, 'user')->create(['title' => 'Lonely topic']);
         $this->actingAs($user, 'web');
 
         $this->withHeaders($this->readHeaders())
@@ -235,11 +201,6 @@ final class SecondBrainOpenApiContractTest extends TestCase
             ->getJson('/api/v1/knowledge')
             ->assertOk()
             ->assertJsonCount(0, 'data');
-
-        $this->withHeaders($this->readHeaders())
-            ->getJson('/api/v1/research-topics')
-            ->assertOk()
-            ->assertJsonPath('data.0.source_count', 0);
     }
 
     /** @return array<string, string> */

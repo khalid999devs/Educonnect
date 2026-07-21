@@ -25,6 +25,8 @@ final readonly class UpdateKnowledgeItemAction
      *     published_year: ?int,
      *     venue: ?string,
      *     doi: ?string,
+     *     purpose: ?string,
+     *     purpose_provided: bool,
      * } $data
      */
     public function execute(User $user, string $publicId, array $data, int $expectedVersion): KnowledgeItem
@@ -40,6 +42,12 @@ final readonly class UpdateKnowledgeItemAction
                     'published_year' => $data['published_year'],
                     'venue' => $data['venue'],
                     'doi' => $data['doi'],
+                    // A request that never mentions purpose leaves it alone,
+                    // so an edit form without a purpose control cannot erase
+                    // what the intake router recorded.
+                    'purpose' => $data['purpose_provided']
+                        ? $data['purpose']
+                        : $item->purpose?->value,
                 ];
 
                 if ($this->canonical($item) === $desired) {
@@ -62,7 +70,7 @@ final readonly class UpdateKnowledgeItemAction
         }
     }
 
-    /** @return array{title: string, summary: ?string, authors: ?string, published_year: ?int, venue: ?string, doi: ?string} */
+    /** @return array{title: string, summary: ?string, authors: ?string, published_year: ?int, venue: ?string, doi: ?string, purpose: ?string} */
     private function canonical(KnowledgeItem $item): array
     {
         return [
@@ -72,6 +80,7 @@ final readonly class UpdateKnowledgeItemAction
             'published_year' => $item->published_year,
             'venue' => $item->venue,
             'doi' => $item->doi,
+            'purpose' => $item->purpose?->value,
         ];
     }
 }

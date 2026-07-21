@@ -19,7 +19,10 @@ import { ArrowLeft, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { listCourses } from "@/lib/api/courses";
+import {
+  ACTIVE_COURSE_LIST_PARAMS,
+  fetchAllActiveCourses,
+} from "@/lib/api/courses";
 import { ApiError } from "@/lib/api/http";
 import { createMentorRequest, getMentor } from "@/lib/api/mentors";
 import { courseKeys, mentorKeys } from "@/lib/query-keys";
@@ -45,11 +48,11 @@ export function MentorDetail({ mentorId }: { mentorId: string }) {
   const mentor = mentorQuery.data;
 
   const coursesQuery = useQuery({
-    queryKey: courseKeys.list(),
-    queryFn: () => listCourses(),
+    queryKey: courseKeys.list(ACTIVE_COURSE_LIST_PARAMS),
+    queryFn: fetchAllActiveCourses,
     enabled: dialogOpen,
   });
-  const courses = coursesQuery.data?.data ?? [];
+  const courses = coursesQuery.data ?? [];
 
   const requestMutation = useMutation({
     mutationFn: () =>
@@ -84,8 +87,8 @@ export function MentorDetail({ mentorId }: { mentorId: string }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <Link
-        href="/mentors"
-        className="inline-flex items-center gap-1.5 text-caption font-medium text-text-secondary hover:text-brand-primary"
+        href="/community?tab=mentors"
+        className="inline-flex items-center gap-1.5 text-caption font-medium text-text-secondary transition-colors hover:text-brand-primary"
       >
         <ArrowLeft className="size-4" aria-hidden /> Back to mentors
       </Link>

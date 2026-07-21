@@ -16,7 +16,10 @@ final class ListResourcesRequest extends FormRequest
 {
     use HandlesResourceInput;
 
-    private const SORTS = ['updated_at', '-updated_at'];
+    private const SORTS = ['updated_at', '-updated_at', 'title', '-title'];
+
+    /** Sentinel meaning "resources filed under no course at all". */
+    public const UNFILED = 'none';
 
     public function authorize(): bool
     {
@@ -29,7 +32,7 @@ final class ListResourcesRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'min:1', 'max:100', $this->plainSingleLineText()],
             'kind' => ['nullable', 'string', Rule::in(['all', ...array_column(ResourceKind::cases(), 'value')])],
-            'course_id' => ['nullable', 'string', 'regex:/^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$/D'],
+            'course_id' => ['nullable', 'string', 'regex:/^(none|[01234567][0-9abcdefghjkmnpqrstvwxyz]{25})$/D'],
             'topic' => ['nullable', 'string', 'min:1', 'max:120', $this->plainSingleLineText()],
             'file_status' => ['nullable', 'string', Rule::in(['all', ...array_column(StoredFileStatus::cases(), 'value')])],
             'sort' => ['nullable', 'string', Rule::in(self::SORTS)],
@@ -70,11 +73,17 @@ final class ListResourcesRequest extends FormRequest
         return is_string($value) ? ResourceKind::tryFrom($value) : null;
     }
 
+    /** Null for both "no course filter" and the unfiled sentinel; pair with unfiledOnly(). */
     public function courseId(): ?string
     {
         $value = $this->validated('course_id');
 
-        return is_string($value) ? $value : null;
+        return is_string($value) && $value !== self::UNFILED ? $value : null;
+    }
+
+    public function unfiledOnly(): bool
+    {
+        return $this->validated('course_id') === self::UNFILED;
     }
 
     public function topic(): ?string

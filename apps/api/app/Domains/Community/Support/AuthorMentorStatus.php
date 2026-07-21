@@ -34,13 +34,7 @@ final class AuthorMentorStatus
             return;
         }
 
-        /** @var list<int> $verified */
-        $verified = DB::table('mentor_profiles')
-            ->whereIn('user_id', $authorIds)
-            ->where('verification_state', MentorVerificationState::Verified->value)
-            ->pluck('user_id')
-            ->map(static fn (mixed $id): int => (int) $id)
-            ->all();
+        $verified = self::verifiedUserIds($authorIds);
 
         foreach ($records as $record) {
             $record->setAttribute(
@@ -48,5 +42,30 @@ final class AuthorMentorStatus
                 in_array((int) $record->author_id, $verified, true),
             );
         }
+    }
+
+    /**
+     * Resolve which of the given user ids hold a verified mentor profile. The
+     * mentor_profiles table is referenced by name on purpose so the Community
+     * domain never imports a Mentor model.
+     *
+     * @param  list<int>  $userIds
+     * @return list<int>
+     */
+    public static function verifiedUserIds(array $userIds): array
+    {
+        if ($userIds === []) {
+            return [];
+        }
+
+        /** @var list<int> $verified */
+        $verified = DB::table('mentor_profiles')
+            ->whereIn('user_id', $userIds)
+            ->where('verification_state', MentorVerificationState::Verified->value)
+            ->pluck('user_id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        return $verified;
     }
 }

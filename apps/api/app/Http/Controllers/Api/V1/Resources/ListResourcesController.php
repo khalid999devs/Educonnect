@@ -19,6 +19,7 @@ final class ListResourcesController
             $request->search(),
             $request->kind(),
             $request->courseId(),
+            $request->unfiledOnly(),
             $request->topic(),
             $request->fileStatus(),
             $request->sort(),

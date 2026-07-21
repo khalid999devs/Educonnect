@@ -18,9 +18,10 @@ final class ListKnowledgeItemsController
             $request->authenticatedUser(),
             $request->search(),
             $request->collectionId(),
-            $request->topicId(),
             $request->tag(),
             $request->sourceType(),
+            $request->purpose(),
+            $request->saved(),
             $request->sort(),
             $request->perPage(),
         );

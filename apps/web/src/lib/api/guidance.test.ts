@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  guidanceBundleSchema,
-  promptSchema,
-  toolSchema,
-  workflowSchema,
-} from "./guidance";
+import { promptSchema, toolSchema, workflowSchema } from "./guidance";
 
 const TOOL = {
   id: "01JTOOL0000000000000000000",
@@ -108,24 +103,5 @@ describe("guidance schemas", () => {
         steps: [{ ...WORKFLOW.steps[0], destination_action: "delete_course" }],
       }),
     ).toThrow();
-  });
-
-  it("parses a full guidance bundle across all four kinds", () => {
-    const bundle = guidanceBundleSchema.parse({
-      category: {
-        key: "study-planning",
-        name: "Study planning",
-        description: "Plan and revise effectively.",
-      },
-      tools: [TOOL],
-      prompts: [PROMPT],
-      workflows: [WORKFLOW],
-      templates: [],
-    });
-
-    expect(bundle.category.name).toBe("Study planning");
-    expect(bundle.tools).toHaveLength(1);
-    expect(bundle.prompts).toHaveLength(1);
-    expect(bundle.workflows).toHaveLength(1);
   });
 });

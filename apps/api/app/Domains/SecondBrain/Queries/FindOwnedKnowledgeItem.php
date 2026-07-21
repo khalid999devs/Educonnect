@@ -30,12 +30,12 @@ final class FindOwnedKnowledgeItem
             if ($withDetail) {
                 $query->with([
                     'resource',
+                    'intakeItem',
                     'notes' => static fn ($notes) => $notes->orderByDesc('created_at')->orderByDesc('id'),
                     'tags' => static fn ($tags) => $tags->orderBy('name'),
                     'collections' => static fn ($collections) => $collections->orderBy('name'),
                     'outgoingLinks.toItem',
                     'incomingLinks.fromItem',
-                    'researchTopics' => static fn ($topics) => $topics->orderBy('title'),
                 ]);
             }
 

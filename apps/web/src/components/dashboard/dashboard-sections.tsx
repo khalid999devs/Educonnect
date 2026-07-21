@@ -25,13 +25,18 @@ import {
   TrendingUp,
   Wrench,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
+import { PageCover } from "@/components/shared/page-cover";
 import type { Dashboard, DashboardTask } from "@/lib/api/dashboard";
 import { dueNote, formatDueAt, formatTime, weekdayLetter } from "./format";
 
+/**
+ * Home cover. Delegates to the shared `PageCover` so all ten sections render
+ * one cover treatment; the greeting, the setup-recovery link and the term
+ * caption are the only Home-specific parts.
+ */
 export function CoverSection({
   dashboard,
   greeting,
@@ -40,41 +45,27 @@ export function CoverSection({
   greeting: string;
 }) {
   const { cover } = dashboard;
-  const program = [cover.degree, cover.major].filter(Boolean).join(" · ");
+  const program = [cover.degree, cover.major].filter(Boolean).join(" \u00b7 ");
   const metaLine = [
     cover.institution,
     program === "" ? null : program,
     cover.study_stage,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" \u00b7 ");
 
   return (
-    <div className="relative min-h-52 overflow-hidden rounded-xl border border-border-default lg:min-h-56">
-      <Image
-        src="/marketing/study-desk.jpg"
-        alt=""
-        fill
-        priority
-        sizes="(max-width: 1024px) 100vw, 1100px"
-        className="object-cover object-center"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-linear-to-r from-bg-canvas/95 via-bg-canvas/75 to-bg-canvas/20"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-bg-canvas/70 to-transparent"
-      />
-      <div className="relative max-w-xl space-y-3 p-6 lg:p-8">
-        <h1 className="text-h2 text-text-primary">
-          {greeting}, {cover.name.split(" ")[0]} 👋
-        </h1>
-        {metaLine !== "" ? (
-          <p className="text-body-lg text-text-secondary">{metaLine}</p>
+    <PageCover
+      photo="/marketing/study-desk.jpg"
+      priority
+      tall
+      headingLevel={1}
+      title={`${greeting}, ${cover.name.split(" ")[0]} \u{1F44B}`}
+      subtitle={
+        metaLine !== "" ? (
+          metaLine
         ) : (
-          <p className="text-body-lg text-text-secondary">
+          <>
             <Link
               href="/onboarding"
               className="text-brand-primary hover:underline"
@@ -82,19 +73,23 @@ export function CoverSection({
               Finish setup
             </Link>{" "}
             to personalize your cover.
+          </>
+        )
+      }
+      action={
+        <div className="space-y-2.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/40 bg-bg-canvas/70 px-3 py-1 text-caption font-medium text-brand-primary backdrop-blur-sm">
+            <Star aria-hidden="true" className="size-3.5" />
+            You got this
+          </span>
+          <p className="text-caption tabular-nums text-text-secondary">
+            {cover.term ? `${cover.term.label} \u00b7 ` : ""}
+            {cover.active_course_count} active{" "}
+            {cover.active_course_count === 1 ? "course" : "courses"}
           </p>
-        )}
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/40 bg-bg-canvas/70 px-3 py-1 text-caption font-medium text-brand-primary backdrop-blur-sm">
-          <Star aria-hidden="true" className="size-3.5" />
-          You got this
-        </span>
-        <p className="text-caption tabular-nums text-text-secondary">
-          {cover.term ? `${cover.term.label} · ` : ""}
-          {cover.active_course_count} active{" "}
-          {cover.active_course_count === 1 ? "course" : "courses"}
-        </p>
-      </div>
-    </div>
+        </div>
+      }
+    />
   );
 }
 
@@ -185,7 +180,7 @@ export function QuickIntakeSection({
               https links only · processed in the background · you review every
               suggestion. For file uploads and full review, open{" "}
               <Link
-                href="/intake"
+                href="/second-brain"
                 className="text-brand-primary hover:underline"
               >
                 Smart Intake
@@ -219,7 +214,7 @@ export function QuickIntakeSection({
               {quickIntake.awaiting_review_count} awaiting review
             </Badge>
             <Link
-              href="/intake"
+              href="/second-brain"
               className="text-caption text-brand-primary hover:underline"
             >
               Review in Smart Intake
@@ -530,7 +525,10 @@ export function SecondBrainSection({ dashboard }: { dashboard: Dashboard }) {
         {secondBrain.recent_items.length === 0 ? (
           <p className="text-body text-text-secondary">
             No knowledge items yet. Confirm captures in{" "}
-            <Link href="/intake" className="text-brand-primary hover:underline">
+            <Link
+              href="/second-brain"
+              className="text-brand-primary hover:underline"
+            >
               Smart Intake
             </Link>{" "}
             and they'll appear in your{" "}

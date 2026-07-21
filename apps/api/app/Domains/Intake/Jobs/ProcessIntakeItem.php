@@ -165,7 +165,9 @@ final class ProcessIntakeItem implements ShouldQueue
             throw new IntakeAcquisitionFailure(IntakeFailureCode::FileUnavailable, 'the stored file is missing');
         }
 
-        $maxBytes = (int) config('intake.max_fetch_bytes');
+        // File intakes read from our own verified storage, so they are bounded by
+        // the upload-sized cap rather than the tighter remote-fetch cap.
+        $maxBytes = (int) config('intake.max_file_read_bytes', config('intake.max_fetch_bytes'));
 
         try {
             $stream = $storage->readStream((string) $storedFile->object_key);

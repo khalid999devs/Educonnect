@@ -10,6 +10,7 @@ import {
   initiateFileResource,
   MAX_RESOURCE_FILE_BYTES,
   putToUploadGrant,
+  resolveResourceMimeType,
   retryResourceUpload,
   sha256Hex,
   type AllowedResourceMimeType,
@@ -109,11 +110,13 @@ export type FileValidationError = { code: "type" | "size"; message: string };
 
 /** Client-side pre-check mirroring the initiate contract's limits. */
 export function validateResourceFile(file: File): FileValidationError | null {
-  if (!(ALLOWED_RESOURCE_MIME_TYPES as readonly string[]).includes(file.type)) {
+  const mimeType = resolveResourceMimeType(file);
+
+  if (!(ALLOWED_RESOURCE_MIME_TYPES as readonly string[]).includes(mimeType)) {
     return {
       code: "type",
       message:
-        "Only PDF, JPEG, PNG, WebP, plain-text, and Markdown files are supported.",
+        "Only PDF, Word (.docx), PowerPoint (.pptx), JPEG, PNG, WebP, plain-text, and Markdown files are supported.",
     };
   }
 
@@ -207,7 +210,7 @@ export function useUploads({ onSettled }: { onSettled: () => void }) {
           course_id: meta.courseId,
           topic: meta.topic,
           original_name: file.name,
-          mime_type: file.type as AllowedResourceMimeType,
+          mime_type: resolveResourceMimeType(file) as AllowedResourceMimeType,
           size: file.size,
           sha256,
         });

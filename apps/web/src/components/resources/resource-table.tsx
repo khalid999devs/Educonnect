@@ -27,7 +27,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { Course } from "@/lib/api/courses";
+import { IconChip } from "@/components/shared/icon-chip";
 import type { Resource, ResourceListParams } from "@/lib/api/resources";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -37,6 +37,10 @@ const TYPE_LABELS: Record<string, string> = {
   "image/webp": "WebP",
   "text/plain": "Text",
   "text/markdown": "Markdown",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "Word",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+    "PowerPoint",
 };
 
 export function resourceTypeLabel(resource: Resource): string {
@@ -75,21 +79,23 @@ function statusBadge(resource: Resource) {
   }
 }
 
+/** The course dimension is the directory itself, so it is deliberately absent
+ * here: filtering by course inside a course directory is a contradiction. */
 export type ResourceFilters = Required<
   Pick<ResourceListParams, "kind" | "fileStatus">
 > & {
   search: string;
-  courseId: string;
   topic: string;
 };
 
 export type ResourceTableProps = {
+  /** The open directory, named in the header and the empty state. */
+  directoryName: string;
   resources: Resource[];
   loading: boolean;
   filters: ResourceFilters;
   onFiltersChange: (filters: ResourceFilters) => void;
   topics: string[];
-  courses: Course[];
   hasNextPage: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
@@ -101,15 +107,15 @@ export type ResourceTableProps = {
   onCancelPending: (resource: Resource) => void;
 };
 
-/** The private library: search + filters, honest lifecycle states, and
+/** One directory's contents: search + filters, honest lifecycle states, and
  * per-row recovery for unfinished uploads. Rows stack below md. */
 export function ResourceTable({
+  directoryName,
   resources,
   loading,
   filters,
   onFiltersChange,
   topics,
-  courses,
   hasNextPage,
   loadingMore,
   onLoadMore,
@@ -123,7 +129,6 @@ export function ResourceTable({
   const filtersActive =
     filters.search !== "" ||
     filters.kind !== "all" ||
-    filters.courseId !== "" ||
     filters.topic !== "" ||
     filters.fileStatus !== "all";
 
@@ -197,14 +202,14 @@ export function ResourceTable({
   );
 
   return (
-    <Card>
+    <Card className="motion-safe:animate-fade-up motion-safe:[animation-delay:240ms]">
       <CardHeader className="space-y-3">
-        <CardTitle className="flex items-center gap-2">
-          <Library aria-hidden="true" className="size-5 text-brand-primary" />
-          Your materials
+        <CardTitle className="flex items-center gap-2.5">
+          <IconChip icon={Library} accent="resources" />
+          Materials in {directoryName}
         </CardTitle>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3">
           <FormField label="Search">
             {(control) => (
               <span className="relative block">
@@ -239,25 +244,6 @@ export function ResourceTable({
                 <option value="all">All kinds</option>
                 <option value="file">Files</option>
                 <option value="link">Links</option>
-              </Select>
-            )}
-          </FormField>
-          <FormField label="Course">
-            {(control) => (
-              <Select
-                {...control}
-                value={filters.courseId}
-                onChange={(event) =>
-                  onFiltersChange({ ...filters, courseId: event.target.value })
-                }
-              >
-                <option value="">All courses</option>
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.code ? `${course.code} · ` : ""}
-                    {course.title}
-                  </option>
-                ))}
               </Select>
             )}
           </FormField>
@@ -327,12 +313,12 @@ export function ResourceTable({
             title={
               filtersActive
                 ? "Nothing matches these filters"
-                : "Your library is empty"
+                : `${directoryName} is empty`
             }
             description={
               filtersActive
                 ? "Clear a filter or search differently."
-                : "Upload a file or save a link above to start your private library."
+                : "Upload a file or save a link above, or drag files straight onto a directory."
             }
           />
         ) : (
@@ -347,9 +333,6 @@ export function ResourceTable({
                     </th>
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Type
-                    </th>
-                    <th scope="col" className="py-2 pr-3 font-medium">
-                      Course
                     </th>
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Topic
@@ -369,21 +352,15 @@ export function ResourceTable({
                   {resources.map((resource) => (
                     <tr
                       key={resource.id}
-                      className="border-b border-border-subtle"
+                      className="border-b border-border-subtle transition-colors hover:bg-bg-subtle/60"
                     >
                       <td className="max-w-64 py-2.5 pr-3">
-                        <span className="flex items-center gap-2">
-                          {resource.kind === "link" ? (
-                            <Link2
-                              aria-hidden="true"
-                              className="size-4 shrink-0 text-status-info"
-                            />
-                          ) : (
-                            <FileText
-                              aria-hidden="true"
-                              className="size-4 shrink-0 text-brand-primary"
-                            />
-                          )}
+                        <span className="flex items-center gap-2.5">
+                          <IconChip
+                            icon={resource.kind === "link" ? Link2 : FileText}
+                            accent="resources"
+                            size="sm"
+                          />
                           <span className="min-w-0">
                             <span className="block truncate text-body font-medium text-text-primary">
                               {resource.title}
@@ -398,11 +375,6 @@ export function ResourceTable({
                       </td>
                       <td className="py-2.5 pr-3 text-body text-text-secondary">
                         {resourceTypeLabel(resource)}
-                      </td>
-                      <td className="max-w-40 truncate py-2.5 pr-3 text-body text-text-secondary">
-                        {resource.course
-                          ? (resource.course.code ?? resource.course.title)
-                          : "-"}
                       </td>
                       <td className="max-w-40 truncate py-2.5 pr-3 text-body text-text-secondary">
                         {resource.topic ?? "-"}
@@ -423,29 +395,20 @@ export function ResourceTable({
               {resources.map((resource) => (
                 <li
                   key={resource.id}
-                  className="rounded-md border border-border-subtle bg-bg-subtle/60 px-3 py-2.5"
+                  className="rounded-md border border-border-subtle bg-bg-surface px-3 py-2.5 transition-colors hover:border-border-strong"
                 >
-                  <div className="flex items-center gap-2">
-                    {resource.kind === "link" ? (
-                      <Link2
-                        aria-hidden="true"
-                        className="size-4 shrink-0 text-status-info"
-                      />
-                    ) : (
-                      <FileText
-                        aria-hidden="true"
-                        className="size-4 shrink-0 text-brand-primary"
-                      />
-                    )}
+                  <div className="flex items-center gap-2.5">
+                    <IconChip
+                      icon={resource.kind === "link" ? Link2 : FileText}
+                      accent="resources"
+                      size="sm"
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body font-medium text-text-primary">
                         {resource.title}
                       </span>
                       <span className="block truncate text-caption text-text-muted">
                         {resourceTypeLabel(resource)}
-                        {resource.course
-                          ? ` · ${resource.course.code ?? resource.course.title}`
-                          : ""}
                         {resource.topic ? ` · ${resource.topic}` : ""}
                       </span>
                     </span>

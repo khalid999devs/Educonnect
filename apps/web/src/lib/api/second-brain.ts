@@ -21,6 +21,27 @@ export type CollectionKind = z.infer<typeof collectionKindSchema>;
 export const sourceTypeSchema = z.enum(["resource", "link", "none"]);
 export type KnowledgeSourceType = z.infer<typeof sourceTypeSchema>;
 
+/** Why an item was captured. Mirrors knowledge_items.purpose, whose CHECK
+ * allows exactly these four values or NULL. Null means "no purpose recorded",
+ * which every row captured before purposes existed reads back as; it is not a
+ * synonym for "resource" and must not be defaulted away on read. */
+export const knowledgePurposeSchema = z.enum([
+  "resource",
+  "study",
+  "research",
+  "exam",
+]);
+export type KnowledgePurpose = z.infer<typeof knowledgePurposeSchema>;
+
+/** The list filter also accepts a sentinel selecting rows with no purpose. */
+export const knowledgePurposeFilterSchema = z.union([
+  knowledgePurposeSchema,
+  z.literal("none"),
+]);
+export type KnowledgePurposeFilter = z.infer<
+  typeof knowledgePurposeFilterSchema
+>;
+
 export const relationSchema = z.enum([
   "related",
   "supports",
@@ -55,6 +76,14 @@ const sourceSchema = z.object({
   resource: z
     .object({ id: z.string(), title: z.string(), type: z.string() })
     .nullable(),
+  /** Public id of the intake item this knowledge item was captured from, when
+   * one exists. It is what the focused workspace's document pane reads its
+   * extracted text from (`GET /intake/{item}/extraction`); the indirect
+   * `resource_id` join is lossy because a link-sourced intake never creates a
+   * Resource. Optional because the API resource does not expose it yet - see
+   * the KnowledgeItemResource patch spec - so items resolve their intake id
+   * from the capture flow until it lands. */
+  intake_item_id: z.string().nullable().optional(),
 });
 
 export const knowledgeItemSchema = z.object({
@@ -62,6 +91,10 @@ export const knowledgeItemSchema = z.object({
   version: z.number().int().min(1),
   title: z.string(),
   summary: z.string().nullable(),
+  purpose: knowledgePurposeSchema.nullable(),
+  /** Whether the current user has bookmarked this item. Always present: the
+   * raw saved_at timestamp stays server-side, only the boolean is exposed. */
+  saved: z.boolean(),
   source: sourceSchema,
   citation: citationSchema,
   tags: z.array(z.string()),
@@ -101,13 +134,6 @@ export const knowledgeItemDetailSchema = knowledgeItemSchema.extend({
       item: z.object({ id: z.string(), title: z.string() }).nullable(),
     }),
   ),
-  research_topics: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-      reading_status: z.enum(["to_read", "reading", "read"]).nullable(),
-    }),
-  ),
 });
 
 export type KnowledgeItemDetail = z.infer<typeof knowledgeItemDetailSchema>;
@@ -137,6 +163,10 @@ export type KnowledgeSearchParams = {
   topicId?: string;
   tag?: string;
   sourceType?: KnowledgeSourceType;
+  purpose?: KnowledgePurposeFilter;
+  /** Server-side saved-only filter. Only `true` narrows; never filter the
+   * `saved` flag client-side, or saved rows past the current page vanish. */
+  saved?: boolean;
   sort?: "created_at" | "-created_at" | "updated_at" | "-updated_at";
   perPage?: number;
   cursor?: string;
@@ -151,6 +181,8 @@ export async function searchKnowledge(
     topic_id: params.topicId,
     tag: params.tag,
     source_type: params.sourceType,
+    purpose: params.purpose,
+    saved: params.saved === true ? true : undefined,
     sort: params.sort,
     per_page: params.perPage,
     cursor: params.cursor,
@@ -175,6 +207,7 @@ export type CreateKnowledgeInput = {
   source_type: KnowledgeSourceType;
   resource_id?: string | null;
   url?: string | null;
+  purpose?: KnowledgePurpose | null;
 };
 
 export async function createKnowledgeItem(
@@ -197,6 +230,9 @@ export async function updateKnowledgeItem(
     published_year?: number | null;
     venue?: string | null;
     doi?: string | null;
+    /** Omit the key entirely to leave the stored purpose untouched; send null
+     * to clear it. Every other field on this payload replaces unconditionally. */
+    purpose?: KnowledgePurpose | null;
   },
 ): Promise<KnowledgeItem> {
   return knowledgeItemSchema.parse(
@@ -209,6 +245,35 @@ export async function updateKnowledgeItem(
   );
 }
 
+/**
+ * Change (or clear) one item's purpose without touching anything else.
+ *
+ * `PUT /knowledge/{item}` replaces every field it accepts EXCEPT purpose - the
+ * server distinguishes an absent purpose key ("leave unchanged") from an
+ * explicit null ("clear it"), but it makes no such distinction for title,
+ * summary, or citation. A naive purpose-only payload therefore erases the
+ * citation. This helper echoes the item's current values back so the purpose
+ * is the only thing that actually changes.
+ *
+ * Pass `null` to clear the purpose; the key is always sent, which is what
+ * makes clearing possible at all.
+ */
+export async function setKnowledgePurpose(
+  item: KnowledgeItem,
+  purpose: KnowledgePurpose | null,
+): Promise<KnowledgeItem> {
+  return updateKnowledgeItem(item.id, {
+    expected_version: item.version,
+    title: item.title,
+    summary: item.summary,
+    authors: item.citation.authors,
+    published_year: item.citation.published_year,
+    venue: item.citation.venue,
+    doi: item.citation.doi,
+    purpose,
+  });
+}
+
 export async function deleteKnowledgeItem(
   itemId: string,
   expectedVersion: number,
@@ -217,6 +282,26 @@ export async function deleteKnowledgeItem(
     method: "DELETE",
     body: { expected_version: expectedVersion },
   });
+}
+
+/**
+ * Save (bookmark) one owned knowledge item. Idempotent: saving an already-saved
+ * item succeeds and returns the item unchanged. The updated item is returned so
+ * a caller can reflect `saved: true` without a refetch.
+ */
+export async function saveKnowledgeItem(
+  itemId: string,
+): Promise<KnowledgeItem> {
+  return knowledgeItemSchema.parse(
+    envelopeData(
+      await apiFetch(`/api/v1/knowledge/${itemId}/saved`, { method: "PUT" }),
+    ),
+  );
+}
+
+/** Clear the bookmark. Idempotent: unsaving an unsaved item still succeeds. */
+export async function unsaveKnowledgeItem(itemId: string): Promise<void> {
+  await apiFetch(`/api/v1/knowledge/${itemId}/saved`, { method: "DELETE" });
 }
 
 export async function addKnowledgeNote(

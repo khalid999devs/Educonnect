@@ -8,7 +8,7 @@ use App\Domains\Courses\Models\Course;
 use App\Domains\Intake\AI\ClassificationPolicy;
 use App\Domains\Intake\AI\ClassificationRequest;
 use App\Domains\Intake\AI\RuleBasedClassificationProvider;
-use App\Domains\Intake\AI\SuggestionSchemaV1;
+use App\Domains\Intake\AI\SuggestionSchemaV2;
 use App\Domains\Intake\Contracts\AIProvider;
 use App\Domains\Intake\Enums\IntakeArtifactKind;
 use App\Domains\Intake\Enums\IntakeFailureCode;
@@ -39,7 +39,7 @@ final class ClassifyIntakeItem implements ShouldQueue
 
     public function handle(
         ClassificationPolicy $policy,
-        SuggestionSchemaV1 $schema,
+        SuggestionSchemaV2 $schema,
         IntakeEventRecorder $events,
         TelemetryRecorder $telemetry,
     ): void {
@@ -177,7 +177,7 @@ final class ClassifyIntakeItem implements ShouldQueue
     private function attemptProvider(
         AIProvider $provider,
         ClassificationPolicy $policy,
-        SuggestionSchemaV1 $schema,
+        SuggestionSchemaV2 $schema,
         ClassificationRequest $request,
     ): ?array {
         $attempts = $policy->maxOutputRetries() + 1;
@@ -239,7 +239,7 @@ final class ClassifyIntakeItem implements ShouldQueue
                         'course_public_id' => $suggestion['course_public_id'],
                         'url' => $suggestion['url'],
                     ],
-                    'schema_version' => SuggestionSchemaV1::VERSION,
+                    'schema_version' => SuggestionSchemaV2::VERSION,
                     'confidence' => number_format((float) $suggestion['confidence'], 3, '.', ''),
                     'reason' => $suggestion['reason'],
                     'status' => IntakeSuggestionStatus::Proposed->value,
@@ -250,7 +250,7 @@ final class ClassifyIntakeItem implements ShouldQueue
                 'state' => IntakeState::AwaitingReview->value,
                 'classification_provider' => $provider->name(),
                 'classification_model' => $provider->model(),
-                'classification_schema_version' => SuggestionSchemaV1::VERSION,
+                'classification_schema_version' => SuggestionSchemaV2::VERSION,
                 'classification_latency_ms' => $latencyMs,
             ])->save();
             $events->record(

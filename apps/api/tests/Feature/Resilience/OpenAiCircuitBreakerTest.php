@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Resilience;
 
+use App\Support\Ai\AiFeature;
 use App\Support\Ai\OpenAiClient;
 use App\Support\Exceptions\CircuitBreakerOpen;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +15,8 @@ final class OpenAiCircuitBreakerTest extends TestCase
 {
     /** @var list<array{role: string, content: string}> */
     private const MESSAGES = [['role' => 'user', 'content' => 'hi']];
+
+    private const MODEL = 'test-model';
 
     protected function setUp(): void
     {
@@ -34,7 +37,7 @@ final class OpenAiCircuitBreakerTest extends TestCase
 
         for ($attempt = 0; $attempt < 3; $attempt++) {
             try {
-                $client->chat('gpt-5-mini', self::MESSAGES);
+                $client->chat(self::MODEL, self::MESSAGES, AiFeature::Copilot);
                 self::fail('Expected the upstream failure to throw.');
             } catch (RuntimeException $exception) {
                 self::assertNotInstanceOf(CircuitBreakerOpen::class, $exception);
@@ -43,7 +46,7 @@ final class OpenAiCircuitBreakerTest extends TestCase
 
         // The breaker is now open: the next call short-circuits with no request.
         try {
-            $client->chat('gpt-5-mini', self::MESSAGES);
+            $client->chat(self::MODEL, self::MESSAGES, AiFeature::Copilot);
             self::fail('Expected the open breaker to short-circuit.');
         } catch (CircuitBreakerOpen) {
             // expected
@@ -60,7 +63,7 @@ final class OpenAiCircuitBreakerTest extends TestCase
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
             try {
-                $client->chat('gpt-5-mini', self::MESSAGES);
+                $client->chat(self::MODEL, self::MESSAGES, AiFeature::Copilot);
             } catch (RuntimeException $exception) {
                 self::assertNotInstanceOf(CircuitBreakerOpen::class, $exception);
             }

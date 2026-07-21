@@ -36,7 +36,9 @@ tags:
   - name: Intake
     description: Private Smart Intake records with durable processing states, SSRF-safe link acquisition, bounded extraction, cancel/retry control, and observable events.
   - name: Second Brain
-    description: Private source-centered knowledge organization with collections, notes, tags, item connections, PostgreSQL search, and lightweight research topic tracking.
+    description: Private source-centered knowledge organization with collections, notes, tags, item connections, PostgreSQL search, and purpose-based filing.
+  - name: Study
+    description: Private AI-generated study material and grounded document chat over one owned knowledge item. Generation is queue-plus-poll; a failed generation is reported honestly and never replaced with fabricated content.
   - name: Dashboard
     description: One bounded truthful aggregate read model for the approved student dashboard hierarchy.
   - name: Copilot
@@ -45,6 +47,10 @@ tags:
     description: Member-scoped student communities with feeds, posts, comments, content reports, and moderator resolution.
   - name: Mentor
     description: Mentor directory profiles and the bounded request lifecycle between students and mentors.
+  - name: Progress
+    description: One authoritative progress read model computed from the student's own records. Real counts only, never streaks, badges, percentiles, or period comparisons.
+  - name: Settings
+    description: Verified, current-user account, academic profile, course-preference summary, and active browser sessions.
 paths:
   /sanctum/csrf-cookie:
     get:
@@ -1423,8 +1429,13 @@ paths:
         - name: course_id
           in: query
           required: false
+          description: >-
+            A course public ULID, or the literal sentinel `none` selecting only
+            resources filed under no course at all.
           schema:
-            $ref: '#/components/schemas/ResourcePublicId'
+            type: string
+            pattern: '^(none|[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25})$'
+            example: none
         - name: topic
           in: query
           required: false
@@ -1536,6 +1547,31 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/resources/directories:
+    get:
+      tags:
+        - Resources
+      operationId: listResourceDirectories
+      summary: List the current user's resource directories
+      description: >-
+        Every active course, plus archived courses that still hold resources,
+        plus the single unfiled bucket. The set is bounded by the owner's course
+        roster and is deliberately not cursor-paginated.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceDirectoryCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/resources/{resource}:
     parameters:
       - $ref: '#/components/parameters/ResourcePublicId'
@@ -1791,6 +1827,65 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/tool-categories:
+    get:
+      tags:
+        - Tools
+      operationId: listToolCategories
+      summary: List every curated tool category as a goal dimension
+      description: >-
+        Returns the complete curated category list ordered by sort_order then
+        name. The list is small, identical for every student, and cached under
+        the shared content version, so it is returned in full rather than
+        cursor-paginated.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/ToolCategoryCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/tools/scenario-search:
+    post:
+      tags:
+        - Tools
+      operationId: searchToolsByScenario
+      summary: Rank curated tools against a free-form student scenario
+      description: 'Retrieval is PostgreSQL only: the published, visible tool set filtered by an optional category and capped at 50 candidates. An AI ranker may reorder and explain that set and nothing else; an identifier outside the candidate set is rejected by the ranking schema. When the ranker is disabled, unconfigured, short-circuited, or failing, the deterministic keyword ranker answers and ai_ranked is false. The endpoint never returns 503.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScenarioSearchRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ScenarioSearchSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /api/v1/tools:
     get:
       tags:
@@ -2938,7 +3033,7 @@ paths:
         - Intake
       operationId: confirmIntake
       summary: Confirm reviewed suggestions and transactionally create the selected records
-      description: Applied suggestions create tasks and link resources through the owning domain rules; undecided proposals are dismissed, retries never duplicate created records, and a saved item replays idempotently.
+      description: Applied suggestions create tasks, link resources, and file knowledge items through the owning domain rules; undecided proposals are dismissed, retries never duplicate created records, and a saved item replays idempotently.
       security:
         - sessionCookie: []
           xsrfHeader: []
@@ -2969,6 +3064,214 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /api/v1/intake/{item}/extraction:
+    parameters:
+      - $ref: '#/components/parameters/IntakeItemPublicId'
+    get:
+      tags:
+        - Intake
+      operationId: showIntakeExtraction
+      summary: Read a bounded window of one current-user intake item's extracted text
+      description: Extracted text is capped at 200,000 characters, which must never ship in a single payload. Reads are windowed at 20,000 characters per request and the client pages with offset against total_characters, following next_offset verbatim. An item whose pipeline has not yet produced an extraction returns has_extraction false with a zeroed window rather than 404.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 200000
+            default: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20000
+            default: 20000
+      responses:
+        '200':
+          $ref: '#/components/responses/IntakeExtractionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/study/artifacts:
+    get:
+      tags:
+        - Study
+      operationId: listStudyArtifacts
+      summary: List the current user's generated study artifacts
+      description: Cursor-paginated. A non-ready artifact never carries a payload and a failed one never does either; the database enforces this, so no response can present fabricated study material as a result.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: item_id
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/KnowledgeItemPublicId'
+        - name: kind
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/StudyArtifactKind'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/StudyArtifactStatus'
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '-created_at'
+            enum:
+              - created_at
+              - '-created_at'
+              - updated_at
+              - '-updated_at'
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 2048
+      responses:
+        '200':
+          $ref: '#/components/responses/StudyArtifactCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/study/artifacts/{artifact}:
+    parameters:
+      - $ref: '#/components/parameters/StudyArtifactPublicId'
+    get:
+      tags:
+        - Study
+      operationId: showStudyArtifact
+      summary: Poll one study artifact until it is ready or failed
+      description: The client polls this while status is queued or running, matching the 2500 ms intake cadence. ADR-0021 rejected SSE, so generation is queue-plus-poll rather than streamed.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/StudyArtifactSuccess'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/study/{item}/generations:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    post:
+      tags:
+        - Study
+      operationId: createStudyGeneration
+      summary: Request one ready-made study action for a knowledge item
+      description: 'Always 202. The persisted artifact is both the cache and the dedupe key - UNIQUE(knowledge_item_id, kind) - so a repeat request for a queued, running, or ready artifact returns that same artifact without re-billing a provider, and a failed artifact is re-queued in place with its version bumped.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyGenerationRequest'
+      responses:
+        '202':
+          $ref: '#/components/responses/StudyArtifactAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/study/{item}/chat:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    post:
+      tags:
+        - Study
+      operationId: createStudyChatTurn
+      summary: Ask one grounded question about a single document
+      description: 'The server resolves the caller''s own knowledge item, assembles the guardrail prompt plus the grounding rule and a bounded window of the document''s extracted text, appends the bounded client-held history and the message, and returns plain text grounded only in that document. Nothing is persisted: there is no conversation record.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyChatRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/StudyChatReplySuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /api/v1/dashboard:
     get:
       tags:
@@ -2988,6 +3291,154 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DashboardSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/progress:
+    get:
+      tags:
+        - Progress
+      operationId: showProgress
+      summary: Return the authoritative progress overview for the current user
+      description: 'Every figure is computed at read time from the student''s own rows. There are no streaks, consecutive-day counters, badges, percentiles, or comparisons against another period. An empty window reports zero and says so. The dashboard''s compact progress block delegates to this same read model, so the two surfaces cannot disagree.'
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: timezone
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 64
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - week
+              - month
+              - term
+            default: week
+      responses:
+        '200':
+          $ref: '#/components/responses/ProgressSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/settings:
+    get:
+      tags:
+        - Settings
+      operationId: getSettings
+      summary: Return the current user's account, academic profile, and course-preference summary
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/SettingsSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/settings/profile:
+    put:
+      tags:
+        - Settings
+      operationId: updateSettingsProfile
+      summary: Replace the current user's academic profile
+      description: 'A full replace: all seven keys must be present, and a cleared value is written as null. The institution name and country code must be supplied together or both null, and an institution already on record cannot be cleared because the institution onboarding step is non-skippable. Onboarding step states are synchronised in the same transaction so a completed onboarding stays completable.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsProfileUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SettingsSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/settings/account:
+    put:
+      tags:
+        - Settings
+      operationId: updateSettingsAccount
+      summary: Update the current user's display name
+      description: Only the display name is writable here. Email address, password, timezone, and theme are deliberately not accepted and are rejected as unknown fields.
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsAccountUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SettingsSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/settings/sessions:
+    get:
+      tags:
+        - Settings
+      operationId: listSettingsSessions
+      summary: List the current user's active browser sessions
+      description: 'Bounded at the 50 most recent sessions with no cursor. The identifier is a stable one-way digest, never the session identifier itself: that value is the bearer credential for the session. Sign-out-everywhere remains POST /api/v1/auth/logout-all.'
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          $ref: '#/components/responses/SessionListSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3210,7 +3661,7 @@ paths:
         - Second Brain
       operationId: listKnowledgeItems
       summary: Search and filter the current user's knowledge items
-      description: Full-text search covers titles, summaries, authors, and venues; title prefixes match as a fallback. Filters narrow by collection, research topic, tag, and source type.
+      description: 'Full-text search covers titles, summaries, authors, and venues; title prefixes match as a fallback. Filters narrow by collection, tag, and source type. `purpose` narrows to a single purpose, or to the unfiled backlog with `purpose=none`.'
       security:
         - sessionCookie: []
       parameters:
@@ -3220,11 +3671,6 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/CollectionPublicId'
-        - name: topic_id
-          in: query
-          required: false
-          schema:
-            $ref: '#/components/schemas/ResearchTopicPublicId'
         - name: tag
           in: query
           required: false
@@ -3237,6 +3683,26 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/KnowledgeSourceType'
+        - name: purpose
+          in: query
+          required: false
+          description: >-
+            A purpose value, or the sentinel `none` selecting items with no
+            purpose recorded.
+          schema:
+            type: string
+            enum:
+              - resource
+              - study
+              - research
+              - exam
+              - none
+        - name: saved
+          in: query
+          required: false
+          description: When true, returns only the items the current user has saved.
+          schema:
+            type: boolean
         - $ref: '#/components/parameters/BrainSort'
         - $ref: '#/components/parameters/BrainPerPage'
         - $ref: '#/components/parameters/BrainCursor'
@@ -3378,6 +3844,65 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/knowledge/{item}/saved:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeItemPublicId'
+    put:
+      tags:
+        - Second Brain
+      operationId: saveKnowledgeItem
+      summary: Save one current-user knowledge item as a bookmark
+      description: 'Idempotent: saving an item that is already saved keeps its original bookmark and still succeeds.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/KnowledgeItemSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '419':
+          $ref: '#/components/responses/CsrfMismatch'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags:
+        - Second Brain
+      operationId: unsaveKnowledgeItem
+      summary: Clear the saved bookmark from one current-user knowledge item
+      description: 'Idempotent: clearing an item that was not saved still succeeds and returns no content.'
+      security:
+        - sessionCookie: []
+          xsrfHeader: []
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '419':
           $ref: '#/components/responses/CsrfMismatch'
         '422':
@@ -3636,260 +4161,6 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
-  /api/v1/research-topics:
-    get:
-      tags:
-        - Second Brain
-      operationId: listResearchTopics
-      summary: List and summarize the current user's research topics
-      security:
-        - sessionCookie: []
-      parameters:
-        - $ref: '#/components/parameters/BrainSearch'
-        - $ref: '#/components/parameters/BrainSort'
-        - $ref: '#/components/parameters/BrainPerPage'
-        - $ref: '#/components/parameters/BrainCursor'
-      responses:
-        '200':
-          $ref: '#/components/responses/ResearchTopicCollectionSuccess'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-    post:
-      tags:
-        - Second Brain
-      operationId: createResearchTopic
-      summary: Create a current-user research topic with keywords
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateResearchTopicRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/ResearchTopicCreated'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-  /api/v1/research-topics/{topic}:
-    parameters:
-      - $ref: '#/components/parameters/ResearchTopicPublicId'
-    get:
-      tags:
-        - Second Brain
-      operationId: showResearchTopic
-      summary: Return one current-user research topic with its reading list
-      security:
-        - sessionCookie: []
-      responses:
-        '200':
-          $ref: '#/components/responses/ResearchTopicSuccess'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-    put:
-      tags:
-        - Second Brain
-      operationId: updateResearchTopic
-      summary: Update one current-user research topic with optimistic concurrency
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateResearchTopicRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/ResearchTopicSuccess'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-    delete:
-      tags:
-        - Second Brain
-      operationId: deleteResearchTopic
-      summary: Permanently delete one current-user research topic without deleting its sources
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BrainVersionedMutationRequest'
-      responses:
-        '204':
-          $ref: '#/components/responses/NoContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-  /api/v1/research-topics/{topic}/sources:
-    parameters:
-      - $ref: '#/components/parameters/ResearchTopicPublicId'
-    post:
-      tags:
-        - Second Brain
-      operationId: attachResearchSource
-      summary: Attach one current-user knowledge item to a research topic reading list
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AttachResearchSourceRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/ResearchTopicCreated'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-  /api/v1/research-topics/{topic}/sources/{item}:
-    parameters:
-      - $ref: '#/components/parameters/ResearchTopicPublicId'
-      - $ref: '#/components/parameters/KnowledgeItemPublicId'
-    put:
-      tags:
-        - Second Brain
-      operationId: updateResearchSource
-      summary: Update the reading status of one attached source
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateResearchSourceRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/ResearchTopicSuccess'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-    delete:
-      tags:
-        - Second Brain
-      operationId: detachResearchSource
-      summary: Detach one source from a research topic without deleting the knowledge item
-      security:
-        - sessionCookie: []
-          xsrfHeader: []
-      parameters:
-        - $ref: '#/components/parameters/XsrfToken'
-      responses:
-        '204':
-          $ref: '#/components/responses/NoContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/AuthenticationRequired'
-        '403':
-          $ref: '#/components/responses/AuthorizationDenied'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '419':
-          $ref: '#/components/responses/CsrfMismatch'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '429':
-          $ref: '#/components/responses/RateLimited'
   /api/v1/communities:
     get:
       tags:
@@ -3991,6 +4262,35 @@ paths:
           $ref: '#/components/responses/NotFound'
         '419':
           $ref: '#/components/responses/CsrfMismatch'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /api/v1/communities/{community}/members:
+    parameters:
+      - $ref: '#/components/parameters/CommunityPublicId'
+    get:
+      tags:
+        - Community
+      operationId: listCommunityMembers
+      summary: List the people in a community the viewer has joined
+      description: 'The viewer must be a member; a non-member receives 403 and an unknown or unpublished community receives 404. Only membership rows are read: the payload carries a display name, membership role, join time, and the verified-mentor badge, and never an email address or an account identifier. The exposed identifier is the membership public id, deliberately not the user''s.'
+      security:
+        - sessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CommunityPerPage'
+        - $ref: '#/components/parameters/CommunityCursor'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommunityMemberCollectionSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AuthorizationDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
   /api/v1/communities/{community}/posts:
@@ -4602,6 +4902,7 @@ paths:
       security:
         - sessionCookie: []
       parameters:
+        - $ref: '#/components/parameters/MentorRequestStatusFilter'
         - $ref: '#/components/parameters/MentorPerPage'
         - $ref: '#/components/parameters/MentorCursor'
       responses:
@@ -4626,6 +4927,7 @@ paths:
       security:
         - sessionCookie: []
       parameters:
+        - $ref: '#/components/parameters/MentorRequestStatusFilter'
         - $ref: '#/components/parameters/MentorPerPage'
         - $ref: '#/components/parameters/MentorCursor'
       responses:
@@ -6069,13 +6371,17 @@ components:
       name: sort
       in: query
       required: false
-      description: Resource cursors contain only an update timestamp, public ULID, and direction flag.
+      description: >-
+        Resource cursors contain only the sort column value, the public ULID,
+        and a direction flag.
       schema:
         type: string
         default: '-updated_at'
         enum:
           - updated_at
           - '-updated_at'
+          - title
+          - '-title'
     ResourcePerPage:
       name: per_page
       in: query
@@ -6356,18 +6662,18 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/KnowledgeNotePublicId'
+    StudyArtifactPublicId:
+      name: artifact
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/StudyArtifactPublicId'
     KnowledgeLinkPublicId:
       name: link
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/KnowledgeLinkPublicId'
-    ResearchTopicPublicId:
-      name: topic
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/ResearchTopicPublicId'
     BrainSearch:
       name: search
       in: query
@@ -6505,6 +6811,22 @@ components:
       schema:
         type: string
         maxLength: 2048
+    MentorRequestStatusFilter:
+      name: status
+      in: query
+      required: false
+      description: >-
+        Comma-separated list of mentor request statuses to return. Omit for
+        every status. Any unknown value fails validation with 422. The Mentors
+        surface gate uses `accepted,completed`: a completed mentorship still
+        counts as a mentor connection so a student keeps access to their
+        history.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+        pattern: '^(open|accepted|declined|withdrawn|completed)(,(open|accepted|declined|withdrawn|completed))*$'
+      example: accepted,completed
     AdminSearch:
       name: search
       in: query
@@ -6760,6 +7082,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceCollectionSuccess'
+    ResourceDirectoryCollectionSuccess:
+      description: The operation returned the current user's bounded resource directory set.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceDirectoryCollectionSuccess'
     ResourceUploadCreated:
       description: Private file metadata and its short-lived upload grant were created.
       headers:
@@ -6814,6 +7145,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ToolCollectionSuccess'
+    ToolCategoryCollectionSuccess:
+      description: The operation returned the complete curated tool category list.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ToolCategoryCollectionSuccess'
     PromptSuccess:
       description: The operation returned one reviewed and published prompt template with current-user state.
       headers:
@@ -7299,33 +7639,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/KnowledgeLinkSuccess'
-    ResearchTopicSuccess:
-      description: The operation returned one current-user research topic.
-      headers:
-        X-Request-ID:
-          $ref: '#/components/headers/RequestId'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ResearchTopicSuccess'
-    ResearchTopicCreated:
-      description: The research topic operation created the requested record.
-      headers:
-        X-Request-ID:
-          $ref: '#/components/headers/RequestId'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ResearchTopicSuccess'
-    ResearchTopicCollectionSuccess:
-      description: The operation returned one page of the current user's research topics.
-      headers:
-        X-Request-ID:
-          $ref: '#/components/headers/RequestId'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ResearchTopicCollectionSuccess'
     DashboardSuccess:
       description: The operation returned the complete bounded dashboard aggregate.
       headers:
@@ -7335,6 +7648,87 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DashboardSuccess'
+    ProgressSuccess:
+      description: The operation returned the authoritative progress overview.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProgressSuccess'
+    SettingsSuccess:
+      description: The operation returned the current user's settings snapshot.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SettingsSuccess'
+    SessionListSuccess:
+      description: The operation returned the current user's active sessions.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SessionListSuccess'
+    ScenarioSearchSuccess:
+      description: Curated tools ranked against the submitted scenario.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ScenarioSearchSuccess'
+    IntakeExtractionSuccess:
+      description: One bounded window of an intake item's extracted text.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntakeExtractionSuccess'
+    StudyArtifactSuccess:
+      description: The operation returned one study artifact in its current state.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StudyArtifactSuccess'
+    StudyArtifactAccepted:
+      description: The generation was accepted; poll the artifact until it is ready or failed.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StudyArtifactSuccess'
+    StudyArtifactCollectionSuccess:
+      description: The operation returned one page of the current user's study artifacts.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StudyArtifactCollectionSuccess'
+    StudyChatReplySuccess:
+      description: The operation returned one grounded reply about a single document.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StudyChatReplySuccess'
     CopilotAvailabilitySuccess:
       description: Copilot availability for the current server configuration.
       content:
@@ -7383,6 +7777,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CommunityPostSuccess'
+    CommunityMemberCollectionSuccess:
+      description: The operation returned one page of a community's people.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CommunityMemberCollectionSuccess'
     CommunityPostCollectionSuccess:
       description: The operation returned one page of a community's visible posts.
       headers:
@@ -8608,6 +9011,47 @@ components:
           $ref: '#/components/schemas/ResourceCollectionMeta'
         links:
           $ref: '#/components/schemas/CollectionLinks'
+    ResourceDirectoryKind:
+      type: string
+      enum:
+        - course
+        - unfiled
+    ResourceDirectory:
+      type: object
+      required:
+        - kind
+        - course
+        - resource_count
+      additionalProperties: false
+      properties:
+        kind:
+          $ref: '#/components/schemas/ResourceDirectoryKind'
+        course:
+          nullable: true
+          description: Null for the unfiled bucket; the owning course otherwise.
+          allOf:
+            - $ref: '#/components/schemas/ResourceCourseReference'
+        resource_count:
+          type: integer
+          minimum: 0
+    ResourceDirectoryCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 201
+          description: >-
+            Active courses first, then archived courses that still hold
+            resources, then the single unfiled bucket. Capped at 200 course
+            directories plus the unfiled bucket.
+          items:
+            $ref: '#/components/schemas/ResourceDirectory'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     ToolPublicId:
       type: string
       pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
@@ -8628,6 +9072,50 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+    ToolCategory:
+      type: object
+      required:
+        - id
+        - key
+        - name
+        - description
+        - sort_order
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+          example: 01jz7n6h1c8j3r4s5t6v7w8xa0
+        key:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+        sort_order:
+          type: integer
+          minimum: 0
+    ToolCategoryCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ToolCategory'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     ToolViewerState:
       type: object
       required:
@@ -8712,6 +9200,151 @@ components:
           format: date-time
         viewer_state:
           $ref: '#/components/schemas/ToolViewerState'
+    ScenarioSearchRequest:
+      type: object
+      required:
+        - scenario
+      additionalProperties: false
+      properties:
+        scenario:
+          type: string
+          minLength: 3
+          maxLength: 600
+          description: The student's own words. It is treated as untrusted data by the ranker and is never echoed back in the response.
+        category:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 80
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+    ScenarioSearchResult:
+      type: object
+      description: One ranked tool. The properties mirror Tool exactly and are inlined rather than composed, because Tool sets additionalProperties false and an allOf composition would therefore reject match_reason.
+      required:
+        - id
+        - name
+        - category
+        - purpose
+        - selection_reason
+        - use_cases
+        - usage_guidance
+        - limitations
+        - cost_note
+        - privacy_note
+        - url
+        - provenance
+        - last_reviewed_at
+        - viewer_state
+        - match_reason
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/ToolPublicId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        category:
+          $ref: '#/components/schemas/ToolCategoryReference'
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        selection_reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        use_cases:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 500
+        usage_guidance:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        limitations:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        cost_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        privacy_note:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        url:
+          type: string
+          format: uri
+          pattern: '^https://'
+          maxLength: 2048
+        provenance:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        last_reviewed_at:
+          type: string
+          format: date-time
+        viewer_state:
+          $ref: '#/components/schemas/ToolViewerState'
+        match_reason:
+          type: string
+          minLength: 1
+          maxLength: 200
+    ScenarioSearch:
+      type: object
+      required:
+        - results
+        - ai_ranked
+        - cached
+        - provider
+        - model
+        - disclaimer
+      additionalProperties: false
+      properties:
+        results:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ScenarioSearchResult'
+        ai_ranked:
+          type: boolean
+          description: False when the deterministic keyword ranker answered, so the client can caption the result set honestly.
+        cached:
+          type: boolean
+        provider:
+          type: string
+          maxLength: 64
+        model:
+          type: string
+          maxLength: 128
+        disclaimer:
+          type: string
+          maxLength: 200
+    ScenarioSearchData:
+      type: object
+      required:
+        - scenario_search
+      additionalProperties: false
+      properties:
+        scenario_search:
+          $ref: '#/components/schemas/ScenarioSearch'
+    ScenarioSearchSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/ScenarioSearchData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     ToolCollectionMeta:
       type: object
       required:
@@ -9646,6 +10279,64 @@ components:
           nullable: true
           minLength: 1
           maxLength: 2000
+    IntakeExtraction:
+      type: object
+      required:
+        - id
+        - has_extraction
+        - content_type
+        - text
+        - offset
+        - limit
+        - returned_characters
+        - total_characters
+        - has_more
+        - next_offset
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Public id of the owning intake item.
+        has_extraction:
+          type: boolean
+          description: False while the pipeline has not yet produced an extracted-text artifact.
+        content_type:
+          type: string
+          nullable: true
+        text:
+          type: string
+          maxLength: 20000
+        offset:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 20000
+        returned_characters:
+          type: integer
+          minimum: 0
+        total_characters:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+        next_offset:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Follow this verbatim rather than recomputing offset plus limit; the two differ whenever the tail is short.
+    IntakeExtractionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/IntakeExtraction'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     IntakeItemCollectionMeta:
       type: object
       required:
@@ -9758,6 +10449,7 @@ components:
         - status
         - created_task_id
         - created_resource_id
+        - created_knowledge_item_id
         - created_at
       additionalProperties: false
       properties:
@@ -9768,6 +10460,7 @@ components:
           enum:
             - task
             - resource
+            - knowledge_item
         proposal:
           $ref: '#/components/schemas/IntakeSuggestionProposal'
         confidence:
@@ -9795,6 +10488,10 @@ components:
         created_resource_id:
           allOf:
             - $ref: '#/components/schemas/ResourcePublicId'
+          nullable: true
+        created_knowledge_item_id:
+          allOf:
+            - $ref: '#/components/schemas/KnowledgeItemPublicId'
           nullable: true
         created_at:
           type: string
@@ -9964,6 +10661,8 @@ components:
         - image/webp
         - text/plain
         - text/markdown
+        - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        - application/vnd.openxmlformats-officedocument.presentationml.presentation
     LinkResourceWriteRequest:
       type: object
       required:
@@ -11013,10 +11712,6 @@ components:
       type: string
       pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
       example: 01jz7n6h1c8j3r4s5t6v7w8xb4
-    ResearchTopicPublicId:
-      type: string
-      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
-      example: 01jz7n6h1c8j3r4s5t6v7w8xb5
     BrainVersion:
       type: integer
       minimum: 1
@@ -11034,6 +11729,17 @@ components:
         - resource
         - link
         - none
+    KnowledgePurpose:
+      type: string
+      description: >-
+        Why the owner captured the item. Drives which Second Brain and Study
+        actions are offered; it is never an authorization signal. Null means no
+        purpose has been recorded, which is not a synonym for "resource".
+      enum:
+        - resource
+        - study
+        - research
+        - exam
     KnowledgeLinkRelation:
       type: string
       enum:
@@ -11041,12 +11747,6 @@ components:
         - supports
         - contradicts
         - builds_on
-    ReadingStatus:
-      type: string
-      enum:
-        - to_read
-        - reading
-        - read
     BrainVersionedMutationRequest:
       type: object
       required:
@@ -11200,6 +11900,7 @@ components:
         - type
         - url
         - resource
+        - intake_item_id
       additionalProperties: false
       properties:
         type:
@@ -11213,6 +11914,14 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/KnowledgeSourceResource'
+        intake_item_id:
+          description: >-
+            Public id of the capture this item came from, when there was one.
+            A link capture never produces a Resource, so this is the only join
+            path back to its extracted text.
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/IntakeItemPublicId'
     KnowledgeCitation:
       type: object
       required:
@@ -11310,22 +12019,6 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/KnowledgeLinkItemSummary'
-    KnowledgeTopicSummary:
-      type: object
-      required:
-        - id
-        - title
-        - reading_status
-      additionalProperties: false
-      properties:
-        id:
-          $ref: '#/components/schemas/ResearchTopicPublicId'
-        title:
-          type: string
-        reading_status:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ReadingStatus'
     KnowledgeItem:
       type: object
       required:
@@ -11333,6 +12026,8 @@ components:
         - version
         - title
         - summary
+        - purpose
+        - saved
         - source
         - citation
         - tags
@@ -11352,6 +12047,13 @@ components:
           type: string
           nullable: true
           maxLength: 4000
+        purpose:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgePurpose'
+        saved:
+          type: boolean
+          description: Whether the current user has saved this item.
         source:
           $ref: '#/components/schemas/KnowledgeSource'
         citation:
@@ -11379,13 +12081,14 @@ components:
         - version
         - title
         - summary
+        - purpose
+        - saved
         - source
         - citation
         - tags
         - notes
         - collections
         - links
-        - research_topics
         - created_at
         - updated_at
       additionalProperties: false
@@ -11402,6 +12105,13 @@ components:
           type: string
           nullable: true
           maxLength: 4000
+        purpose:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgePurpose'
+        saved:
+          type: boolean
+          description: Whether the current user has saved this item.
         source:
           $ref: '#/components/schemas/KnowledgeSource'
         citation:
@@ -11424,10 +12134,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/KnowledgeLink'
-        research_topics:
-          type: array
-          items:
-            $ref: '#/components/schemas/KnowledgeTopicSummary'
         created_at:
           type: string
           format: date-time
@@ -11449,6 +12155,10 @@ components:
           type: string
           nullable: true
           maxLength: 4000
+        purpose:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/KnowledgePurpose'
         source_type:
           $ref: '#/components/schemas/KnowledgeSourceType'
         resource_id:
@@ -11492,6 +12202,16 @@ components:
           type: string
           nullable: true
           maxLength: 4000
+        purpose:
+          nullable: true
+          description: >-
+            Deliberately divergent from every other field on this payload:
+            omitting the key leaves the stored purpose unchanged, and sending
+            null clears it. Purpose is written by the intake router as well as
+            by the owner, so an edit form with no purpose control must not
+            silently erase provenance on every save.
+          allOf:
+            - $ref: '#/components/schemas/KnowledgePurpose'
         authors:
           type: string
           nullable: true
@@ -11631,187 +12351,6 @@ components:
           $ref: '#/components/schemas/KnowledgeLink'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
-    ResearchSource:
-      type: object
-      required:
-        - item
-        - reading_status
-      additionalProperties: false
-      properties:
-        item:
-          type: object
-          required:
-            - id
-            - title
-            - source_type
-            - authors
-            - published_year
-            - venue
-            - doi
-          additionalProperties: false
-          properties:
-            id:
-              $ref: '#/components/schemas/KnowledgeItemPublicId'
-            title:
-              type: string
-            source_type:
-              $ref: '#/components/schemas/KnowledgeSourceType'
-            authors:
-              type: string
-              nullable: true
-            published_year:
-              type: integer
-              nullable: true
-            venue:
-              type: string
-              nullable: true
-            doi:
-              type: string
-              nullable: true
-        reading_status:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ReadingStatus'
-    ResearchTopic:
-      type: object
-      required:
-        - id
-        - version
-        - title
-        - description
-        - keywords
-        - source_count
-        - created_at
-        - updated_at
-      additionalProperties: false
-      properties:
-        id:
-          $ref: '#/components/schemas/ResearchTopicPublicId'
-        version:
-          $ref: '#/components/schemas/BrainVersion'
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          nullable: true
-          maxLength: 2000
-        keywords:
-          type: array
-          maxItems: 20
-          items:
-            type: string
-            minLength: 1
-            maxLength: 60
-        source_count:
-          type: integer
-          minimum: 0
-        sources:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResearchSource'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    CreateResearchTopicRequest:
-      type: object
-      required:
-        - title
-      additionalProperties: false
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          nullable: true
-          maxLength: 2000
-        keywords:
-          type: array
-          nullable: true
-          maxItems: 20
-          items:
-            type: string
-            minLength: 1
-            maxLength: 60
-    UpdateResearchTopicRequest:
-      type: object
-      required:
-        - title
-        - keywords
-        - expected_version
-      additionalProperties: false
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          nullable: true
-          maxLength: 2000
-        keywords:
-          type: array
-          maxItems: 20
-          items:
-            type: string
-            minLength: 1
-            maxLength: 60
-        expected_version:
-          $ref: '#/components/schemas/BrainVersion'
-    AttachResearchSourceRequest:
-      type: object
-      required:
-        - knowledge_item_id
-      additionalProperties: false
-      properties:
-        knowledge_item_id:
-          $ref: '#/components/schemas/KnowledgeItemPublicId'
-        reading_status:
-          nullable: true
-          allOf:
-            - $ref: '#/components/schemas/ReadingStatus'
-    UpdateResearchSourceRequest:
-      type: object
-      required:
-        - reading_status
-      additionalProperties: false
-      properties:
-        reading_status:
-          $ref: '#/components/schemas/ReadingStatus'
-    ResearchTopicSuccess:
-      type: object
-      required:
-        - data
-        - meta
-      additionalProperties: false
-      properties:
-        data:
-          $ref: '#/components/schemas/ResearchTopic'
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-    ResearchTopicCollectionSuccess:
-      type: object
-      required:
-        - data
-        - meta
-        - links
-      additionalProperties: false
-      properties:
-        data:
-          type: array
-          maxItems: 50
-          items:
-            $ref: '#/components/schemas/ResearchTopic'
-        meta:
-          $ref: '#/components/schemas/BrainCollectionMeta'
-        links:
-          $ref: '#/components/schemas/CollectionLinks'
     DashboardTaskSummary:
       type: object
       required:
@@ -11828,6 +12367,233 @@ components:
           type: string
           format: date-time
           nullable: true
+    StudyArtifactPublicId:
+      type: string
+      pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
+      example: 01jz7n6h1c8j3r4s5t6v7w8xa4
+    StudyArtifactKind:
+      type: string
+      enum:
+        - summary
+        - topic_explanation
+        - quick_learn
+        - exam_questions
+    StudyArtifactStatus:
+      type: string
+      enum:
+        - queued
+        - running
+        - ready
+        - failed
+    StudyGenerationRequest:
+      type: object
+      required:
+        - kind
+      additionalProperties: false
+      properties:
+        kind:
+          $ref: '#/components/schemas/StudyArtifactKind'
+    StudyArtifact:
+      type: object
+      required:
+        - id
+        - kind
+        - status
+        - version
+        - is_pending
+        - payload
+        - failure_reason
+        - schema_version
+        - provider
+        - model
+        - latency_ms
+        - disclaimer
+        - created_at
+        - updated_at
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/StudyArtifactPublicId'
+        kind:
+          $ref: '#/components/schemas/StudyArtifactKind'
+        status:
+          $ref: '#/components/schemas/StudyArtifactStatus'
+        version:
+          type: integer
+          minimum: 1
+        is_pending:
+          type: boolean
+          description: True while status is queued or running; the client polls until this is false.
+        payload:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: 'Present only when status is ready. Its shape is StudyOutputSchemaV1 (title, overview, sections, key_points) for summary, topic_explanation, and quick_learn, and ExamQuestionSchemaV1 (questions) for exam_questions.'
+        failure_reason:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: Present only when status is failed. Study generation has no deterministic fallback; a failure is reported honestly and never replaced with generated material.
+        schema_version:
+          type: string
+          maxLength: 16
+        provider:
+          type: string
+          nullable: true
+          maxLength: 64
+        model:
+          type: string
+          nullable: true
+          maxLength: 128
+        latency_ms:
+          type: integer
+          nullable: true
+          minimum: 0
+        disclaimer:
+          type: string
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    StudyArtifactSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/StudyArtifact'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    StudyListSummary:
+      type: object
+      required:
+        - total
+        - queued
+        - running
+        - ready
+        - failed
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        queued:
+          type: integer
+          minimum: 0
+        running:
+          type: integer
+          minimum: 0
+        ready:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+    StudyCollectionMeta:
+      type: object
+      required:
+        - summary
+        - pagination
+        - request_id
+      additionalProperties: false
+      properties:
+        summary:
+          $ref: '#/components/schemas/StudyListSummary'
+        pagination:
+          $ref: '#/components/schemas/CursorPagination'
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    StudyArtifactCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/StudyArtifact'
+        meta:
+          $ref: '#/components/schemas/StudyCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
+    StudyChatRequest:
+      type: object
+      required:
+        - message
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        history:
+          type: array
+          maxItems: 8
+          items:
+            type: object
+            required:
+              - role
+              - content
+            additionalProperties: false
+            properties:
+              role:
+                type: string
+                description: 'Exactly user or assistant. This enum is the contract-level half of the prompt-injection boundary: a client-supplied system turn would overwrite the guardrails the server assembled. Do not widen it.'
+                enum:
+                  - user
+                  - assistant
+              content:
+                type: string
+                minLength: 1
+                maxLength: 1000
+    StudyChatReply:
+      type: object
+      required:
+        - reply
+        - model
+        - disclaimer
+      additionalProperties: false
+      properties:
+        reply:
+          type: string
+          minLength: 0
+          maxLength: 4000
+        model:
+          type: string
+          maxLength: 120
+        disclaimer:
+          type: string
+          maxLength: 200
+    StudyChatReplyData:
+      type: object
+      required:
+        - study_chat
+      additionalProperties: false
+      properties:
+        study_chat:
+          $ref: '#/components/schemas/StudyChatReply'
+    StudyChatReplySuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/StudyChatReplyData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
     CopilotAvailability:
       type: object
       required:
@@ -12305,6 +13071,413 @@ components:
           $ref: '#/components/schemas/Dashboard'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
+    Progress:
+      type: object
+      description: 'Real counts only. This schema deliberately has no streak, consecutive-day, badge, percentile, or period-comparison member, and additionalProperties is false so one cannot be added by accident.'
+      required:
+        - timeframe
+        - has_activity
+        - summary
+        - totals
+        - daily
+        - activity_rhythm
+        - next_action
+      additionalProperties: false
+      properties:
+        timeframe:
+          type: object
+          required:
+            - timezone
+            - window
+            - starts_on
+            - ends_on
+            - term_label
+          additionalProperties: false
+          properties:
+            timezone:
+              type: string
+              maxLength: 64
+            window:
+              type: string
+              enum:
+                - week
+                - month
+                - term
+            starts_on:
+              type: string
+              format: date
+            ends_on:
+              type: string
+              format: date
+              description: The resolved window end. A term longer than 92 days is clamped, and starts_on reports the clamped start rather than implying full term coverage.
+            term_label:
+              type: string
+              nullable: true
+        has_activity:
+          type: boolean
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 200
+        totals:
+          type: object
+          required:
+            - tasks_completed
+            - tasks_due
+            - focus_minutes
+            - resources_added
+            - intake_items_processed
+            - knowledge_items_added
+            - notes_written
+            - template_copies_created
+            - research_sources_reviewed
+          additionalProperties: false
+          properties:
+            tasks_completed:
+              type: integer
+              minimum: 0
+            tasks_due:
+              type: integer
+              minimum: 0
+            focus_minutes:
+              type: integer
+              minimum: 0
+            resources_added:
+              type: integer
+              minimum: 0
+            intake_items_processed:
+              type: integer
+              minimum: 0
+            knowledge_items_added:
+              type: integer
+              minimum: 0
+            notes_written:
+              type: integer
+              minimum: 0
+            template_copies_created:
+              type: integer
+              minimum: 0
+            research_sources_reviewed:
+              type: integer
+              minimum: 0
+        daily:
+          type: array
+          minItems: 1
+          maxItems: 92
+          items:
+            type: object
+            required:
+              - date
+              - tasks_completed
+              - focus_minutes
+              - resources_added
+              - notes_written
+            additionalProperties: false
+            properties:
+              date:
+                type: string
+                format: date
+              tasks_completed:
+                type: integer
+                minimum: 0
+              focus_minutes:
+                type: integer
+                minimum: 0
+              resources_added:
+                type: integer
+                minimum: 0
+              notes_written:
+                type: integer
+                minimum: 0
+        activity_rhythm:
+          type: object
+          required:
+            - has_activity
+            - days
+          additionalProperties: false
+          properties:
+            has_activity:
+              type: boolean
+            days:
+              type: array
+              minItems: 7
+              maxItems: 7
+              items:
+                type: object
+                required:
+                  - date
+                  - was_active
+                  - signals
+                additionalProperties: false
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  was_active:
+                    type: boolean
+                  signals:
+                    type: object
+                    required:
+                      - tasks
+                      - focus_minutes
+                      - resources
+                      - notes
+                    additionalProperties: false
+                    properties:
+                      tasks:
+                        type: integer
+                        minimum: 0
+                      focus_minutes:
+                        type: integer
+                        minimum: 0
+                      resources:
+                        type: integer
+                        minimum: 0
+                      notes:
+                        type: integer
+                        minimum: 0
+        next_action:
+          type: object
+          nullable: true
+          required:
+            - kind
+            - id
+            - title
+            - due_at
+          additionalProperties: false
+          properties:
+            kind:
+              type: string
+              enum:
+                - task
+                - intake_review
+            id:
+              type: string
+            title:
+              type: string
+            due_at:
+              type: string
+              format: date-time
+              nullable: true
+    ProgressSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Progress'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    Settings:
+      type: object
+      required:
+        - account
+        - profile
+        - course_preferences
+        - onboarding_completed
+      additionalProperties: false
+      properties:
+        account:
+          type: object
+          required:
+            - id
+            - name
+            - email
+            - email_verified
+            - primary_role
+            - created_at
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            email_verified:
+              type: boolean
+            primary_role:
+              type: string
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+              nullable: true
+        profile:
+          type: object
+          required:
+            - institution_name
+            - institution_country_code
+            - department
+            - degree
+            - major
+            - year_label
+            - term_label
+          additionalProperties: false
+          properties:
+            institution_name:
+              type: string
+              nullable: true
+            institution_country_code:
+              type: string
+              nullable: true
+            department:
+              type: string
+              nullable: true
+            degree:
+              type: string
+              nullable: true
+            major:
+              type: string
+              nullable: true
+            year_label:
+              type: string
+              nullable: true
+            term_label:
+              type: string
+              nullable: true
+        course_preferences:
+          type: object
+          required:
+            - total
+            - active
+            - archived
+            - unfiled_resources
+          additionalProperties: false
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            active:
+              type: integer
+              minimum: 0
+            archived:
+              type: integer
+              minimum: 0
+            unfiled_resources:
+              type: integer
+              minimum: 0
+        onboarding_completed:
+          type: boolean
+    SettingsSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Settings'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    SettingsProfileUpdateRequest:
+      type: object
+      required:
+        - institution_name
+        - institution_country_code
+        - department
+        - degree
+        - major
+        - year_label
+        - term_label
+      additionalProperties: false
+      properties:
+        institution_name:
+          type: string
+          nullable: true
+          maxLength: 200
+        institution_country_code:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 2
+          pattern: '^[A-Z]{2}$'
+        department:
+          type: string
+          nullable: true
+          maxLength: 160
+        degree:
+          type: string
+          nullable: true
+          maxLength: 160
+        major:
+          type: string
+          nullable: true
+          maxLength: 160
+        year_label:
+          type: string
+          nullable: true
+          maxLength: 80
+        term_label:
+          type: string
+          nullable: true
+          maxLength: 80
+    SettingsAccountUpdateRequest:
+      type: object
+      required:
+        - name
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+    Session:
+      type: object
+      required:
+        - id
+        - ip_address
+        - user_agent
+        - last_activity
+        - is_current
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: A stable one-way digest of the session identifier. It is not the session identifier and cannot be used to assume the session.
+          minLength: 1
+          maxLength: 64
+        ip_address:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_activity:
+          type: string
+          format: date-time
+        is_current:
+          type: boolean
+    SessionListMeta:
+      type: object
+      required:
+        - total
+        - request_id
+      additionalProperties: false
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        request_id:
+          $ref: '#/components/schemas/RequestId'
+    SessionListSuccess:
+      type: object
+      required:
+        - data
+        - meta
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Session'
+        meta:
+          $ref: '#/components/schemas/SessionListMeta'
     CommunityPublicId:
       type: string
       pattern: '^[01234567][0123456789abcdefghjkmnpqrstvwxyz]{25}$'
@@ -12722,6 +13895,51 @@ components:
           type: string
           format: date-time
           nullable: true
+    CommunityMember:
+      type: object
+      required:
+        - id
+        - name
+        - role
+        - joined_at
+        - is_verified_mentor
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Membership public id. Deliberately not the user's identifier, so the same person cannot be correlated across communities.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        role:
+          type: string
+          enum:
+            - member
+            - moderator
+        joined_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_verified_mentor:
+          type: boolean
+    CommunityMemberCollectionSuccess:
+      type: object
+      required:
+        - data
+        - meta
+        - links
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CommunityMember'
+        meta:
+          $ref: '#/components/schemas/CommunityCollectionMeta'
+        links:
+          $ref: '#/components/schemas/CollectionLinks'
     CommunityTotalSummary:
       type: object
       required:

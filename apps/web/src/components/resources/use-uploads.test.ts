@@ -144,6 +144,32 @@ describe("validateResourceFile", () => {
 
     expect(validateResourceFile(file)).toBeNull();
   });
+
+  it("accepts Office documents the browser types correctly", () => {
+    const docx = new File(["x"], "lecture.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    const pptx = new File(["x"], "deck.pptx", {
+      type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    });
+
+    expect(validateResourceFile(docx)).toBeNull();
+    expect(validateResourceFile(pptx)).toBeNull();
+  });
+
+  it("accepts Office documents when the browser reports no type", () => {
+    const docx = new File(["x"], "lecture.docx", { type: "" });
+    const pptx = new File(["x"], "deck.pptx", { type: "application/zip" });
+
+    expect(validateResourceFile(docx)).toBeNull();
+    expect(validateResourceFile(pptx)).toBeNull();
+  });
+
+  it("does not let an Office extension smuggle an unrelated type through", () => {
+    const file = new File(["x"], "payload.xlsx", { type: "application/zip" });
+
+    expect(validateResourceFile(file)?.code).toBe("type");
+  });
 });
 
 describe("titleFromFileName", () => {

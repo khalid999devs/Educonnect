@@ -74,12 +74,66 @@ function securityHeaders(): { key: string; value: string }[] {
   return headers;
 }
 
+/**
+ * Permanent redirects for the routes the information-architecture overhaul
+ * retired. These are declared here rather than as `redirect()` stub pages so
+ * that the retired route directories can be deleted outright: a config
+ * redirect is answered as a real HTTP 308 before any React renders, which
+ * browsers and crawlers cache, whereas a stub page would keep four route
+ * segments alive purely to throw NEXT_REDIRECT on every request.
+ *
+ * `permanent: true` is correct here because none of these paths will ever be
+ * reissued -- the sections were folded into their replacements, not moved
+ * temporarily.
+ */
+function retiredRouteRedirects(): {
+  source: string;
+  destination: string;
+  permanent: boolean;
+}[] {
+  return [
+    // Smart Intake's standalone surface; the pipeline itself lives on inside
+    // Second Brain, which took over its navigation slot.
+    { source: "/intake", destination: "/second-brain", permanent: true },
+    // Research is now a purpose facet of Second Brain rather than its own
+    // section. Individual topic ids have no knowledge-item equivalent, so
+    // deep links land on the filtered list rather than 404.
+    {
+      source: "/research",
+      destination: "/second-brain?purpose=research",
+      permanent: true,
+    },
+    {
+      source: "/research/:id",
+      destination: "/second-brain?purpose=research",
+      permanent: true,
+    },
+    // Tools and prompts became the AI Tools section.
+    { source: "/tools-prompts", destination: "/ai-tools", permanent: true },
+    // Mentors became a tab of the Community hub; mentor detail pages moved
+    // under that hub and keep a one-to-one mapping.
+    {
+      source: "/mentors",
+      destination: "/community?tab=mentors",
+      permanent: true,
+    },
+    {
+      source: "/mentors/:id",
+      destination: "/community/mentors/:id",
+      permanent: true,
+    },
+  ];
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@educonnect/ui"],
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders() }];
+  },
+  async redirects() {
+    return retiredRouteRedirects();
   },
 };
 

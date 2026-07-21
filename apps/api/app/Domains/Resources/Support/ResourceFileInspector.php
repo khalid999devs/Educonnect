@@ -19,7 +19,11 @@ final class ResourceFileInspector
         'image/webp' => ['webp'],
         'text/plain' => ['txt'],
         'text/markdown' => ['md', 'markdown'],
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => ['docx'],
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' => ['pptx'],
     ];
+
+    private const ZIP_LOCAL_FILE_HEADER = "PK\x03\x04";
 
     public function assertUploadMetadata(
         string $originalName,
@@ -121,6 +125,19 @@ final class ResourceFileInspector
             'image/webp' => strlen($prefix) >= 12
                 && substr($prefix, 0, 4) === 'RIFF'
                 && substr($prefix, 8, 4) === 'WEBP',
+            // Every OOXML format is a ZIP container, so all of them - docx, pptx,
+            // xlsx, and any other Office package - open with the same local file
+            // header. Magic-byte checking therefore CANNOT distinguish one OOXML
+            // type from another, nor an Office file from a plain .zip renamed to
+            // .docx. This is a weaker guarantee than the PDF and image arms above
+            // and it is not fixable at the prefix level: the discriminator lives in
+            // [Content_Types].xml inside the archive, past the 16-byte prefix this
+            // inspector reads. What the check does still buy is a hard reject of
+            // non-ZIP bytes. The real defence is downstream: the extractors demand
+            // the format's own required parts (word/document.xml, ppt/slides/*) and
+            // fail honestly when they are absent.
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => str_starts_with($prefix, self::ZIP_LOCAL_FILE_HEADER),
             'text/plain', 'text/markdown' => true,
             default => false,
         };

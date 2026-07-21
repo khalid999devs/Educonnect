@@ -4,6 +4,7 @@ import {
   Alert,
   Badge,
   Button,
+  buttonClasses,
   Card,
   CardContent,
   CardHeader,
@@ -16,10 +17,12 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Compass,
   ExternalLink,
   FileText,
   Link2,
   Link as LinkIcon,
+  Maximize2,
   Pencil,
   StickyNote,
   Trash2,
@@ -27,15 +30,22 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 
+import { IconChip } from "@/components/shared/icon-chip";
 import { ApiError } from "@/lib/api/http";
 import {
   addKnowledgeNote,
   deleteKnowledgeNote,
   getKnowledgeItem,
+  saveKnowledgeItem,
+  setKnowledgePurpose,
+  unsaveKnowledgeItem,
   updateKnowledgeNote,
   type KnowledgeNote,
+  type KnowledgePurpose,
 } from "@/lib/api/second-brain";
 import { brainKeys } from "@/lib/query-keys";
+import { PurposePicker } from "./purpose-picker";
+import { SaveToggle } from "./save-toggle";
 
 const RELATION_LABELS: Record<string, string> = {
   related: "Related to",
@@ -85,6 +95,35 @@ export function ItemDetail({ itemId }: { itemId: string }) {
     onSuccess: invalidate,
   });
 
+  /** `setKnowledgePurpose` echoes the item's current title and citation back,
+   * because PUT /knowledge/{item} replaces every field except purpose. Sending
+   * a purpose-only payload would silently erase the citation. */
+  const changePurpose = useMutation({
+    mutationFn: (next: KnowledgePurpose) => {
+      if (!itemQuery.data) {
+        throw new Error("This item is still loading.");
+      }
+
+      return setKnowledgePurpose(itemQuery.data, next);
+    },
+    onSuccess: invalidate,
+  });
+
+  const toggleSave = useMutation({
+    mutationFn: async () => {
+      if (!itemQuery.data) {
+        throw new Error("This item is still loading.");
+      }
+
+      if (itemQuery.data.saved) {
+        await unsaveKnowledgeItem(itemId);
+      } else {
+        await saveKnowledgeItem(itemId);
+      }
+    },
+    onSuccess: invalidate,
+  });
+
   if (itemQuery.isPending) {
     return <Skeleton className="h-96 rounded-lg" />;
   }
@@ -102,13 +141,30 @@ export function ItemDetail({ itemId }: { itemId: string }) {
 
   return (
     <div className="space-y-4">
-      <Link
-        href="/second-brain"
-        className="inline-flex items-center gap-1.5 text-body text-brand-primary hover:underline"
-      >
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Back to Second Brain
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/second-brain"
+          className="inline-flex items-center gap-1.5 text-body text-brand-primary hover:underline"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Back to Second Brain
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <SaveToggle
+            saved={item.saved}
+            busy={toggleSave.isPending}
+            onToggle={() => toggleSave.mutate()}
+          />
+          <Link
+            href={`/second-brain/${itemId}/workspace`}
+            className={buttonClasses({ glow: true })}
+          >
+            <Maximize2 aria-hidden="true" className="size-4" />
+            Open focused workspace
+          </Link>
+        </div>
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
         <div className="space-y-4">
@@ -274,8 +330,35 @@ export function ItemDetail({ itemId }: { itemId: string }) {
           </Card>
         </div>
 
-        {/* Side rail: tags, collections, connections, topics */}
+        {/* Side rail: purpose, tags, collections, connections, topics */}
         <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2.5 text-h4">
+                <IconChip icon={Compass} accent="secondBrain" size="sm" />
+                What this is for
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {/* Purpose drives which ready actions the workspace offers, so
+                  correcting it is one click and never an edit-mode round trip.
+                  A null purpose is a real value: rows captured before purposes
+                  existed have none, and that is not a synonym for "resource". */}
+              <PurposePicker
+                label="What this item is for"
+                value={item.purpose}
+                onChange={(next) => changePurpose.mutate(next)}
+                disabled={changePurpose.isPending}
+                className="sm:grid-cols-1"
+              />
+              {changePurpose.error ? (
+                <Alert variant="error" title="Couldn't change the purpose">
+                  {changePurpose.error.message}
+                </Alert>
+              ) : null}
+            </CardContent>
+          </Card>
+
           {item.tags.length > 0 ? (
             <Card>
               <CardHeader>
@@ -337,30 +420,6 @@ export function ItemDetail({ itemId }: { itemId: string }) {
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {item.research_topics.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-h4">Research topics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {item.research_topics.map((topic) => (
-                  <Link
-                    key={topic.id}
-                    href={`/research/${topic.id}`}
-                    className="flex items-center justify-between gap-2 text-body text-brand-primary hover:underline"
-                  >
-                    {topic.title}
-                    {topic.reading_status ? (
-                      <Badge variant="neutral">
-                        {topic.reading_status.replace("_", " ")}
-                      </Badge>
-                    ) : null}
-                  </Link>
-                ))}
               </CardContent>
             </Card>
           ) : null}

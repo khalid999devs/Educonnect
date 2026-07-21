@@ -8,20 +8,32 @@ use App\Domains\Guidance\Models\PromptTemplate;
 use App\Domains\Guidance\Models\WorkflowRecipe;
 use App\Domains\Guidance\Models\WorkflowStep;
 use App\Domains\Intake\AI\OpenAiClassificationProvider;
+use App\Domains\Intake\AI\PurposeRoutingAgent;
 use App\Domains\Intake\AI\RuleBasedClassificationProvider;
+use App\Domains\Intake\AI\RulePurposeRouter;
 use App\Domains\Intake\Contracts\AIProvider;
 use App\Domains\Intake\Contracts\HostResolver;
 use App\Domains\Intake\Contracts\IntakeContentExtractor;
+use App\Domains\Intake\Contracts\PurposeRouter;
 use App\Domains\Intake\Support\CompositeIntakeExtractor;
 use App\Domains\Intake\Support\DnsHostResolver;
+use App\Domains\Intake\Support\DocxExtractor;
 use App\Domains\Intake\Support\ImageOcrExtractor;
 use App\Domains\Intake\Support\PdfExtractor;
 use App\Domains\Intake\Support\PlainTextExtractor;
+use App\Domains\Intake\Support\PptxExtractor;
 use App\Domains\Resources\Contracts\ResourceUploadSigner;
 use App\Domains\Resources\Support\LocalResourceUploadSigner;
 use App\Domains\Resources\Support\S3StrictPutUploadSigner;
+use App\Domains\Study\AI\DocumentChatAgent;
+use App\Domains\Study\AI\StudyGenerationAgent;
+use App\Domains\Study\Contracts\DocumentChatProvider;
+use App\Domains\Study\Contracts\StudyGenerator;
 use App\Domains\Templates\Models\Template;
 use App\Domains\Templates\Models\TemplateVersion;
+use App\Domains\Tools\AI\DeterministicScenarioRanker;
+use App\Domains\Tools\AI\ScenarioSearchAgent;
+use App\Domains\Tools\Contracts\ScenarioRanker;
 use App\Domains\Tools\Models\Tool;
 use App\Domains\Tools\Models\ToolCategory;
 use App\Support\Ai\OpenAiClient;
@@ -51,10 +63,16 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
         // Extraction dispatches by content type: plain text/HTML, PDF text
-        // layer, then image OCR. Adapters are tried in order.
+        // layer, Office packages, then image OCR. Adapters are tried in order.
+        // supports() is disjoint across all five, so correctness does not
+        // depend on order, but the composite returns on the first match and the
+        // cheap in-process extractors stay ahead of the out-of-process
+        // 30-second OCR arm. ImageOcrExtractor must remain last.
         $this->app->bind(IntakeContentExtractor::class, fn (): CompositeIntakeExtractor => new CompositeIntakeExtractor(
             $this->app->make(PlainTextExtractor::class),
             $this->app->make(PdfExtractor::class),
+            $this->app->make(DocxExtractor::class),
+            $this->app->make(PptxExtractor::class),
             $this->app->make(ImageOcrExtractor::class),
         ));
         /*
@@ -69,6 +87,35 @@ class AppServiceProvider extends ServiceProvider
                 : RuleBasedClassificationProvider::class,
         );
         $this->app->bind(ChatProvider::class, OpenAiChatProvider::class);
+        /*
+         * Document chat and study generation bind UNCONDITIONALLY, mirroring
+         * ChatProvider above rather than the configured() conditional below.
+         * Neither capability has a deterministic implementation and neither
+         * must ever gain one: an invented summary or a wrong exam answer is
+         * strictly worse than none. With no key configured the chat controller
+         * returns a clean 503 and the generation job records the artifact as
+         * failed with an honest reason, which is the intended behaviour.
+         */
+        $this->app->bind(DocumentChatProvider::class, DocumentChatAgent::class);
+        $this->app->bind(StudyGenerator::class, StudyGenerationAgent::class);
+        /*
+         * Purpose routing and scenario ranking both keep a deterministic
+         * implementation that needs no provider at all, so when no key is
+         * configured the deterministic class is bound directly rather than
+         * wrapping an agent that could never reach a provider.
+         */
+        $this->app->bind(
+            PurposeRouter::class,
+            OpenAiClient::configured()
+                ? PurposeRoutingAgent::class
+                : RulePurposeRouter::class,
+        );
+        $this->app->bind(
+            ScenarioRanker::class,
+            OpenAiClient::configured()
+                ? ScenarioSearchAgent::class
+                : DeterministicScenarioRanker::class,
+        );
 
         $postgresConnection = config('database.connections.pgsql');
 
@@ -115,7 +162,10 @@ class AppServiceProvider extends ServiceProvider
         $this->registerIntakeRateLimiters();
         $this->registerSecondBrainRateLimiters();
         $this->registerDashboardRateLimiters();
+        $this->registerProgressRateLimiters();
+        $this->registerSettingsRateLimiters();
         $this->registerCopilotRateLimiters();
+        $this->registerStudyRateLimiters();
         $this->registerCommunityRateLimiters();
         $this->registerMentorRateLimiters();
         $this->registerAdminRateLimiters();
@@ -412,6 +462,13 @@ class AppServiceProvider extends ServiceProvider
             actorAttempts: 60,
             ipAttempts: 60,
         ));
+        // Deliberately tight: every scenario search fans out to a paid AI provider.
+        RateLimiter::for('tools.scenario', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'tools-scenario',
+            actorAttempts: 10,
+            ipAttempts: 10,
+        ));
     }
 
     private function registerGuidanceRateLimiters(): void
@@ -502,6 +559,34 @@ class AppServiceProvider extends ServiceProvider
         ));
     }
 
+    private function registerProgressRateLimiters(): void
+    {
+        // Progress is a pure read aggregate with no provider fan-out; it shares
+        // the dashboard's shape because the dashboard delegates to it.
+        RateLimiter::for('progress.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'progress-read',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+    }
+
+    private function registerSettingsRateLimiters(): void
+    {
+        RateLimiter::for('settings.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'settings-read',
+            actorAttempts: 60,
+            ipAttempts: 60,
+        ));
+        RateLimiter::for('settings.write', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'settings-write',
+            actorAttempts: 20,
+            ipAttempts: 20,
+        ));
+    }
+
     private function registerCopilotRateLimiters(): void
     {
         RateLimiter::for('copilot.read', fn (Request $request): array => $this->actorAndIpLimits(
@@ -516,6 +601,31 @@ class AppServiceProvider extends ServiceProvider
             scope: 'copilot-message',
             actorAttempts: 10,
             ipAttempts: 10,
+        ));
+    }
+
+    private function registerStudyRateLimiters(): void
+    {
+        // Deliberately tight: every document chat turn fans out to a paid AI provider.
+        RateLimiter::for('study.chat', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'study-chat',
+            actorAttempts: 10,
+            ipAttempts: 10,
+        ));
+        // Deliberately tight: every generation enqueues a paid AI provider call.
+        RateLimiter::for('study.generate', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'study-generate',
+            actorAttempts: 10,
+            ipAttempts: 10,
+        ));
+        // Looser: study reads and generation polling never reach a provider.
+        RateLimiter::for('study.read', fn (Request $request): array => $this->actorAndIpLimits(
+            request: $request,
+            scope: 'study-read',
+            actorAttempts: 60,
+            ipAttempts: 60,
         ));
     }
 

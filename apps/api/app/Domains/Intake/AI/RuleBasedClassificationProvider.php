@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Intake\AI;
 
 use App\Domains\Intake\Contracts\AIProvider;
+use App\Support\Ai\BoundedText;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -34,10 +35,28 @@ final class RuleBasedClassificationProvider implements AIProvider
     public function classify(ClassificationRequest $request): array
     {
         $text = $request->extractedText;
-        $suggestions = [];
         $course = $this->matchCourse($text, $request);
 
-        foreach ($this->taskLines($text, $request->maxSuggestions) as $line) {
+        // The captured document itself is always worth keeping. This one
+        // suggestion is never conditional, so a capture is never a dead end with
+        // "nothing to review": it always has a way into the Second Brain and the
+        // focused workspace. It mirrors what the AI classifier already offers.
+        $suggestions = [
+            [
+                'kind' => 'knowledge_item',
+                'title' => $this->titleFromLine($this->firstLine($text)),
+                'description' => $request->context,
+                'due_at' => null,
+                'course_public_id' => $course,
+                'url' => $request->sourceUrl,
+                'confidence' => 0.5,
+                'reason' => 'Keeping this in your Second Brain lets you open it in the focused workspace and work through it.',
+            ],
+        ];
+
+        // One slot is already spent on the knowledge item, so the task budget
+        // leaves room for it (and for the source-link resource below).
+        foreach ($this->taskLines($text, $request->maxSuggestions - 1) as $line) {
             $suggestions[] = [
                 'kind' => 'task',
                 'title' => $this->titleFromLine($line['line']),
@@ -171,13 +190,6 @@ final class RuleBasedClassificationProvider implements AIProvider
 
     private function titleFromLine(string $line): string
     {
-        $title = trim((string) preg_replace('/[<>\x00-\x1F\x7F]/u', ' ', $line));
-        $title = trim((string) preg_replace('/\s+/u', ' ', $title));
-
-        if ($title === '') {
-            $title = 'Review the ingested source';
-        }
-
-        return mb_strlen($title) > 160 ? mb_substr($title, 0, 157).'...' : $title;
+        return BoundedText::titleText($line, 160, 'Review the ingested source');
     }
 }

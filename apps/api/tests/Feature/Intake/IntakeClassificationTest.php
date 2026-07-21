@@ -50,7 +50,7 @@ final class IntakeClassificationTest extends TestCase
         self::assertSame('awaiting_review', $item->state->value);
         self::assertSame('rule_based', $item->classification_provider);
         self::assertSame('deterministic-rules-1', $item->classification_model);
-        self::assertSame('v1', $item->classification_schema_version);
+        self::assertSame('v2', $item->classification_schema_version);
         self::assertIsInt($item->classification_latency_ms);
 
         $suggestions = $item->suggestions()->get();

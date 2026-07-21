@@ -3,7 +3,6 @@
 import {
   Badge,
   Button,
-  buttonClasses,
   Card,
   CardContent,
   CardHeader,
@@ -17,17 +16,14 @@ import {
   Bookmark,
   CircleSlash,
   Copy,
-  DollarSign,
   ExternalLink,
-  ListChecks,
-  Lock,
+  type LucideIcon,
   ShieldQuestion,
   Sparkles,
-  TriangleAlert,
 } from "lucide-react";
 import { useState } from "react";
 
-import type { Prompt, Tool, Workflow } from "@/lib/api/guidance";
+import type { Prompt, Workflow } from "@/lib/api/guidance";
 
 const DESTINATION_LABELS: Record<string, string> = {
   create_task: "Create a task",
@@ -44,7 +40,7 @@ function NoteRow({
   children,
   tone = "muted",
 }: {
-  icon: typeof DollarSign;
+  icon: LucideIcon;
   label: string;
   children: React.ReactNode;
   tone?: "muted" | "warning";
@@ -107,102 +103,6 @@ function SaveDismissRow({
         {dismissed ? "Dismissed" : "Dismiss"}
       </Button>
     </div>
-  );
-}
-
-export function ToolCard({
-  tool,
-  busy,
-  onToggleSave,
-  onToggleDismiss,
-}: {
-  tool: Tool;
-  busy: boolean;
-  onToggleSave: () => void;
-  onToggleDismiss: () => void;
-}) {
-  return (
-    <Card className={tool.viewer_state.dismissed ? "opacity-60" : undefined}>
-      <CardHeader className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles
-              aria-hidden="true"
-              className="size-5 shrink-0 text-status-ai"
-            />
-            {tool.name}
-          </CardTitle>
-          <Badge variant="ai">{tool.category.name}</Badge>
-        </div>
-        <p className="text-body text-text-secondary">{tool.purpose}</p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <NoteRow icon={BadgeCheck} label="Why it fits">
-          {tool.selection_reason}
-        </NoteRow>
-
-        {tool.use_cases.length > 0 ? (
-          <div className="flex gap-2.5">
-            <ListChecks
-              aria-hidden="true"
-              className="mt-0.5 size-4 shrink-0 text-text-muted"
-            />
-            <div className="space-y-1">
-              <p className="text-body font-medium text-text-primary">
-                Good for
-              </p>
-              <ul className="flex flex-wrap gap-1.5">
-                {tool.use_cases.map((useCase) => (
-                  <li key={useCase}>
-                    <Badge variant="neutral">{useCase}</Badge>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : null}
-
-        <p className="text-body text-text-secondary">{tool.usage_guidance}</p>
-
-        <NoteRow icon={TriangleAlert} label="Limitations" tone="warning">
-          {tool.limitations}
-        </NoteRow>
-        <NoteRow icon={DollarSign} label="Cost">
-          {tool.cost_note}
-        </NoteRow>
-        <NoteRow icon={Lock} label="Privacy">
-          {tool.privacy_note}
-        </NoteRow>
-
-        <p className="text-caption text-text-muted">
-          {tool.provenance} · Reviewed{" "}
-          {new Intl.DateTimeFormat("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }).format(new Date(tool.last_reviewed_at))}
-        </p>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-3">
-          <SaveDismissRow
-            saved={tool.viewer_state.saved}
-            dismissed={tool.viewer_state.dismissed}
-            busy={busy}
-            onToggleSave={onToggleSave}
-            onToggleDismiss={onToggleDismiss}
-          />
-          <a
-            href={tool.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClasses({ variant: "secondary", size: "sm" })}
-          >
-            Open tool
-            <ExternalLink aria-hidden="true" className="size-4" />
-          </a>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

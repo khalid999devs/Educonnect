@@ -7,7 +7,6 @@ namespace Tests\Feature\SecondBrain;
 use App\Domains\SecondBrain\Models\Collection;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\SecondBrain\Models\KnowledgeTag;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use App\Domains\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -77,12 +76,11 @@ final class KnowledgeSearchTest extends TestCase
         self::assertSame([], $this->searchTitles('transformer'));
     }
 
-    public function test_filters_narrow_by_collection_tag_topic_and_source_type(): void
+    public function test_filters_narrow_by_collection_tag_and_source_type(): void
     {
         $user = User::factory()->create();
         $inCollection = KnowledgeItem::factory()->for($user, 'user')->create(['title' => 'Collected paper']);
         $tagged = KnowledgeItem::factory()->for($user, 'user')->linkSource()->create(['title' => 'Tagged link']);
-        $inTopic = KnowledgeItem::factory()->for($user, 'user')->create(['title' => 'Topic source']);
 
         $collection = Collection::factory()->for($user, 'user')->create();
         DB::table('collection_knowledge_items')->insert([
@@ -98,16 +96,6 @@ final class KnowledgeSearchTest extends TestCase
             'knowledge_tag_id' => $tag->getKey(),
         ]);
 
-        $topic = ResearchTopic::factory()->for($user, 'user')->create();
-        DB::table('research_topic_sources')->insert([
-            'user_id' => $user->getKey(),
-            'research_topic_id' => $topic->getKey(),
-            'knowledge_item_id' => $inTopic->getKey(),
-            'reading_status' => 'reading',
-            'created_at' => now('UTC'),
-            'updated_at' => now('UTC'),
-        ]);
-
         $this->actingAs($user, 'web');
 
         $byCollection = $this->list("collection_id={$collection->public_id}");
@@ -115,9 +103,6 @@ final class KnowledgeSearchTest extends TestCase
 
         $byTag = $this->list('tag=ML');
         self::assertSame(['Tagged link'], $this->titles($byTag));
-
-        $byTopic = $this->list("topic_id={$topic->public_id}");
-        self::assertSame(['Topic source'], $this->titles($byTopic));
 
         $bySource = $this->list('source_type=link');
         self::assertSame(['Tagged link'], $this->titles($bySource));

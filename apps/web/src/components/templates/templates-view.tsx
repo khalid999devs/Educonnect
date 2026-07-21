@@ -29,10 +29,15 @@ import {
   Pencil,
   Search,
 } from "lucide-react";
-import Image from "next/image";
+import { useCatalogPreference } from "@/components/shared/catalog-preference";
+import { PageCover } from "@/components/shared/page-cover";
+import { SavedFilterChip } from "@/components/shared/saved-filter-chip";
 import { useEffect, useMemo, useState } from "react";
 
-import { listCourses } from "@/lib/api/courses";
+import {
+  ACTIVE_COURSE_LIST_PARAMS,
+  fetchAllActiveCourses,
+} from "@/lib/api/courses";
 import { ApiError } from "@/lib/api/http";
 import {
   archiveTemplateCopy,
@@ -62,6 +67,10 @@ export function TemplatesView() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
+  /* Server-side and URL-synced: `/templates?preference=saved` is a linkable
+     saved view. The filter is a query parameter, never a client-side pass over
+     one loaded page, which would drop saved rows sitting past the cursor. */
+  const { preference, savedOnly, toggleSaved } = useCatalogPreference();
   const [includeArchived, setIncludeArchived] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -93,8 +102,9 @@ export function TemplatesView() {
     () => ({
       search: debouncedSearch === "" ? undefined : debouncedSearch,
       category: category ?? undefined,
+      preference,
     }),
-    [debouncedSearch, category],
+    [debouncedSearch, category, preference],
   );
 
   const templatesQuery = useInfiniteQuery({
@@ -114,8 +124,8 @@ export function TemplatesView() {
   });
 
   const coursesQuery = useQuery({
-    queryKey: courseKeys.list(),
-    queryFn: () => listCourses({ status: "active", perPage: 50 }),
+    queryKey: courseKeys.list(ACTIVE_COURSE_LIST_PARAMS),
+    queryFn: fetchAllActiveCourses,
     staleTime: 5 * 60_000,
   });
 
@@ -221,27 +231,14 @@ export function TemplatesView() {
 
   return (
     <div className="space-y-4">
-      <header className="relative min-h-44 overflow-hidden rounded-xl border border-border-default lg:min-h-52">
-        <Image
-          src="/marketing/shelf-books.jpg"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 1100px"
-          className="object-cover object-center"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-r from-bg-canvas/95 via-bg-canvas/75 to-bg-canvas/25"
-        />
-        <div className="relative flex max-w-xl flex-col gap-3 p-6 lg:p-8">
-          <h1 className="text-h2 text-text-primary">Templates</h1>
-          <p className="text-body-lg text-text-secondary">
-            Approved, free academic templates you can preview, copy into your
-            own library, and edit. The originals never change.
-          </p>
-        </div>
-      </header>
+      <PageCover
+        photo="/marketing/shelf-books.jpg"
+        headingLevel={1}
+        tall
+        priority
+        title="Templates"
+        subtitle="Approved, free academic templates you can preview, copy into your own library, and edit. The originals never change."
+      />
 
       {notice ? (
         <Alert variant="info" title="Library update">
@@ -280,6 +277,20 @@ export function TemplatesView() {
                     )}
                   </FormField>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <SavedFilterChip
+                  accent="templates"
+                  active={savedOnly}
+                  onToggle={toggleSaved}
+                  describes="templates"
+                />
+                <p className="text-caption text-text-muted">
+                  {savedOnly
+                    ? "Showing only the templates you saved."
+                    : "Save a template with the bookmark on its card to keep it here."}
+                </p>
               </div>
 
               {categoryTabs.length > 0 ? (
@@ -321,14 +332,25 @@ export function TemplatesView() {
                 <EmptyState
                   icon={LayoutTemplate}
                   title={
-                    debouncedSearch !== "" || category !== null
-                      ? "No templates match"
-                      : "Templates are being curated"
+                    savedOnly
+                      ? "Nothing saved yet"
+                      : debouncedSearch !== "" || category !== null
+                        ? "No templates match"
+                        : "Templates are being curated"
                   }
                   description={
-                    debouncedSearch !== "" || category !== null
-                      ? "Try a different search or category."
-                      : "Approved, free academic templates will appear here as our team publishes them."
+                    savedOnly
+                      ? "Turn off the Saved filter to browse the library, then use the bookmark on any template card to keep it here."
+                      : debouncedSearch !== "" || category !== null
+                        ? "Try a different search or category."
+                        : "Approved, free academic templates will appear here as our team publishes them."
+                  }
+                  action={
+                    savedOnly ? (
+                      <Button variant="secondary" onClick={toggleSaved}>
+                        Browse everything
+                      </Button>
+                    ) : null
                   }
                 />
               ) : (
@@ -518,7 +540,7 @@ export function TemplatesView() {
       {using ? (
         <UseTemplateDialog
           template={using}
-          courses={coursesQuery.data?.data ?? []}
+          courses={coursesQuery.data ?? []}
           busy={copyMutation.isPending}
           error={copyMutation.error}
           onConfirm={(destination) =>

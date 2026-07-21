@@ -14,7 +14,7 @@ final class ListIncomingRequestsController
 {
     public function __invoke(ListMentorRequestsRequest $request, ListIncomingRequests $requests): JsonResponse
     {
-        $result = $requests->execute($request->authenticatedUser(), $request->perPage());
+        $result = $requests->execute($request->authenticatedUser(), $request->perPage(), $request->statuses());
 
         return ApiResponse::collection(
             MentorRequestResource::collection($result->paginator->items())->resolve($request),

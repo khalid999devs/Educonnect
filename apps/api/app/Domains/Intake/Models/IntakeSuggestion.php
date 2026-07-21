@@ -8,6 +8,7 @@ use App\Domains\Intake\Enums\IntakeSuggestionKind;
 use App\Domains\Intake\Enums\IntakeSuggestionStatus;
 use App\Domains\Planner\Models\Task;
 use App\Domains\Resources\Models\Resource;
+use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Support\StoresUtcDateTimes;
 use Carbon\CarbonImmutable;
 use Database\Factories\IntakeSuggestionFactory;
@@ -28,11 +29,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property IntakeSuggestionStatus $status
  * @property int|null $created_task_id
  * @property int|null $created_resource_id
+ * @property int|null $created_knowledge_item_id
  * @property CarbonImmutable $created_at
  * @property CarbonImmutable $updated_at
  * @property-read IntakeItem $item
  * @property-read Task|null $createdTask
  * @property-read resource|null $createdResource
+ * @property-read KnowledgeItem|null $createdKnowledgeItem
  */
 final class IntakeSuggestion extends Model
 {
@@ -51,6 +54,7 @@ final class IntakeSuggestion extends Model
         'status',
         'created_task_id',
         'created_resource_id',
+        'created_knowledge_item_id',
     ];
 
     protected $hidden = [
@@ -58,6 +62,7 @@ final class IntakeSuggestion extends Model
         'intake_item_id',
         'created_task_id',
         'created_resource_id',
+        'created_knowledge_item_id',
     ];
 
     /** @return list<string> */
@@ -87,6 +92,12 @@ final class IntakeSuggestion extends Model
     public function createdResource(): BelongsTo
     {
         return $this->belongsTo(Resource::class, 'created_resource_id');
+    }
+
+    /** @return BelongsTo<KnowledgeItem, $this> */
+    public function createdKnowledgeItem(): BelongsTo
+    {
+        return $this->belongsTo(KnowledgeItem::class, 'created_knowledge_item_id');
     }
 
     protected static function newFactory(): IntakeSuggestionFactory

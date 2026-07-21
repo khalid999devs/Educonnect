@@ -31,6 +31,8 @@ final class BrainPersistenceFailure extends HttpException
         'knowledge.collections.sync',
         'knowledge.link.create',
         'knowledge.link.delete',
+        'brain.item.save',
+        'brain.item.unsave',
         'research.read',
         'research.list',
         'research.create',

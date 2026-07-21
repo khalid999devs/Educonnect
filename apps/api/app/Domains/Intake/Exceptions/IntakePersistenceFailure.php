@@ -21,6 +21,7 @@ final class IntakePersistenceFailure extends HttpException
         'intake.retry',
         'intake.suggestions.read',
         'intake.confirm',
+        'intake.extraction.read',
     ];
 
     private function __construct()

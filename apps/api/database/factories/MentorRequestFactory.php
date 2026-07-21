@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domains\Mentor\Enums\MentorRequestStatus;
 use App\Domains\Mentor\Models\MentorProfile;
 use App\Domains\Mentor\Models\MentorRequest;
 use App\Domains\Users\Models\User;
@@ -23,9 +24,23 @@ final class MentorRequestFactory extends Factory
             'subject' => 'Help with algorithms',
             'message' => 'Could you review my approach to dynamic programming?',
             'context_course_id' => null,
-            'status' => 'open',
+            'status' => MentorRequestStatus::Open->value,
+            'responded_at' => null,
             'response_note' => null,
             'version' => 1,
         ];
+    }
+
+    /**
+     * `mentor_requests_responded_consistent` requires responded_at to be NULL
+     * for an open request and set for every other status, so the timestamp
+     * always moves with the status rather than being remembered separately.
+     */
+    public function withStatus(MentorRequestStatus $status): static
+    {
+        return $this->state(fn (): array => [
+            'status' => $status->value,
+            'responded_at' => $status === MentorRequestStatus::Open ? null : now('UTC'),
+        ]);
     }
 }

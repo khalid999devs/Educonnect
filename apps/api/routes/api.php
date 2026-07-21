@@ -62,6 +62,7 @@ use App\Http\Controllers\Api\V1\Community\JoinCommunityController;
 use App\Http\Controllers\Api\V1\Community\LeaveCommunityController;
 use App\Http\Controllers\Api\V1\Community\ListCommentsController;
 use App\Http\Controllers\Api\V1\Community\ListCommunitiesController;
+use App\Http\Controllers\Api\V1\Community\ListCommunityMembersController;
 use App\Http\Controllers\Api\V1\Community\ListCommunityPostsController;
 use App\Http\Controllers\Api\V1\Community\ListFeedController;
 use App\Http\Controllers\Api\V1\Community\ListModerationReportsController;
@@ -93,6 +94,7 @@ use App\Http\Controllers\Api\V1\Intake\CreateLinkIntakeController;
 use App\Http\Controllers\Api\V1\Intake\ListIntakeItemsController;
 use App\Http\Controllers\Api\V1\Intake\ListIntakeSuggestionsController;
 use App\Http\Controllers\Api\V1\Intake\RetryIntakeItemController;
+use App\Http\Controllers\Api\V1\Intake\ShowIntakeExtractionController;
 use App\Http\Controllers\Api\V1\Intake\ShowIntakeItemController;
 use App\Http\Controllers\Api\V1\Mentor\CreateMentorProfileController;
 use App\Http\Controllers\Api\V1\Mentor\CreateMentorRequestController;
@@ -121,6 +123,7 @@ use App\Http\Controllers\Api\V1\Planner\ShowWeeklyPlannerController;
 use App\Http\Controllers\Api\V1\Planner\UpdateFocusSessionController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskController;
 use App\Http\Controllers\Api\V1\Planner\UpdateTaskStatusController;
+use App\Http\Controllers\Api\V1\Progress\ShowProgressController;
 use App\Http\Controllers\Api\V1\Prompts\DismissPromptController;
 use App\Http\Controllers\Api\V1\Prompts\ListPromptsController;
 use App\Http\Controllers\Api\V1\Prompts\RecordPromptCopyController;
@@ -134,35 +137,38 @@ use App\Http\Controllers\Api\V1\Resources\CreateLinkResourceController;
 use App\Http\Controllers\Api\V1\Resources\CreateResourceDownloadController;
 use App\Http\Controllers\Api\V1\Resources\DeleteResourceController;
 use App\Http\Controllers\Api\V1\Resources\InitiateFileResourceController;
+use App\Http\Controllers\Api\V1\Resources\ListResourceDirectoriesController;
 use App\Http\Controllers\Api\V1\Resources\ListResourcesController;
 use App\Http\Controllers\Api\V1\Resources\RetryResourceUploadController;
 use App\Http\Controllers\Api\V1\Resources\ShowResourceController;
 use App\Http\Controllers\Api\V1\Resources\UpdateResourceController;
-use App\Http\Controllers\Api\V1\SecondBrain\AttachResearchSourceController;
 use App\Http\Controllers\Api\V1\SecondBrain\CreateCollectionController;
 use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeItemController;
 use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeLinkController;
 use App\Http\Controllers\Api\V1\SecondBrain\CreateKnowledgeNoteController;
-use App\Http\Controllers\Api\V1\SecondBrain\CreateResearchTopicController;
 use App\Http\Controllers\Api\V1\SecondBrain\DeleteCollectionController;
 use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeItemController;
 use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeLinkController;
 use App\Http\Controllers\Api\V1\SecondBrain\DeleteKnowledgeNoteController;
-use App\Http\Controllers\Api\V1\SecondBrain\DeleteResearchTopicController;
-use App\Http\Controllers\Api\V1\SecondBrain\DetachResearchSourceController;
 use App\Http\Controllers\Api\V1\SecondBrain\ListCollectionsController;
 use App\Http\Controllers\Api\V1\SecondBrain\ListKnowledgeItemsController;
-use App\Http\Controllers\Api\V1\SecondBrain\ListResearchTopicsController;
+use App\Http\Controllers\Api\V1\SecondBrain\SaveKnowledgeItemController;
 use App\Http\Controllers\Api\V1\SecondBrain\ShowCollectionController;
 use App\Http\Controllers\Api\V1\SecondBrain\ShowKnowledgeItemController;
-use App\Http\Controllers\Api\V1\SecondBrain\ShowResearchTopicController;
 use App\Http\Controllers\Api\V1\SecondBrain\SyncKnowledgeCollectionsController;
 use App\Http\Controllers\Api\V1\SecondBrain\SyncKnowledgeTagsController;
+use App\Http\Controllers\Api\V1\SecondBrain\UnsaveKnowledgeItemController;
 use App\Http\Controllers\Api\V1\SecondBrain\UpdateCollectionController;
 use App\Http\Controllers\Api\V1\SecondBrain\UpdateKnowledgeItemController;
 use App\Http\Controllers\Api\V1\SecondBrain\UpdateKnowledgeNoteController;
-use App\Http\Controllers\Api\V1\SecondBrain\UpdateResearchSourceController;
-use App\Http\Controllers\Api\V1\SecondBrain\UpdateResearchTopicController;
+use App\Http\Controllers\Api\V1\Settings\ListSessionsController;
+use App\Http\Controllers\Api\V1\Settings\ShowSettingsController;
+use App\Http\Controllers\Api\V1\Settings\UpdateAccountController;
+use App\Http\Controllers\Api\V1\Settings\UpdateProfileController;
+use App\Http\Controllers\Api\V1\Study\CreateStudyGenerationController;
+use App\Http\Controllers\Api\V1\Study\ListStudyArtifactsController;
+use App\Http\Controllers\Api\V1\Study\ShowStudyArtifactController;
+use App\Http\Controllers\Api\V1\Study\StudyChatController;
 use App\Http\Controllers\Api\V1\TemplateCopies\ArchiveTemplateCopyController;
 use App\Http\Controllers\Api\V1\TemplateCopies\ListTemplateCopiesController;
 use App\Http\Controllers\Api\V1\TemplateCopies\RestoreTemplateCopyController;
@@ -176,8 +182,10 @@ use App\Http\Controllers\Api\V1\Templates\ShowTemplateController;
 use App\Http\Controllers\Api\V1\Templates\UndismissTemplateController;
 use App\Http\Controllers\Api\V1\Templates\UnsaveTemplateController;
 use App\Http\Controllers\Api\V1\Tools\DismissToolController;
+use App\Http\Controllers\Api\V1\Tools\ListToolCategoriesController as ListStudentToolCategoriesController;
 use App\Http\Controllers\Api\V1\Tools\ListToolsController;
 use App\Http\Controllers\Api\V1\Tools\SaveToolController;
+use App\Http\Controllers\Api\V1\Tools\ScenarioSearchController;
 use App\Http\Controllers\Api\V1\Tools\ShowToolController;
 use App\Http\Controllers\Api\V1\Tools\UndismissToolController;
 use App\Http\Controllers\Api\V1\Tools\UnsaveToolController;
@@ -404,6 +412,9 @@ Route::middleware([
                     Route::post('/files', InitiateFileResourceController::class)
                         ->middleware(['throttle:resources.upload', 'can:academic.manage-own'])
                         ->name('files.store');
+                    Route::get('/directories', ListResourceDirectoriesController::class)
+                        ->middleware(['throttle:resources.read', 'can:academic.manage-own'])
+                        ->name('directories');
                     Route::get('/{resource}', ShowResourceController::class)
                         ->where('resource', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:resources.read', 'can:academic.manage-own'])
@@ -434,12 +445,19 @@ Route::middleware([
                         ->name('upload.cancel');
                 });
 
+            Route::get('/tool-categories', ListStudentToolCategoriesController::class)
+                ->middleware(['throttle:tools.read', 'can:academic.manage-own'])
+                ->name('tool-categories.index');
+
             Route::prefix('tools')
                 ->name('tools.')
                 ->group(function (): void {
                     Route::get('/', ListToolsController::class)
                         ->middleware(['throttle:tools.read', 'can:academic.manage-own'])
                         ->name('index');
+                    Route::post('/scenario-search', ScenarioSearchController::class)
+                        ->middleware(['throttle:tools.scenario', 'can:academic.manage-own'])
+                        ->name('scenario-search');
                     Route::get('/{tool}', ShowToolController::class)
                         ->where('tool', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:tools.read', 'can:academic.manage-own'])
@@ -586,6 +604,27 @@ Route::middleware([
                 ->middleware(['throttle:dashboard.read', 'can:academic.manage-own'])
                 ->name('dashboard.show');
 
+            Route::get('/progress', ShowProgressController::class)
+                ->middleware(['throttle:progress.read', 'can:academic.manage-own'])
+                ->name('progress.show');
+
+            Route::prefix('settings')
+                ->name('settings.')
+                ->group(function (): void {
+                    Route::get('/', ShowSettingsController::class)
+                        ->middleware(['throttle:settings.read', 'can:academic.manage-own'])
+                        ->name('show');
+                    Route::get('/sessions', ListSessionsController::class)
+                        ->middleware(['throttle:settings.read', 'can:academic.manage-own'])
+                        ->name('sessions.index');
+                    Route::put('/profile', UpdateProfileController::class)
+                        ->middleware(['throttle:settings.write', 'can:academic.manage-own'])
+                        ->name('profile.update');
+                    Route::put('/account', UpdateAccountController::class)
+                        ->middleware(['throttle:settings.write', 'can:academic.manage-own'])
+                        ->name('account.update');
+                });
+
             Route::prefix('copilot')
                 ->name('copilot.')
                 ->group(function (): void {
@@ -629,6 +668,36 @@ Route::middleware([
                         ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:intake.write', 'can:academic.manage-own'])
                         ->name('confirmation.store');
+                    Route::get('/{item}/extraction', ShowIntakeExtractionController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:intake.read', 'can:academic.manage-own'])
+                        ->name('extraction.show');
+                });
+
+            /*
+             * Study sits on knowledge_items, not on intake items: every {item}
+             * below is a knowledge item public id. The literal /artifacts
+             * segments are declared first so a future GET /study/{item} cannot
+             * shadow them.
+             */
+            Route::prefix('study')
+                ->name('study.')
+                ->group(function (): void {
+                    Route::get('/artifacts', ListStudyArtifactsController::class)
+                        ->middleware(['throttle:study.read', 'can:academic.manage-own'])
+                        ->name('artifacts.index');
+                    Route::get('/artifacts/{artifact}', ShowStudyArtifactController::class)
+                        ->where('artifact', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:study.read', 'can:academic.manage-own'])
+                        ->name('artifacts.show');
+                    Route::post('/{item}/generations', CreateStudyGenerationController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:study.generate', 'can:academic.manage-own'])
+                        ->name('generations.store');
+                    Route::post('/{item}/chat', StudyChatController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:study.chat', 'can:academic.manage-own'])
+                        ->name('chat.store');
                 });
 
             Route::prefix('collections')
@@ -675,6 +744,14 @@ Route::middleware([
                         ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
                         ->name('destroy');
+                    Route::put('/{item}/saved', SaveKnowledgeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('saved.store');
+                    Route::delete('/{item}/saved', UnsaveKnowledgeItemController::class)
+                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
+                        ->name('saved.destroy');
                     Route::post('/{item}/notes', CreateKnowledgeNoteController::class)
                         ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
@@ -708,43 +785,6 @@ Route::middleware([
                         ->name('links.destroy');
                 });
 
-            Route::prefix('research-topics')
-                ->name('research-topics.')
-                ->group(function (): void {
-                    Route::get('/', ListResearchTopicsController::class)
-                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
-                        ->name('index');
-                    Route::post('/', CreateResearchTopicController::class)
-                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
-                        ->name('store');
-                    Route::get('/{topic}', ShowResearchTopicController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.read', 'can:academic.manage-own'])
-                        ->name('show');
-                    Route::put('/{topic}', UpdateResearchTopicController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
-                        ->name('update');
-                    Route::delete('/{topic}', DeleteResearchTopicController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
-                        ->name('destroy');
-                    Route::post('/{topic}/sources', AttachResearchSourceController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
-                        ->name('sources.store');
-                    Route::put('/{topic}/sources/{item}', UpdateResearchSourceController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.write', 'can:academic.manage-own'])
-                        ->name('sources.update');
-                    Route::delete('/{topic}/sources/{item}', DetachResearchSourceController::class)
-                        ->where('topic', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->where('item', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
-                        ->middleware(['throttle:brain.destructive', 'can:academic.manage-own'])
-                        ->name('sources.destroy');
-                });
-
             Route::prefix('communities')
                 ->name('communities.')
                 ->group(function (): void {
@@ -763,6 +803,10 @@ Route::middleware([
                         ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:community.write', 'can:academic.manage-own'])
                         ->name('membership.destroy');
+                    Route::get('/{community}/members', ListCommunityMembersController::class)
+                        ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
+                        ->middleware(['throttle:community.read', 'can:academic.manage-own'])
+                        ->name('members.index');
                     Route::get('/{community}/posts', ListCommunityPostsController::class)
                         ->where('community', '[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}')
                         ->middleware(['throttle:community.read', 'can:academic.manage-own'])

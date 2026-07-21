@@ -8,7 +8,6 @@ use App\Domains\Authorization\Enums\CapabilityKey;
 use App\Domains\Authorization\Enums\RoleKey;
 use App\Domains\SecondBrain\Models\Collection;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use App\Domains\Users\Models\User;
 use App\Http\Middleware\RequireBrowserSurface;
 use App\Http\Middleware\RequireStatefulSpaSession;
@@ -83,7 +82,6 @@ final class SecondBrainAuthorizationTest extends TestCase
         $owner = User::factory()->create();
         $collection = Collection::factory()->for($owner, 'user')->create();
         $item = KnowledgeItem::factory()->for($owner, 'user')->create();
-        $topic = ResearchTopic::factory()->for($owner, 'user')->create();
 
         $intruder = User::factory()->create();
         $this->actingAs($intruder, 'web');
@@ -91,12 +89,8 @@ final class SecondBrainAuthorizationTest extends TestCase
         $probes = [
             $this->withHeaders($this->headers())->getJson("/api/v1/collections/{$collection->public_id}"),
             $this->withHeaders($this->headers())->getJson("/api/v1/knowledge/{$item->public_id}"),
-            $this->withHeaders($this->headers())->getJson("/api/v1/research-topics/{$topic->public_id}"),
             $this->withHeaders($this->headers())->putJson("/api/v1/knowledge/{$item->public_id}/tags", [
                 'tags' => ['stolen'],
-            ]),
-            $this->withHeaders($this->headers())->postJson("/api/v1/research-topics/{$topic->public_id}/sources", [
-                'knowledge_item_id' => (string) $item->public_id,
             ]),
         ];
 
@@ -152,13 +146,5 @@ final class SecondBrainAuthorizationTest extends TestCase
         yield 'knowledge collections sync' => ['knowledge.collections.sync', 'brain.write'];
         yield 'knowledge link create' => ['knowledge.links.store', 'brain.write'];
         yield 'knowledge link delete' => ['knowledge.links.destroy', 'brain.destructive'];
-        yield 'research list' => ['research-topics.index', 'brain.read'];
-        yield 'research create' => ['research-topics.store', 'brain.write'];
-        yield 'research show' => ['research-topics.show', 'brain.read'];
-        yield 'research update' => ['research-topics.update', 'brain.write'];
-        yield 'research delete' => ['research-topics.destroy', 'brain.destructive'];
-        yield 'research source attach' => ['research-topics.sources.store', 'brain.write'];
-        yield 'research source update' => ['research-topics.sources.update', 'brain.write'];
-        yield 'research source detach' => ['research-topics.sources.destroy', 'brain.destructive'];
     }
 }

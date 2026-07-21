@@ -28,14 +28,22 @@ final readonly class CreateKnowledgeItemAction
      *     published_year: ?int,
      *     venue: ?string,
      *     doi: ?string,
+     *     purpose: ?string,
      * } $data
+     * @param  int|null  $intakeItemId  Internal id of the capture this item came
+     *                                  from. Not accepted over HTTP: provenance
+     *                                  is stamped by the intake pipeline, never
+     *                                  claimed by a client. The composite FK
+     *                                  (user_id, intake_item_id) makes a
+     *                                  cross-owner link impossible at the
+     *                                  database, not merely at this layer.
      */
-    public function execute(User $user, array $data): KnowledgeItem
+    public function execute(User $user, array $data, ?int $intakeItemId = null): KnowledgeItem
     {
         Gate::forUser($user)->authorize('create', KnowledgeItem::class);
 
         try {
-            return DB::transaction(function () use ($user, $data): KnowledgeItem {
+            return DB::transaction(function () use ($user, $data, $intakeItemId): KnowledgeItem {
                 $resource = $data['source_type'] === KnowledgeSourceType::Resource->value
                     ? $this->resources->execute($user, (string) $data['resource_id'])
                     : null;
@@ -54,6 +62,8 @@ final readonly class CreateKnowledgeItemAction
                     'published_year' => $data['published_year'],
                     'venue' => $data['venue'],
                     'doi' => $data['doi'],
+                    'purpose' => $data['purpose'],
+                    'intake_item_id' => $intakeItemId,
                     'version' => 1,
                 ])->save();
 

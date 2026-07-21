@@ -9,6 +9,7 @@ use App\Domains\Copilot\Queries\BuildCopilotMessages;
 use App\Domains\Telemetry\Enums\TelemetryOutcome;
 use App\Domains\Telemetry\Support\TelemetryRecorder;
 use App\Http\Requests\Api\V1\Copilot\CopilotMessageRequest;
+use App\Support\Ai\BoundedText;
 use App\Support\Ai\OpenAiClient;
 use App\Support\ApiErrorCode;
 use App\Support\ApiResponse;
@@ -99,8 +100,6 @@ final class CopilotMessageController
 
     private function boundedReply(string $reply): string
     {
-        $clean = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', trim($reply));
-
-        return mb_substr($clean ?? '', 0, 4000);
+        return BoundedText::freeText($reply, 4000);
     }
 }

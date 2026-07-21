@@ -10,12 +10,12 @@ export function MentorCard({ mentor }: { mentor: MentorProfile }) {
   const initial = mentor.name.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <Card className="h-full">
+    <Card className="h-full transition-colors hover:border-border-strong">
       <CardContent className="flex h-full flex-col gap-3 p-5">
         <div className="flex items-start gap-3">
           <span
             aria-hidden
-            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-bg-interactive text-body font-semibold text-text-secondary"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-status-success/12 text-body font-semibold text-status-success"
           >
             {initial}
           </span>
@@ -51,7 +51,7 @@ export function MentorCard({ mentor }: { mentor: MentorProfile }) {
 
         <div className="mt-auto pt-1">
           <Link
-            href={`/mentors/${mentor.id}`}
+            href={`/community/mentors/${mentor.id}`}
             className={buttonClasses({
               variant: "secondary",
               size: "sm",

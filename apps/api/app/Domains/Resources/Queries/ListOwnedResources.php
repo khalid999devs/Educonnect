@@ -28,6 +28,7 @@ final readonly class ListOwnedResources
         ?string $search,
         ?ResourceKind $kind,
         ?string $coursePublicId,
+        bool $unfiledOnly,
         ?string $topic,
         ?StoredFileStatus $fileStatus,
         string $sort,
@@ -54,7 +55,10 @@ final readonly class ListOwnedResources
                 $query->where('kind', $kind->value);
             }
 
-            if ($course !== null) {
+            if ($unfiledOnly) {
+                // The Unfiled directory: served by resources_owner_updated_cursor_idx.
+                $query->whereNull('course_id');
+            } elseif ($course !== null) {
                 $query->where('course_id', $course->getKey());
             }
 

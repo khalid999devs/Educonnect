@@ -16,11 +16,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 
 final class CourseMigrationTest extends TestCase
 {
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_academic_records_receive_public_ulids_and_database_constraints_protect_identity_and_ownership(): void
     {
@@ -150,6 +152,10 @@ final class CourseMigrationTest extends TestCase
         $secondBrainMigration = $this->secondBrainMigration();
         $communityMigration = $this->communityMigration();
 
+        // Phase 29 study artifacts and knowledge purposes hang off
+        // knowledge_items(user_id, id) and intake_items(user_id, id), so they
+        // lower before the foundations that own those tables.
+        $this->rollBackStudyAndPurposeFoundation();
         $communityMigration->down();
         $secondBrainMigration->down();
         $suggestionMigration->down();
@@ -169,6 +175,7 @@ final class CourseMigrationTest extends TestCase
         $intakeMigration->up();
         $suggestionMigration->up();
         $secondBrainMigration->up();
+        $this->restoreStudyAndPurposeFoundation();
         $this->assertTrue(Schema::hasTable('courses'));
         $this->assertTrue(Schema::hasTable('academic_terms'));
         $this->assertTrue(Schema::hasColumn('onboarding_progress', 'academic_materialized_at'));

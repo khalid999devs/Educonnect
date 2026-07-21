@@ -100,6 +100,18 @@ export const reportSchema = z.object({
 });
 export type Report = z.infer<typeof reportSchema>;
 
+/** A membership row, never a user row: `id` is the membership public id so the
+ * same person cannot be correlated across communities, and no email or account
+ * identifier is exposed (openapi.yaml `CommunityMember`). */
+export const communityMemberSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.enum(["member", "moderator"]),
+  joined_at: z.string().nullable(),
+  is_verified_mentor: z.boolean(),
+});
+export type CommunityMember = z.infer<typeof communityMemberSchema>;
+
 const collectionMeta = z.object({
   summary: z.record(z.string(), z.number()).optional(),
   pagination: z.object({
@@ -114,6 +126,14 @@ const communityCollectionSchema = z.object({
   meta: collectionMeta,
 });
 export type CommunityPage = z.infer<typeof communityCollectionSchema>;
+
+const communityMemberCollectionSchema = z.object({
+  data: z.array(communityMemberSchema),
+  meta: collectionMeta,
+});
+export type CommunityMemberPage = z.infer<
+  typeof communityMemberCollectionSchema
+>;
 
 const postCollectionSchema = z.object({
   data: z.array(postSchema),
@@ -172,6 +192,22 @@ export async function leaveCommunity(id: string): Promise<Community> {
         method: "DELETE",
       }),
     ),
+  );
+}
+
+/** People in a group you have joined. The API returns 403 for non-members, so
+ * only call this for a community whose `is_member` is true. */
+export async function listCommunityMembers(
+  communityId: string,
+  params: Cursor = {},
+): Promise<CommunityMemberPage> {
+  const query = toQueryString({
+    per_page: params.perPage,
+    cursor: params.cursor,
+  });
+
+  return communityMemberCollectionSchema.parse(
+    await apiFetch(`/api/v1/communities/${communityId}/members${query}`),
   );
 }
 

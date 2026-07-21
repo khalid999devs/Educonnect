@@ -159,6 +159,8 @@ final class ResourceStorage
             'image/webp' => 'webp',
             'text/plain' => 'txt',
             'text/markdown' => 'md',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
             default => 'bin',
         };
     }

@@ -19,11 +19,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 
 final class ResourceMigrationTest extends TestCase
 {
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_public_identity_exact_ownership_and_file_resource_integrity_are_database_enforced(): void
     {
@@ -404,6 +406,10 @@ final class ResourceMigrationTest extends TestCase
         // Phase 14 intake items, Phase 16 knowledge items, and Phase 25 community
         // posts reference resources(user_id, id), so those foundations must lower
         // before resources can.
+        // Phase 29 study artifacts and knowledge purposes hang off
+        // knowledge_items(user_id, id) and intake_items(user_id, id), so they
+        // lower before the foundations that own those tables.
+        $this->rollBackStudyAndPurposeFoundation();
         $community = require database_path('migrations/2026_07_18_000016_create_community_and_mentor_foundation.php');
         $this->assertInstanceOf(Migration::class, $community);
         $community->down();
@@ -430,6 +436,11 @@ final class ResourceMigrationTest extends TestCase
         $this->assertFalse(Schema::hasTable('resources'));
 
         $migration->up();
+        $intake->up();
+        $suggestions->up();
+        $secondBrain->up();
+        $community->up();
+        $this->restoreStudyAndPurposeFoundation();
         $this->assertTrue(Schema::hasTable('resources'));
         $this->assertTrue(Schema::hasTable('stored_files'));
 

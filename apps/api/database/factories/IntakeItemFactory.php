@@ -9,6 +9,7 @@ use App\Domains\Intake\Enums\IntakeSourceType;
 use App\Domains\Intake\Enums\IntakeState;
 use App\Domains\Intake\Models\IntakeItem;
 use App\Domains\Users\Models\User;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<IntakeItem> */
@@ -79,6 +80,21 @@ final class IntakeItemFactory extends Factory
             'queued_at' => now()->subMinute(),
             'started_at' => now()->subSeconds(40),
             'finished_at' => now()->subSeconds(20),
+            'attempts' => 1,
+            'classification_provider' => 'rule_based',
+            'classification_model' => 'deterministic-rules-1',
+            'classification_schema_version' => 'v1',
+            'classification_latency_ms' => 4,
+        ]);
+    }
+
+    public function saved(?DateTimeInterface $finishedAt = null): static
+    {
+        return $this->state(fn (): array => [
+            'state' => IntakeState::Saved->value,
+            'queued_at' => now()->subMinute(),
+            'started_at' => now()->subSeconds(40),
+            'finished_at' => $finishedAt ?? now(),
             'attempts' => 1,
             'classification_provider' => 'rule_based',
             'classification_model' => 'deterministic-rules-1',

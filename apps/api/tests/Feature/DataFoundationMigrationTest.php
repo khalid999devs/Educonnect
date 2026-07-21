@@ -13,12 +13,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 use Throwable;
 
 final class DataFoundationMigrationTest extends TestCase
 {
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_phase_four_migrations_reconcile_existing_safe_brownfield_rows(): void
     {
@@ -60,6 +62,7 @@ final class DataFoundationMigrationTest extends TestCase
         $intake->up();
         $suggestions->up();
         $secondBrain->up();
+        $this->restoreStudyAndPurposeFoundation();
 
         $user = User::query()->findOrFail($userId);
         $createdAt = $user->created_at;
@@ -212,6 +215,10 @@ final class DataFoundationMigrationTest extends TestCase
         $resources = $this->migration('2026_07_14_000009_create_resource_storage_foundation.php');
         $planner = $this->migration('2026_07_14_000008_create_planner_foundation.php');
         $courses = $this->migration('2026_07_14_000007_create_courses_and_academic_terms.php');
+        // Phase 29 study artifacts and knowledge purposes hang off
+        // knowledge_items(user_id, id) and intake_items(user_id, id), so they
+        // lower before the foundations that own those tables.
+        $this->rollBackStudyAndPurposeFoundation();
         $community->down();
         $secondBrain->down();
         $suggestions->down();

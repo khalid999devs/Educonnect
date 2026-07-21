@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\SecondBrain;
 
+use App\Domains\SecondBrain\Enums\KnowledgePurpose;
 use App\Domains\Users\Models\User;
 use App\Http\Requests\Api\V1\SecondBrain\Concerns\HandlesBrainInput;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateKnowledgeItemRequest extends FormRequest
@@ -28,6 +30,7 @@ class UpdateKnowledgeItemRequest extends FormRequest
             'published_year' => ['nullable', 'integer', 'min:1000', 'max:2100'],
             'venue' => ['nullable', 'string', 'max:200', $this->plainSingleLineText()],
             'doi' => ['nullable', 'string', 'max:255', $this->plainSingleLineText()],
+            'purpose' => ['nullable', 'string', Rule::in(KnowledgePurpose::values())],
             'expected_version' => ['required', 'integer', 'min:1'],
         ];
     }
@@ -36,11 +39,27 @@ class UpdateKnowledgeItemRequest extends FormRequest
     public function after(): array
     {
         return [fn (Validator $validator) => $this->rejectUnknownFields($validator, [
-            'title', 'summary', 'authors', 'published_year', 'venue', 'doi', 'expected_version',
+            'title', 'summary', 'authors', 'published_year', 'venue', 'doi', 'purpose', 'expected_version',
         ])];
     }
 
-    /** @return array{title: string, summary: ?string, authors: ?string, published_year: ?int, venue: ?string, doi: ?string} */
+    /**
+     * `purpose_provided` distinguishes "clear the purpose" from "do not touch
+     * the purpose". Every other field on this request replaces unconditionally,
+     * but purpose is written by the intake router as well as by the owner, so
+     * an edit form that never renders it must not silently erase provenance.
+     *
+     * @return array{
+     *     title: string,
+     *     summary: ?string,
+     *     authors: ?string,
+     *     published_year: ?int,
+     *     venue: ?string,
+     *     doi: ?string,
+     *     purpose: ?string,
+     *     purpose_provided: bool,
+     * }
+     */
     public function knowledgeItemData(): array
     {
         $publishedYear = $this->validated('published_year');
@@ -52,7 +71,17 @@ class UpdateKnowledgeItemRequest extends FormRequest
             'published_year' => $publishedYear === null ? null : (int) $publishedYear,
             'venue' => $this->validated('venue'),
             'doi' => $this->validated('doi'),
+            'purpose' => $this->purpose(),
+            'purpose_provided' => $this->has('purpose'),
         ];
+    }
+
+    /** Null means "no purpose recorded", which is not the same as any purpose. */
+    private function purpose(): ?string
+    {
+        $value = $this->validated('purpose');
+
+        return is_string($value) ? $value : null;
     }
 
     public function expectedVersion(): int
@@ -70,5 +99,11 @@ class UpdateKnowledgeItemRequest extends FormRequest
             'venue' => $this->nullableTrimmed($this->input('venue')),
             'doi' => $this->nullableTrimmed($this->input('doi')),
         ]);
+
+        // Merging unconditionally would create the key and make every request
+        // look like it supplied a purpose, defeating knowledgeItemData().
+        if ($this->has('purpose')) {
+            $this->merge(['purpose' => $this->nullableTrimmed($this->input('purpose'))]);
+        }
     }
 }

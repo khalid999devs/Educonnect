@@ -1,31 +1,45 @@
 "use client";
 
-import { Alert, ErrorState } from "@educonnect/ui";
+import { Alert, Badge, ErrorState } from "@educonnect/ui";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import Image from "next/image";
+import { Archive, FolderOpen, Inbox, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { listCourses } from "@/lib/api/courses";
+import { IconChip } from "@/components/shared/icon-chip";
+import { PageCover } from "@/components/shared/page-cover";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ApiError } from "@/lib/api/http";
 import {
   cancelResourceUpload,
   createLinkResource,
   createResourceDownload,
   deleteResource,
+  listResourceDirectories,
   listResources,
   updateResource,
+  RESOURCE_FILE_ACCEPT,
+  UNFILED_COURSE_ID,
   type LinkResourceInput,
   type Resource,
+  type ResourceDirectory,
   type ResourceUpdateInput,
 } from "@/lib/api/resources";
-import { courseKeys, resourceKeys } from "@/lib/query-keys";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { resourceKeys } from "@/lib/query-keys";
+
 import { AddMaterial } from "./add-material";
+import {
+  ARCHIVED_DIRECTORY_REASON,
+  directoryKey,
+  directoryTitle,
+  isArchivedDirectory,
+  type DirectoryCourse,
+} from "./directory-card";
+import { DirectoryBrowser } from "./directory-browser";
 import { ResourceDialog } from "./resource-dialog";
 import { ResourceTable, type ResourceFilters } from "./resource-table";
 import { UploadPanel } from "./upload-panel";
@@ -34,15 +48,24 @@ import { useUploads, validateResourceFile } from "./use-uploads";
 const DEFAULT_FILTERS: ResourceFilters = {
   search: "",
   kind: "all",
-  courseId: "",
   topic: "",
   fileStatus: "all",
 };
 
+/**
+ * The private library, presented as one directory per course plus a single
+ * unfiled bucket.
+ *
+ * The course roster comes from `GET /resources/directories`, which is bounded
+ * by the owner's course list and therefore deliberately uncursored. It also
+ * returns archived courses that still hold resources - the reason the archived
+ * section exists at all, and the reason no list here silently truncates.
+ */
 export function ResourcesView() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ResourceFilters>(DEFAULT_FILTERS);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [editing, setEditing] = useState<Resource | null>(null);
   const [deleting, setDeleting] = useState<Resource | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -70,15 +93,49 @@ export function ResourcesView() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  const directoriesQuery = useQuery({
+    queryKey: resourceKeys.directories(),
+    queryFn: () => listResourceDirectories(),
+    staleTime: 60_000,
+  });
+
+  const directories = useMemo<ResourceDirectory[]>(
+    () => directoriesQuery.data ?? [],
+    [directoriesQuery.data],
+  );
+
+  /* The endpoint always returns the unfiled bucket last, so the first entry is
+     the first course directory when one exists. Deriving the fallback rather
+     than storing it keeps the selection correct across refetches. */
+  const firstDirectory = directories[0];
+  const activeKey =
+    selectedKey ??
+    (firstDirectory ? directoryKey(firstDirectory) : UNFILED_COURSE_ID);
+
+  const currentDirectory =
+    directories.find((directory) => directoryKey(directory) === activeKey) ??
+    null;
+
+  const currentArchived =
+    currentDirectory !== null && isArchivedDirectory(currentDirectory);
+
+  const courses = useMemo<DirectoryCourse[]>(
+    () =>
+      directories
+        .map((directory) => directory.course)
+        .filter((course): course is DirectoryCourse => course !== null),
+    [directories],
+  );
+
   const listParams = useMemo(
     () => ({
+      courseId: activeKey,
       search: debouncedSearch === "" ? undefined : debouncedSearch,
       kind: filters.kind === "all" ? undefined : filters.kind,
-      courseId: filters.courseId === "" ? undefined : filters.courseId,
       topic: filters.topic === "" ? undefined : filters.topic,
       fileStatus: filters.fileStatus === "all" ? undefined : filters.fileStatus,
     }),
-    [debouncedSearch, filters],
+    [activeKey, debouncedSearch, filters],
   );
 
   const resourcesQuery = useInfiniteQuery({
@@ -88,12 +145,6 @@ export function ResourcesView() {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.meta.pagination.next_cursor ?? undefined,
-  });
-
-  const coursesQuery = useQuery({
-    queryKey: courseKeys.list(),
-    queryFn: () => listCourses({ status: "active", perPage: 50 }),
-    staleTime: 5 * 60_000,
   });
 
   const invalidateResources = () => {
@@ -107,7 +158,7 @@ export function ResourcesView() {
     onSuccess: () => {
       invalidateResources();
       setLinkSavedCount((count) => count + 1);
-      setNotice("Link saved to your library.");
+      setNotice("Link saved to this directory.");
     },
   });
 
@@ -195,6 +246,24 @@ export function ResourcesView() {
     return Array.from(seen).sort((a, b) => a.localeCompare(b));
   }, [resources, filters.topic]);
 
+  const uploadInto = (courseId: string | null, files: File[]) => {
+    for (const file of files) {
+      const invalid = validateResourceFile(file);
+
+      if (invalid) {
+        setNotice(`${file.name}: ${invalid.message}`);
+        continue;
+      }
+
+      void uploads.startUpload(file, { courseId, topic: null });
+    }
+  };
+
+  const onDirectoryDrop = (key: string, files: File[]) => {
+    setSelectedKey(key);
+    uploadInto(key === UNFILED_COURSE_ID ? null : key, files);
+  };
+
   const startResume = (resource: Resource) => {
     resumeTargetRef.current = resource;
     resumeInputRef.current?.click();
@@ -219,29 +288,20 @@ export function ResourcesView() {
     void uploads.resumeUpload(target, file);
   };
 
+  const directoryName = currentDirectory
+    ? directoryTitle(currentDirectory)
+    : "Unfiled";
+
   return (
     <div className="space-y-4">
-      <header className="relative min-h-44 overflow-hidden rounded-xl border border-border-default lg:min-h-52">
-        <Image
-          src="/marketing/library-curve.jpg"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 1100px"
-          className="object-cover object-center"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-r from-bg-canvas/95 via-bg-canvas/75 to-bg-canvas/25"
-        />
-        <div className="relative flex max-w-xl flex-col gap-3 p-6 lg:p-8">
-          <h1 className="text-h2 text-text-primary">Resources</h1>
-          <p className="text-body-lg text-text-secondary">
-            Organize your notes, PDFs, links, and class materials in one private
-            library.
-          </p>
-        </div>
-      </header>
+      <PageCover
+        photo="/marketing/library-curve.jpg"
+        headingLevel={1}
+        tall
+        priority
+        title="One private library, filed by course"
+        subtitle="Every course keeps its own directory. Anything without a course waits in Unfiled until you file it."
+      />
 
       {notice ? (
         <Alert variant="info" title="Library update">
@@ -249,41 +309,95 @@ export function ResourcesView() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
-        <AddMaterial
-          courses={coursesQuery.data?.data ?? []}
-          onUploadFiles={(files, meta) => {
-            for (const file of files) {
-              void uploads.startUpload(file, meta);
-            }
-          }}
-          onCreateLink={(input) => linkMutation.mutate(input)}
-          linkBusy={linkMutation.isPending}
-          linkError={linkMutation.error}
-          linkSavedCount={linkSavedCount}
+      <DirectoryBrowser
+        directories={directories}
+        loading={directoriesQuery.isPending}
+        error={directoriesQuery.isError}
+        onRetry={() => void directoriesQuery.refetch()}
+        selectedKey={activeKey}
+        onSelect={(key) => {
+          setSelectedKey(key);
+          setFilters(DEFAULT_FILTERS);
+          setDebouncedSearch("");
+        }}
+        onDropFiles={onDirectoryDrop}
+      />
+
+      <div className="flex flex-wrap items-center gap-2.5 motion-safe:animate-fade-up motion-safe:[animation-delay:80ms]">
+        <IconChip
+          icon={
+            currentArchived
+              ? Archive
+              : currentDirectory?.kind === "unfiled"
+                ? Inbox
+                : FolderOpen
+          }
+          accent={currentArchived ? "settings" : "resources"}
+          size="lg"
         />
-        <UploadPanel
-          jobs={uploads.jobs}
-          onRetry={(job) => void uploads.retryJob(job)}
-          onCancel={(job) => void uploads.cancelJob(job)}
-          onDismiss={uploads.dismissJob}
-        />
+        <div className="min-w-0">
+          <h2 className="truncate text-h4 text-text-primary">
+            {directoryName}
+          </h2>
+          <p className="text-caption tabular-nums text-text-muted">
+            {currentDirectory
+              ? `${currentDirectory.resource_count} ${
+                  currentDirectory.resource_count === 1 ? "item" : "items"
+                }`
+              : "0 items"}
+          </p>
+        </div>
+        {currentArchived ? <Badge variant="neutral">Archived</Badge> : null}
       </div>
+
+      {currentArchived ? (
+        <Alert variant="info" title="This directory is read only">
+          {ARCHIVED_DIRECTORY_REASON}
+        </Alert>
+      ) : (
+        <div className="grid gap-4 motion-safe:animate-fade-up motion-safe:[animation-delay:160ms] xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+          <AddMaterial
+            key={activeKey}
+            courses={courses}
+            directoryCourseId={
+              currentDirectory?.kind === "course"
+                ? (currentDirectory.course?.id ?? null)
+                : null
+            }
+            directoryName={directoryName}
+            onUploadFiles={(files, meta) => {
+              for (const file of files) {
+                void uploads.startUpload(file, meta);
+              }
+            }}
+            onCreateLink={(input) => linkMutation.mutate(input)}
+            linkBusy={linkMutation.isPending}
+            linkError={linkMutation.error}
+            linkSavedCount={linkSavedCount}
+          />
+          <UploadPanel
+            jobs={uploads.jobs}
+            onRetry={(job) => void uploads.retryJob(job)}
+            onCancel={(job) => void uploads.cancelJob(job)}
+            onDismiss={uploads.dismissJob}
+          />
+        </div>
+      )}
 
       {resourcesQuery.isError ? (
         <ErrorState
-          title="Your library could not load"
+          title="This directory could not load"
           description="Your materials are safe. This is a loading problem, not a data problem."
           onRetry={() => void resourcesQuery.refetch()}
         />
       ) : (
         <ResourceTable
+          directoryName={directoryName}
           resources={resources}
           loading={resourcesQuery.isPending}
           filters={filters}
           onFiltersChange={setFilters}
           topics={topics}
-          courses={coursesQuery.data?.data ?? []}
           hasNextPage={resourcesQuery.hasNextPage}
           loadingMore={resourcesQuery.isFetchingNextPage}
           onLoadMore={() => void resourcesQuery.fetchNextPage()}
@@ -304,13 +418,19 @@ export function ResourcesView() {
         />
       )}
 
+      <p className="flex items-center gap-1.5 text-caption text-text-muted">
+        <Lock aria-hidden="true" className="size-3 shrink-0" />
+        Your library is private to your account. Saved collections arrive as
+        their own subsection.
+      </p>
+
       <input
         ref={resumeInputRef}
         type="file"
         className="sr-only"
         tabIndex={-1}
         aria-hidden="true"
-        accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.md,application/pdf,image/jpeg,image/png,image/webp,text/plain,text/markdown"
+        accept={RESOURCE_FILE_ACCEPT}
         onChange={(event) => {
           onResumeFilePicked(event.target.files?.[0] ?? null);
           event.target.value = "";
@@ -322,7 +442,7 @@ export function ResourcesView() {
           key={editing.id}
           open
           resource={editing}
-          courses={coursesQuery.data?.data ?? []}
+          courses={courses}
           busy={updateMutation.isPending}
           error={updateMutation.error}
           onUpdate={(resource, input) =>

@@ -2,11 +2,16 @@
 
 import { Alert, Button, ErrorState } from "@educonnect/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, Timer } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Archive,
+  CalendarDays,
+  CalendarPlus,
+  ListChecks,
+  Timer,
+} from "lucide-react";
+import { PageCover } from "@/components/shared/page-cover";
+import { useEffect, useState } from "react";
 
-import { listCourses } from "@/lib/api/courses";
 import { ApiError } from "@/lib/api/http";
 import {
   createFocusSession,
@@ -17,7 +22,7 @@ import {
   getAgenda,
   getTask,
   getWeekly,
-  listTasks,
+  restoreTask,
   updateFocusSession,
   updateTask,
   updateTaskStatus,
@@ -27,14 +32,21 @@ import {
   type TaskStatus,
   type TaskWriteInput,
 } from "@/lib/api/planner";
+import {
+  ACTIVE_COURSE_LIST_PARAMS,
+  fetchAllActiveCourses,
+} from "@/lib/api/courses";
 import { courseKeys, plannerKeys } from "@/lib/query-keys";
 import { browserTimezone } from "@/components/dashboard/format";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { SectionTabs, type SectionTab } from "@/components/shared/section-tabs";
 import { AgendaPanel } from "./agenda-panel";
 import { WeeklyBoard } from "./weekly-board";
+import { fetchTaskPickerOptions } from "./planner-fetches";
 import { UpcomingDeadlineCard, FocusSessionCard } from "./rail-cards";
 import { SessionDialog } from "./session-dialog";
 import { TaskDialog } from "./task-dialog";
+import { TaskList } from "./task-list";
 import { localDateOf, mondayOf } from "./time";
 
 type TaskDialogState = { task: Task | null } | null;
@@ -45,6 +57,16 @@ type ConfirmState =
   | { kind: "session-delete"; session: FocusSession }
   | null;
 
+/** The planner is now the only task surface, so it carries the schedule, the
+ * full task list (undated tasks included), and the archive. */
+type PlannerTab = "schedule" | "tasks" | "archived";
+
+const PLANNER_TABS: readonly SectionTab<PlannerTab>[] = [
+  { value: "schedule", label: "Schedule", icon: CalendarDays },
+  { value: "tasks", label: "All tasks", icon: ListChecks },
+  { value: "archived", label: "Archived", icon: Archive },
+];
+
 export function PlannerView() {
   const queryClient = useQueryClient();
   const [timezone] = useState(browserTimezone);
@@ -53,6 +75,7 @@ export function PlannerView() {
   const currentWeekStart = mondayOf(today);
   const [weekStart, setWeekStart] = useState(currentWeekStart);
   const [agendaDate, setAgendaDate] = useState(today);
+  const [tab, setTab] = useState<PlannerTab>("schedule");
 
   const [taskDialog, setTaskDialog] = useState<TaskDialogState>(null);
   const [sessionDialog, setSessionDialog] = useState<SessionDialogState>(null);
@@ -79,19 +102,23 @@ export function PlannerView() {
   const weeklyQuery = useQuery({
     queryKey: plannerKeys.weekly(timezone, weekStart),
     queryFn: () => getWeekly(timezone, weekStart),
+    enabled: tab === "schedule",
   });
   const agendaQuery = useQuery({
     queryKey: plannerKeys.agenda(timezone, agendaDate),
     queryFn: () => getAgenda(timezone, agendaDate),
+    enabled: tab === "schedule",
   });
+  /* Both pickers follow the cursor: `perPage: 50` with no cursor silently
+     dropped every course and task past the first page. */
   const coursesQuery = useQuery({
-    queryKey: courseKeys.list(),
-    queryFn: () => listCourses({ status: "active", perPage: 50 }),
+    queryKey: courseKeys.list(ACTIVE_COURSE_LIST_PARAMS),
+    queryFn: fetchAllActiveCourses,
     staleTime: 5 * 60_000,
   });
   const openTasksQuery = useQuery({
-    queryKey: ["planner", "task-picker"],
-    queryFn: () => listTasks({ status: "all", perPage: 50 }),
+    queryKey: plannerKeys.taskPicker(),
+    queryFn: fetchTaskPickerOptions,
     staleTime: 60_000,
   });
 
@@ -186,6 +213,27 @@ export function PlannerView() {
     },
   });
 
+  /* Restoring is not destructive, so it is a one-click inline action with no
+     confirmation step. */
+  const restoreTaskMutation = useMutation({
+    mutationFn: ({ task }: { task: Task }) =>
+      restoreTask(task.id, task.version),
+    onSuccess: (task) => {
+      invalidatePlanner();
+      setNotice(`"${task.title}" is back in your plan.`);
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        invalidatePlanner();
+        setNotice(
+          "That task changed somewhere else, so the list was refreshed. Try again.",
+        );
+      } else {
+        setNotice("The task could not be restored. Please try again.");
+      }
+    },
+  });
+
   const createSessionMutation = useMutation({
     mutationFn: (input: FocusSessionWriteInput) => createFocusSession(input),
     onSuccess: () => {
@@ -222,14 +270,10 @@ export function PlannerView() {
     },
   });
 
-  const courses = coursesQuery.data?.data ?? [];
-  const pickerTasks = useMemo(
-    () =>
-      (openTasksQuery.data?.data ?? []).filter(
-        (task) => task.archive_status === "active",
-      ),
-    [openTasksQuery.data],
-  );
+  const courses = coursesQuery.data ?? [];
+  /* The picker query already asks the server for active tasks only, so no
+     client-side narrowing is left to drift. */
+  const pickerTasks = openTasksQuery.data ?? [];
 
   const openCreateTask = () => {
     createTaskMutation.reset();
@@ -253,28 +297,23 @@ export function PlannerView() {
   };
 
   const windowsFailed = weeklyQuery.isError && agendaQuery.isError;
+  const busyTaskId =
+    toggleTaskMutation.isPending && toggleTaskMutation.variables
+      ? toggleTaskMutation.variables.task.id
+      : restoreTaskMutation.isPending && restoreTaskMutation.variables
+        ? restoreTaskMutation.variables.task.id
+        : null;
 
   return (
     <div className="space-y-4">
-      <header className="relative min-h-44 overflow-hidden rounded-xl border border-border-default lg:min-h-52">
-        <Image
-          src="/marketing/notebook-pens.jpg"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 1100px"
-          className="object-cover object-center"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-r from-bg-canvas/95 via-bg-canvas/75 to-bg-canvas/25"
-        />
-        <div className="relative flex max-w-xl flex-col gap-3 p-6 lg:p-8">
-          <h1 className="text-h2 text-text-primary">Planner</h1>
-          <p className="text-body-lg text-text-secondary">
-            Plan your deadlines and focus time so you can stay ahead with
-            confidence.
-          </p>
+      <PageCover
+        photo="/marketing/notebook-pens.jpg"
+        headingLevel={1}
+        tall
+        priority
+        title="Planner"
+        subtitle="Plan your deadlines and focus time so you can stay ahead with confidence."
+        action={
           <div className="flex flex-wrap gap-2">
             <Button size="md" glow onClick={openCreateTask}>
               <CalendarPlus aria-hidden="true" className="size-4" />
@@ -285,16 +324,62 @@ export function PlannerView() {
               Log focus session
             </Button>
           </div>
-        </div>
-      </header>
+        }
+      />
+
+      <SectionTabs
+        tabs={PLANNER_TABS}
+        value={tab}
+        onChange={setTab}
+        label="Planner sections"
+        panelId={(value) => `planner-panel-${value}`}
+      />
 
       {notice ? (
-        <Alert variant="info" title="Plan refreshed">
+        <Alert variant="info" title="Planner updated">
           {notice}
         </Alert>
       ) : null}
 
-      {windowsFailed ? (
+      {tab === "tasks" ? (
+        <div
+          id="planner-panel-tasks"
+          role="tabpanel"
+          aria-labelledby="section-tab-tasks"
+        >
+          <TaskList
+            mode="active"
+            courses={courses}
+            timezone={timezone}
+            now={now}
+            busyTaskId={busyTaskId}
+            onEditTask={openEditTask}
+            onToggleTask={(task) => toggleTaskMutation.mutate({ task })}
+            onArchiveTask={(task) => setConfirm({ kind: "task-archive", task })}
+            onRestoreTask={(task) => restoreTaskMutation.mutate({ task })}
+            onCreateTask={openCreateTask}
+          />
+        </div>
+      ) : tab === "archived" ? (
+        <div
+          id="planner-panel-archived"
+          role="tabpanel"
+          aria-labelledby="section-tab-archived"
+        >
+          <TaskList
+            mode="archived"
+            courses={courses}
+            timezone={timezone}
+            now={now}
+            busyTaskId={busyTaskId}
+            onEditTask={openEditTask}
+            onToggleTask={(task) => toggleTaskMutation.mutate({ task })}
+            onArchiveTask={(task) => setConfirm({ kind: "task-archive", task })}
+            onRestoreTask={(task) => restoreTaskMutation.mutate({ task })}
+            onCreateTask={openCreateTask}
+          />
+        </div>
+      ) : windowsFailed ? (
         <ErrorState
           title="The planner could not load"
           description="Your plan is safe. This is a loading problem, not a data problem."
@@ -304,7 +389,12 @@ export function PlannerView() {
           }}
         />
       ) : (
-        <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+        <div
+          id="planner-panel-schedule"
+          role="tabpanel"
+          aria-labelledby="section-tab-schedule"
+          className="flex flex-col gap-4 motion-safe:animate-fade-up xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start"
+        >
           <div className="order-2 xl:order-0">
             {weeklyQuery.isError ? (
               <ErrorState
@@ -323,11 +413,7 @@ export function PlannerView() {
                 onEditTask={openEditTask}
                 onEditSession={openEditSession}
                 onToggleTask={(task) => toggleTaskMutation.mutate({ task })}
-                busyTaskId={
-                  toggleTaskMutation.isPending
-                    ? (toggleTaskMutation.variables?.task.id ?? null)
-                    : null
-                }
+                busyTaskId={busyTaskId}
               />
             )}
           </div>
@@ -349,11 +435,7 @@ export function PlannerView() {
                 onToggleTask={(task) => toggleTaskMutation.mutate({ task })}
                 onEditTask={openEditTask}
                 onEditSession={openEditSession}
-                busyTaskId={
-                  toggleTaskMutation.isPending
-                    ? (toggleTaskMutation.variables?.task.id ?? null)
-                    : null
-                }
+                busyTaskId={busyTaskId}
               />
             )}
             <UpcomingDeadlineCard

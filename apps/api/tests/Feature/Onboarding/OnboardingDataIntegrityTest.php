@@ -22,11 +22,13 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 
 final class OnboardingDataIntegrityTest extends TestCase
 {
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_moderator_academic_grant_is_forward_migrated_and_catalog_aligned(): void
     {
@@ -287,6 +289,10 @@ final class OnboardingDataIntegrityTest extends TestCase
         // posts reference resources(user_id, id).
         $communityMigration = $this->migration('2026_07_18_000016_create_community_and_mentor_foundation.php');
 
+        // Phase 29 study artifacts and knowledge purposes hang off
+        // knowledge_items(user_id, id) and intake_items(user_id, id), so they
+        // lower before the foundations that own those tables.
+        $this->rollBackStudyAndPurposeFoundation();
         $communityMigration->down();
         $secondBrainMigration->down();
         $suggestionMigration->down();
@@ -308,6 +314,7 @@ final class OnboardingDataIntegrityTest extends TestCase
         $suggestionMigration->up();
         $secondBrainMigration->up();
         $communityMigration->up();
+        $this->restoreStudyAndPurposeFoundation();
         $this->assertTrue(Schema::hasTable('onboarding_progress'));
         $this->assertTrue(Schema::hasTable('user_profiles'));
 

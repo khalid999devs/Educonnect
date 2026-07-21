@@ -4,6 +4,7 @@ import {
   collectionSchema,
   knowledgeItemDetailSchema,
   knowledgeItemSchema,
+  knowledgePurposeFilterSchema,
 } from "./second-brain";
 
 const ITEM = {
@@ -11,6 +12,8 @@ const ITEM = {
   version: 2,
   title: "Attention is all you need",
   summary: "Introduces the transformer architecture.",
+  purpose: "research",
+  saved: false,
   source: {
     type: "link",
     url: "https://arxiv.org/abs/1706.03762",
@@ -48,7 +51,7 @@ describe("second brain schemas", () => {
     expect(item.collections).toEqual([]);
   });
 
-  it("parses a detail with notes, links, and research topics", () => {
+  it("parses a detail with notes and links", () => {
     const detail = knowledgeItemDetailSchema.parse({
       ...ITEM,
       notes: [
@@ -68,18 +71,56 @@ describe("second brain schemas", () => {
           item: { id: "01JKNOW00000000000000000001", title: "RNN paper" },
         },
       ],
-      research_topics: [
-        {
-          id: "01JTOPIC0000000000000000000",
-          title: "Interpretability",
-          reading_status: "reading",
-        },
-      ],
     });
 
     expect(detail.notes[0]?.body).toContain("my words");
     expect(detail.links[0]?.relation_type).toBe("builds_on");
-    expect(detail.research_topics[0]?.reading_status).toBe("reading");
+  });
+
+  it("parses every purpose the column allows", () => {
+    for (const purpose of ["resource", "study", "research", "exam"]) {
+      expect(knowledgeItemSchema.parse({ ...ITEM, purpose }).purpose).toBe(
+        purpose,
+      );
+    }
+  });
+
+  it("parses the saved bookmark flag both ways", () => {
+    expect(knowledgeItemSchema.parse({ ...ITEM, saved: true }).saved).toBe(
+      true,
+    );
+    expect(knowledgeItemSchema.parse({ ...ITEM, saved: false }).saved).toBe(
+      false,
+    );
+  });
+
+  it("requires the saved flag rather than defaulting it", () => {
+    const { saved, ...withoutSaved } = ITEM;
+    void saved;
+
+    expect(() => knowledgeItemSchema.parse(withoutSaved)).toThrow();
+  });
+
+  it("keeps a null purpose null rather than defaulting it", () => {
+    // Rows captured before purposes existed read back as null, which is not a
+    // synonym for "resource" and must survive parsing unchanged.
+    expect(
+      knowledgeItemSchema.parse({ ...ITEM, purpose: null }).purpose,
+    ).toBeNull();
+  });
+
+  it("rejects an unknown purpose", () => {
+    expect(() =>
+      knowledgeItemSchema.parse({ ...ITEM, purpose: "revision" }),
+    ).toThrow();
+  });
+
+  it("accepts the unfiled sentinel only on the list filter", () => {
+    expect(knowledgePurposeFilterSchema.parse("none")).toBe("none");
+    expect(() =>
+      knowledgeItemSchema.parse({ ...ITEM, purpose: "none" }),
+    ).toThrow();
+    expect(() => knowledgePurposeFilterSchema.parse("revision")).toThrow();
   });
 
   it("rejects an unknown source type", () => {

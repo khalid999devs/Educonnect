@@ -76,6 +76,8 @@ export type SidebarItemProps = {
    */
   disabled?: boolean;
   disabledLabel?: string;
+  /** Optional decorative hue for the glyph (section accents). */
+  iconClassName?: string;
 };
 
 export function SidebarItem({
@@ -85,6 +87,7 @@ export function SidebarItem({
   isActive = false,
   disabled = false,
   disabledLabel = "Soon",
+  iconClassName,
 }: SidebarItemProps) {
   const baseClasses =
     "flex h-11 items-center gap-3 rounded-md px-3 text-body font-medium";
@@ -96,7 +99,10 @@ export function SidebarItem({
           aria-disabled="true"
           className={cn(baseClasses, "cursor-not-allowed text-text-muted")}
         >
-          <Icon aria-hidden="true" className="size-4.5 shrink-0" />
+          <Icon
+            aria-hidden="true"
+            className={cn("size-4.5 shrink-0", iconClassName)}
+          />
           <span className="flex-1 truncate">{label}</span>
           <Badge variant="neutral">{disabledLabel}</Badge>
         </span>
@@ -117,7 +123,10 @@ export function SidebarItem({
             : "text-text-secondary hover:bg-bg-interactive hover:text-text-primary",
         )}
       >
-        <Icon aria-hidden="true" className="size-4.5 shrink-0" />
+        <Icon
+          aria-hidden="true"
+          className={cn("size-4.5 shrink-0", iconClassName)}
+        />
         <span className="flex-1 truncate">{label}</span>
       </Link>
     </li>

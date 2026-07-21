@@ -14,11 +14,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 
 final class IntakeMigrationTest extends TestCase
 {
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_intake_state_transitions_and_identity_are_database_enforced(): void
     {
@@ -107,7 +109,9 @@ final class IntakeMigrationTest extends TestCase
 
     public function test_migration_rolls_back_atomically_when_empty_and_refuses_intake_rows(): void
     {
-        // Phase 15 suggestions reference intake items, so they lower first.
+        // Phase 29 knowledge items reference intake_items(user_id, id) and
+        // Phase 15 suggestions reference intake items, so both lower first.
+        $this->rollBackStudyAndPurposeFoundation();
         $suggestions = require database_path('migrations/2026_07_16_000014_create_intake_suggestions.php');
         self::assertInstanceOf(Migration::class, $suggestions);
         $suggestions->down();
@@ -120,6 +124,8 @@ final class IntakeMigrationTest extends TestCase
         self::assertFalse(Schema::hasTable('intake_events'));
 
         $migration->up();
+        $suggestions->up();
+        $this->restoreStudyAndPurposeFoundation();
         self::assertTrue(Schema::hasTable('intake_items'));
         self::assertTrue(Schema::hasTable('intake_artifacts'));
         self::assertTrue(Schema::hasTable('intake_events'));

@@ -145,10 +145,10 @@ export function CommunityDetail({ communityId }: { communityId: string }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Link
-        href="/community"
-        className="inline-flex items-center gap-1.5 text-caption font-medium text-text-secondary hover:text-brand-primary"
+        href="/community?tab=groups"
+        className="inline-flex items-center gap-1.5 text-caption font-medium text-text-secondary transition-colors hover:text-brand-primary"
       >
-        <ArrowLeft className="size-4" aria-hidden /> Back to community
+        <ArrowLeft className="size-4" aria-hidden /> Back to groups
       </Link>
 
       {communityQuery.isPending || community === undefined ? (

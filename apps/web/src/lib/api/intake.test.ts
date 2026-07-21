@@ -59,6 +59,7 @@ const SUGGESTION = {
   status: "proposed",
   created_task_id: null,
   created_resource_id: null,
+  created_knowledge_item_id: null,
   created_at: null,
 };
 

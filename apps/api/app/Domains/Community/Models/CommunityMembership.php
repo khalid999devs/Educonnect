@@ -62,6 +62,10 @@ final class CommunityMembership extends Model
     {
         return [
             'role' => MembershipRole::class,
+            /* The cursor alias must be cast, exactly as CommunityPost casts
+               it. Left raw, the timestamptz column reaches the cursor as
+               "Y-m-d H:i:s+00" and fails the !Y-m-d H:i:s cursor validator. */
+            'cursor_created_at_desc' => 'immutable_datetime',
         ];
     }
 }

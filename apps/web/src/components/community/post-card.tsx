@@ -43,7 +43,7 @@ export function PostCard({
         <div className="flex items-start gap-3">
           <span
             aria-hidden
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-interactive text-sm font-semibold text-text-secondary"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-interactive text-label font-semibold text-text-secondary"
           >
             {initial}
           </span>

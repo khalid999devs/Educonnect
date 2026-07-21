@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\Gate;
 
 final class ListOwnedKnowledgeItems
 {
+    /** Sentinel filter value selecting rows whose purpose is NULL. */
+    public const UNSET_PURPOSE = 'none';
+
     public function __construct(
         private readonly FindOwnedCollection $collections,
-        private readonly FindOwnedResearchTopic $topics,
     ) {}
 
     /** @return BrainListResult<KnowledgeItem> */
@@ -26,9 +28,10 @@ final class ListOwnedKnowledgeItems
         User $user,
         ?string $search,
         ?string $collectionPublicId,
-        ?string $topicPublicId,
         ?string $tag,
         ?string $sourceType,
+        ?string $purpose,
+        ?bool $saved,
         string $sort,
         int $perPage,
     ): BrainListResult {
@@ -40,9 +43,10 @@ final class ListOwnedKnowledgeItems
                 $user,
                 $search,
                 $collectionPublicId,
-                $topicPublicId,
                 $tag,
                 $sourceType,
+                $purpose,
+                $saved,
                 $sort,
                 $perPage,
                 $ownsTransaction,
@@ -54,9 +58,6 @@ final class ListOwnedKnowledgeItems
                 $collection = $collectionPublicId === null
                     ? null
                     : $this->collections->execute($user, $collectionPublicId);
-                $topic = $topicPublicId === null
-                    ? null
-                    : $this->topics->execute($user, $topicPublicId);
                 $sortDefinition = BrainCursorSort::resolve($sort);
                 $query = KnowledgeItem::query()
                     ->select([
@@ -64,7 +65,7 @@ final class ListOwnedKnowledgeItems
                         'knowledge_items.'.$sortDefinition['column'].' as '.$sortDefinition['cursor_column'],
                     ])
                     ->where('knowledge_items.user_id', $user->getKey())
-                    ->with(['resource', 'tags' => static fn ($tags) => $tags->orderBy('name')]);
+                    ->with(['resource', 'intakeItem', 'tags' => static fn ($tags) => $tags->orderBy('name')]);
 
                 if ($collection !== null) {
                     $query->whereExists(static function ($membership) use ($collection): void {
@@ -72,15 +73,6 @@ final class ListOwnedKnowledgeItems
                             ->from('collection_knowledge_items')
                             ->whereColumn('collection_knowledge_items.knowledge_item_id', 'knowledge_items.id')
                             ->where('collection_knowledge_items.collection_id', $collection->getKey());
-                    });
-                }
-
-                if ($topic !== null) {
-                    $query->whereExists(static function ($membership) use ($topic): void {
-                        $membership->selectRaw('1')
-                            ->from('research_topic_sources')
-                            ->whereColumn('research_topic_sources.knowledge_item_id', 'knowledge_items.id')
-                            ->where('research_topic_sources.research_topic_id', $topic->getKey());
                     });
                 }
 
@@ -97,6 +89,20 @@ final class ListOwnedKnowledgeItems
 
                 if ($sourceType !== null) {
                     $query->where('source_type', $sourceType);
+                }
+
+                // Only the true case narrows: a saved-only view. Absent or false
+                // leaves the full library visible.
+                if ($saved === true) {
+                    $query->whereNotNull('knowledge_items.saved_at');
+                }
+
+                // 'none' asks for the rows that have no purpose recorded, which
+                // is the pre-migration backlog plus anything never routed.
+                if ($purpose === self::UNSET_PURPOSE) {
+                    $query->whereNull('knowledge_items.purpose');
+                } elseif ($purpose !== null) {
+                    $query->where('knowledge_items.purpose', $purpose);
                 }
 
                 if ($search !== null) {

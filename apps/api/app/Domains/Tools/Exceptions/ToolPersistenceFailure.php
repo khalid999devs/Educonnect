@@ -16,6 +16,7 @@ final class ToolPersistenceFailure extends HttpException
     private const OPERATIONS = [
         'tool.read',
         'tool.list',
+        'tool.category.list',
         'tool.preference.set',
         'tool.preference.clear',
     ];

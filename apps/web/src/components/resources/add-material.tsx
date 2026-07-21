@@ -13,18 +13,32 @@ import {
   Select,
   UploadDropzone,
 } from "@educonnect/ui";
-import { FilePlus2, Link2, UploadCloud } from "lucide-react";
+import { FilePlus2, Link2, Lock, UploadCloud } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-import type { Course } from "@/lib/api/courses";
+import { IconChip } from "@/components/shared/icon-chip";
 import { ApiError } from "@/lib/api/http";
-import type { LinkResourceInput } from "@/lib/api/resources";
+import {
+  RESOURCE_FILE_ACCEPT,
+  RESOURCE_FILE_ACCEPT_DESCRIPTION,
+  type LinkResourceInput,
+} from "@/lib/api/resources";
+import {
+  ARCHIVED_DIRECTORY_REASON,
+  type DirectoryCourse,
+} from "./directory-card";
 import { validateResourceFile } from "./use-uploads";
 
 type Mode = "file" | "link";
 
 export type AddMaterialProps = {
-  courses: Course[];
+  /** Every course directory, archived ones included: they render disabled
+   * with a reason rather than 409ing after the upload starts. */
+  courses: DirectoryCourse[];
+  /** The open directory's course, or null for the unfiled bucket. New
+   * material defaults here. */
+  directoryCourseId: string | null;
+  directoryName: string;
   onUploadFiles: (
     files: File[],
     meta: { courseId: string | null; topic: string | null },
@@ -36,10 +50,14 @@ export type AddMaterialProps = {
   linkSavedCount: number;
 };
 
-/** The library's single entry point: private file upload or an HTTPS link,
- * both landing in the same lifecycle-honest list. */
+/** The directory's entry point: a private file upload or an HTTPS link, both
+ * landing in the same lifecycle-honest list. New material defaults to the open
+ * directory; archived courses are offered but disabled, with the reason shown
+ * up front rather than as a 409 after the fact. */
 export function AddMaterial({
   courses,
+  directoryCourseId,
+  directoryName,
   onUploadFiles,
   onCreateLink,
   linkBusy,
@@ -47,7 +65,7 @@ export function AddMaterial({
   linkSavedCount,
 }: AddMaterialProps) {
   const [mode, setMode] = useState<Mode>("file");
-  const [courseId, setCourseId] = useState("");
+  const [courseId, setCourseId] = useState(directoryCourseId ?? "");
   const [topic, setTopic] = useState("");
   const [rejection, setRejection] = useState<string | null>(null);
 
@@ -62,6 +80,9 @@ export function AddMaterial({
   }
 
   const apiError = linkError instanceof ApiError ? linkError : null;
+  const archivedCourseCount = courses.filter(
+    (course) => course.archive_status === "archived",
+  ).length;
 
   const acceptFiles = (files: File[]) => {
     setRejection(null);
@@ -99,9 +120,9 @@ export function AddMaterial({
   return (
     <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-2">
-        <CardTitle className="flex items-center gap-2">
-          <FilePlus2 aria-hidden="true" className="size-5 text-brand-primary" />
-          Add material
+        <CardTitle className="flex items-center gap-2.5">
+          <IconChip icon={FilePlus2} accent="resources" />
+          Add to {directoryName}
         </CardTitle>
         <div
           role="group"
@@ -130,18 +151,32 @@ export function AddMaterial({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Course" hint="Applied to what you add next">
+          <FormField
+            label="Directory"
+            hint={
+              archivedCourseCount > 0
+                ? "Defaults to the open directory. Archived courses cannot take new material."
+                : "Defaults to the open directory"
+            }
+          >
             {(control) => (
               <Select
                 {...control}
                 value={courseId}
                 onChange={(event) => setCourseId(event.target.value)}
               >
-                <option value="">No course</option>
+                <option value="">Unfiled</option>
                 {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
+                  <option
+                    key={course.id}
+                    value={course.id}
+                    disabled={course.archive_status === "archived"}
+                  >
                     {course.code ? `${course.code} · ` : ""}
                     {course.title}
+                    {course.archive_status === "archived"
+                      ? " (archived, read only)"
+                      : ""}
                   </option>
                 ))}
               </Select>
@@ -160,6 +195,13 @@ export function AddMaterial({
           </FormField>
         </div>
 
+        {archivedCourseCount > 0 ? (
+          <p className="flex items-start gap-1.5 text-caption text-text-muted">
+            <Lock aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
+            {ARCHIVED_DIRECTORY_REASON}
+          </p>
+        ) : null}
+
         {mode === "file" ? (
           <div className="space-y-3">
             {rejection ? (
@@ -170,9 +212,9 @@ export function AddMaterial({
             <UploadDropzone
               status="idle"
               multiple
-              accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.md,application/pdf,image/jpeg,image/png,image/webp,text/plain,text/markdown"
+              accept={RESOURCE_FILE_ACCEPT}
               onFilesSelected={acceptFiles}
-              acceptDescription="PDF, JPEG, PNG, WebP, plain text, or Markdown"
+              acceptDescription={RESOURCE_FILE_ACCEPT_DESCRIPTION}
               maxSizeDescription="Up to 25 MB per file"
               privacyNote="Private to your account; see the privacy policy for handling."
             />

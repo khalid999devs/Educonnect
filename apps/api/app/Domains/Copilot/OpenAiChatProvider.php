@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Copilot;
 
 use App\Domains\Copilot\Contracts\ChatProvider;
+use App\Support\Ai\AiFeature;
 use App\Support\Ai\OpenAiClient;
 
 final readonly class OpenAiChatProvider implements ChatProvider
@@ -18,12 +19,12 @@ final readonly class OpenAiChatProvider implements ChatProvider
 
     public function model(): string
     {
-        return (string) config('ai.models.copilot');
+        return AiFeature::Copilot->model();
     }
 
     /** @param list<array{role: string, content: string}> $messages */
     public function reply(array $messages): string
     {
-        return $this->client->chat($this->model(), $messages);
+        return $this->client->chat($this->model(), $messages, AiFeature::Copilot);
     }
 }

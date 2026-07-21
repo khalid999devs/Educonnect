@@ -18,7 +18,6 @@ import {
   Bell,
   Brain,
   CalendarDays,
-  Inbox,
   LayoutDashboard,
   LayoutTemplate,
   Library,
@@ -391,14 +390,27 @@ export function demoProgress(state: DemoState) {
   return { total, completed, percent, focusMinutes, weekly, nextTask };
 }
 
-const DEMO_NAV: Array<{ view: DemoView; label: string; icon: LucideIcon }> = [
+type DemoNavItem = {
+  view: DemoView;
+  label: string;
+  icon: LucideIcon;
+};
+
+/**
+ * The demo navigation mirrors the signed-in app's sidebar: one flat, ungrouped
+ * list, the same icons, and the same neutral glyph colour - icons inherit the
+ * row's text colour rather than carrying a per-section hue. Capture lives inside
+ * Second Brain now, exactly as it does in the product, so there is no separate
+ * Smart Intake entry: the capture flow is reached from Home and from Second
+ * Brain, the way the real app reaches it.
+ */
+const DEMO_NAV: DemoNavItem[] = [
   { view: "dashboard", label: "Home", icon: LayoutDashboard },
-  { view: "intake", label: "Smart Intake", icon: Inbox },
+  { view: "brain", label: "Second Brain", icon: Brain },
   { view: "planner", label: "Planner", icon: CalendarDays },
   { view: "resources", label: "Resources", icon: Library },
   { view: "tools", label: "AI Tools", icon: Wrench },
   { view: "templates", label: "Templates", icon: LayoutTemplate },
-  { view: "brain", label: "Second Brain", icon: Brain },
   { view: "community", label: "Community", icon: Users },
   { view: "progress", label: "Progress", icon: TrendingUp },
 ];
@@ -456,8 +468,8 @@ export function DemoApp() {
         </div>
 
         <div className="flex min-h-0 flex-1">
-          <aside className="hidden w-56 shrink-0 flex-col overflow-y-auto border-r border-border-default bg-bg-surface lg:flex">
-            <nav aria-label="Demo navigation" className="p-3">
+          <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto border-r border-border-default bg-bg-surface lg:flex">
+            <nav aria-label="Demo navigation" className="p-3 pt-5">
               <ul className="space-y-0.5">
                 {DEMO_NAV.map((item) => {
                   const isActive = state.view === item.view;
@@ -471,15 +483,20 @@ export function DemoApp() {
                           dispatch({ type: "navigate", view: item.view })
                         }
                         className={cn(
-                          "flex h-10 w-full items-center gap-3 rounded-md px-3 text-body font-medium transition-colors",
+                          "flex h-11 w-full items-center gap-3 rounded-md px-3 text-body font-medium transition-colors",
                           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-focus",
                           isActive
                             ? "bg-brand-primary text-white shadow-glow-sm"
                             : "text-text-secondary hover:bg-bg-interactive hover:text-text-primary",
                         )}
                       >
-                        <item.icon aria-hidden="true" className="size-4" />
-                        {item.label}
+                        <item.icon
+                          aria-hidden="true"
+                          className="size-4.5 shrink-0"
+                        />
+                        <span className="flex-1 truncate text-left">
+                          {item.label}
+                        </span>
                       </button>
                     </li>
                   );

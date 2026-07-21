@@ -158,30 +158,52 @@ export async function createMentorRequest(
   );
 }
 
-export async function listSentRequests(
-  params: Cursor = {},
-): Promise<MentorRequestPage> {
-  const query = toQueryString({
+type RequestFilters = { status?: MentorRequestStatus[] } & Cursor;
+
+function requestQuery(params: RequestFilters): string {
+  return toQueryString({
+    status: params.status?.length ? params.status.join(",") : undefined,
     per_page: params.perPage,
     cursor: params.cursor,
   });
+}
 
+export async function listSentRequests(
+  params: RequestFilters = {},
+): Promise<MentorRequestPage> {
   return requestCollectionSchema.parse(
-    await apiFetch(`/api/v1/mentor-requests${query}`),
+    await apiFetch(`/api/v1/mentor-requests${requestQuery(params)}`),
   );
 }
 
 export async function listIncomingRequests(
-  params: Cursor = {},
+  params: RequestFilters = {},
 ): Promise<MentorRequestPage> {
-  const query = toQueryString({
-    per_page: params.perPage,
-    cursor: params.cursor,
+  return requestCollectionSchema.parse(
+    await apiFetch(`/api/v1/mentor-requests/incoming${requestQuery(params)}`),
+  );
+}
+
+/** The statuses that count as "this student has a mentor". A completed
+ * mentorship still counts: finishing an engagement must not take the student's
+ * mentorship history away from them. */
+export const CONNECTED_MENTOR_STATUSES: MentorRequestStatus[] = [
+  "accepted",
+  "completed",
+];
+
+/** Nav gate: does the caller hold a mentor connection? Asks for a single row and
+ * reads the filtered total from the collection meta, so it never pulls a page of
+ * requests just to answer a boolean. */
+export async function hasAcceptedMentor(): Promise<boolean> {
+  const page = await listSentRequests({
+    status: CONNECTED_MENTOR_STATUSES,
+    perPage: 1,
   });
 
-  return requestCollectionSchema.parse(
-    await apiFetch(`/api/v1/mentor-requests/incoming${query}`),
-  );
+  const total = page.meta.summary?.total;
+
+  return typeof total === "number" ? total > 0 : page.data.length > 0;
 }
 
 export async function transitionMentorRequest(

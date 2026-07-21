@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domains\Intake\Enums\IntakePurpose;
+use App\Domains\Intake\Models\IntakeItem;
 use App\Domains\Resources\Models\Resource;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\Users\Models\User;
@@ -59,5 +61,24 @@ final class KnowledgeItemFactory extends Factory
             'venue' => 'NeurIPS',
             'doi' => '10.48550/arXiv.1706.03762',
         ]);
+    }
+
+    /**
+     * Links the item to the intake capture it came from. The owner is copied
+     * from the intake item because the FK is composite:
+     * (user_id, intake_item_id) -> intake_items(user_id, id). Setting the two
+     * independently violates it.
+     */
+    public function fromIntake(IntakeItem $item): static
+    {
+        return $this->state(fn (): array => [
+            'user_id' => $item->user_id,
+            'intake_item_id' => $item->getKey(),
+        ]);
+    }
+
+    public function purposed(IntakePurpose $purpose): static
+    {
+        return $this->state(fn (): array => ['purpose' => $purpose->value]);
     }
 }

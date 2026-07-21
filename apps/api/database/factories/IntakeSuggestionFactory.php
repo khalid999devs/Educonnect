@@ -50,4 +50,21 @@ final class IntakeSuggestionFactory extends Factory
             'reason' => 'Saving the ingested source link keeps it findable in your workspace.',
         ]);
     }
+
+    public function knowledgeItem(?string $url = 'https://intake.example.edu/spectral-methods.pdf'): static
+    {
+        return $this->state(fn (): array => [
+            'kind' => IntakeSuggestionKind::KnowledgeItem->value,
+            'payload' => [
+                'title' => 'Spectral methods for boundary value problems',
+                'description' => 'A survey chapter the seminar reading list points at.',
+                'due_at' => null,
+                'course_public_id' => null,
+                'url' => $url,
+            ],
+            'schema_version' => 'v2',
+            'confidence' => '0.620',
+            'reason' => 'The reading list names this chapter as required study material.',
+        ]);
+    }
 }

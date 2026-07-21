@@ -17,5 +17,7 @@ return [
         'image/webp' => ['webp'],
         'text/plain' => ['txt'],
         'text/markdown' => ['md', 'markdown'],
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => ['docx'],
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation' => ['pptx'],
     ],
 ];

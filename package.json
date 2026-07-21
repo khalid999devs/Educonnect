@@ -9,6 +9,9 @@
     "pnpm": "11.11.0"
   },
   "scripts": {
+    "start": "pnpm run dev",
+    "dev": "concurrently -k -n api,queue,web,admin -c blue,magenta,green,yellow \"php apps/api/artisan serve\" \"php apps/api/artisan queue:listen --tries=1\" \"pnpm --filter @educonnect/web dev\" \"pnpm --filter @educonnect/admin dev\"",
+    "dev:apps": "concurrently -k -n api,web,admin -c blue,green,yellow \"php apps/api/artisan serve\" \"pnpm --filter @educonnect/web dev\" \"pnpm --filter @educonnect/admin dev\"",
     "versions:check": "node scripts/verify-toolchain.mjs",
     "install:all": "pnpm install --frozen-lockfile && composer --working-dir=apps/api install --no-interaction --prefer-dist --no-progress",
     "format": "pnpm --recursive --if-present run format && composer --working-dir=apps/api exec pint",
@@ -21,5 +24,8 @@
     "build": "pnpm --recursive --if-present run build",
     "audit": "pnpm audit --audit-level=high && composer --working-dir=apps/api audit --locked --no-interaction",
     "check": "pnpm run versions:check && pnpm run format:check && pnpm run analyse && pnpm run contracts:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.3"
   }
 }

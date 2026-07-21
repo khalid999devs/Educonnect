@@ -14,10 +14,54 @@ export const ALLOWED_RESOURCE_MIME_TYPES = [
   "image/webp",
   "text/plain",
   "text/markdown",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ] as const;
 
 export type AllowedResourceMimeType =
   (typeof ALLOWED_RESOURCE_MIME_TYPES)[number];
+
+/** Mirrors `resources.allowed_mime_types` on the API: the browser file picker
+ * filters on both extension and MIME type because some platforms report an empty
+ * type for Office files. */
+export const RESOURCE_FILE_ACCEPT = [
+  ".pdf",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".txt",
+  ".md",
+  ".docx",
+  ".pptx",
+  ...ALLOWED_RESOURCE_MIME_TYPES,
+].join(",");
+
+export const RESOURCE_FILE_ACCEPT_DESCRIPTION =
+  "PDF, Word (.docx), PowerPoint (.pptx), JPEG, PNG, WebP, plain text, or Markdown";
+
+const EXTENSION_MIME_TYPES: Record<string, AllowedResourceMimeType> = {
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+};
+
+/** Resolves the MIME type to declare for a picked file. Browsers report the
+ * OOXML types inconsistently - some platforms hand back an empty string or a
+ * generic zip type for .docx and .pptx - so the extension is the fallback. The
+ * API re-derives and verifies the type server-side either way, so this only
+ * decides which files the picker refuses locally. */
+export function resolveResourceMimeType(file: {
+  name: string;
+  type: string;
+}): string {
+  if ((ALLOWED_RESOURCE_MIME_TYPES as readonly string[]).includes(file.type)) {
+    return file.type;
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+  return EXTENSION_MIME_TYPES[extension] ?? file.type;
+}
 
 export const MAX_RESOURCE_FILE_BYTES = 26_214_400;
 
@@ -34,6 +78,14 @@ export const storedFileSchema = z.object({
 
 export type StoredFile = z.infer<typeof storedFileSchema>;
 
+export const resourceCourseReferenceSchema = z.object({
+  id: z.string(),
+  version: z.number().int().min(1),
+  title: z.string(),
+  code: z.string().nullable(),
+  archive_status: z.enum(["active", "archived"]),
+});
+
 export const resourceSchema = z.object({
   id: z.string(),
   kind: z.enum(["link", "file"]),
@@ -41,15 +93,7 @@ export const resourceSchema = z.object({
   description: z.string().nullable(),
   topic: z.string().nullable(),
   url: z.string().nullable(),
-  course: z
-    .object({
-      id: z.string(),
-      version: z.number().int().min(1),
-      title: z.string(),
-      code: z.string().nullable(),
-      archive_status: z.enum(["active", "archived"]),
-    })
-    .nullable(),
+  course: resourceCourseReferenceSchema.nullable(),
   version: z.number().int().min(1),
   file: storedFileSchema.nullable(),
   created_at: isoDateTime,
@@ -68,6 +112,24 @@ const resourceCollectionSchema = z.object({
     }),
   }),
 });
+
+/** One library bucket: an owned course directory, or the single unfiled bucket. */
+export const resourceDirectorySchema = z.object({
+  kind: z.enum(["course", "unfiled"]),
+  course: resourceCourseReferenceSchema.nullable(),
+  resource_count: z.number().int().min(0),
+});
+
+export type ResourceDirectory = z.infer<typeof resourceDirectorySchema>;
+
+const resourceDirectoryListSchema = z.array(resourceDirectorySchema);
+
+/** Bounded and uncursored: the set is capped by the owner's course roster. */
+export async function listResourceDirectories(): Promise<ResourceDirectory[]> {
+  return resourceDirectoryListSchema.parse(
+    envelopeData(await apiFetch("/api/v1/resources/directories")),
+  );
+}
 
 export const uploadGrantSchema = z.object({
   method: z.literal("PUT"),
@@ -92,13 +154,17 @@ const downloadGrantSchema = z.object({
 
 export type DownloadGrant = z.infer<typeof downloadGrantSchema>;
 
+/** The sentinel `course_id` value selecting resources filed under no course. */
+export const UNFILED_COURSE_ID = "none";
+
 export type ResourceListParams = {
   search?: string;
   kind?: "all" | "link" | "file";
+  /** A course public id, or UNFILED_COURSE_ID for the unfiled bucket. */
   courseId?: string;
   topic?: string;
   fileStatus?: "all" | "pending" | "ready" | "deletion_pending";
-  sort?: "updated_at" | "-updated_at";
+  sort?: "updated_at" | "-updated_at" | "title" | "-title";
   perPage?: number;
   cursor?: string;
 };

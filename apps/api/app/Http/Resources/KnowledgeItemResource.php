@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Domains\Intake\Models\IntakeItem;
 use App\Domains\Resources\Models\Resource;
+use App\Domains\SecondBrain\Enums\KnowledgePurpose;
 use App\Domains\SecondBrain\Models\Collection;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\SecondBrain\Models\KnowledgeLink;
 use App\Domains\SecondBrain\Models\KnowledgeNote;
 use App\Domains\SecondBrain\Models\KnowledgeTag;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,12 +23,19 @@ final class KnowledgeItemResource extends JsonResource
     public function toArray(Request $request): array
     {
         $resource = $this->relationLoaded('resource') ? $this->getRelation('resource') : null;
+        $intakeItem = $this->relationLoaded('intakeItem') ? $this->getRelation('intakeItem') : null;
 
         $payload = [
             'id' => (string) $this->public_id,
             'version' => $this->version,
             'title' => $this->title,
             'summary' => $this->summary,
+            // Null is a real value here: rows captured before purposes existed
+            // have no purpose, which is not the same as any particular one.
+            'purpose' => $this->purposeValue(),
+            // The raw saved_at timestamp stays hidden; the surface only needs to
+            // know whether the item is bookmarked, always as a present boolean.
+            'saved' => $this->getAttribute('saved_at') !== null,
             'source' => [
                 'type' => $this->source_type,
                 'url' => $this->source_url,
@@ -36,6 +44,14 @@ final class KnowledgeItemResource extends JsonResource
                     'title' => (string) $resource->title,
                     'type' => $resource->kind->value,
                 ] : null,
+                /* The capture this item came from, when there was one. It is
+                   how a deep-linked workspace resolves the extracted text to
+                   render, since link captures never produce a Resource and so
+                   have no other join path back to their content. The internal
+                   id stays hidden; only the public id is exposed. */
+                'intake_item_id' => $intakeItem instanceof IntakeItem
+                    ? (string) $intakeItem->public_id
+                    : null,
             ],
             'citation' => [
                 'authors' => $this->authors,
@@ -64,11 +80,14 @@ final class KnowledgeItemResource extends JsonResource
             $payload['links'] = $this->linkSummaries();
         }
 
-        if ($this->relationLoaded('researchTopics')) {
-            $payload['research_topics'] = $this->topicSummaries();
-        }
-
         return $payload;
+    }
+
+    private function purposeValue(): ?string
+    {
+        $purpose = $this->getAttribute('purpose');
+
+        return $purpose instanceof KnowledgePurpose ? $purpose->value : null;
     }
 
     /** @return list<string> */
@@ -134,24 +153,6 @@ final class KnowledgeItemResource extends JsonResource
                         'id' => (string) $link->fromItem->public_id,
                         'title' => (string) $link->fromItem->title,
                     ],
-                ];
-            }
-        }
-
-        return $summaries;
-    }
-
-    /** @return list<array{id: string, title: string, reading_status: string|null}> */
-    private function topicSummaries(): array
-    {
-        $summaries = [];
-        foreach ($this->getRelation('researchTopics') as $topic) {
-            if ($topic instanceof ResearchTopic) {
-                $readingStatus = $topic->getRelationValue('pivot')?->getAttribute('reading_status');
-                $summaries[] = [
-                    'id' => (string) $topic->public_id,
-                    'title' => (string) $topic->title,
-                    'reading_status' => is_string($readingStatus) ? $readingStatus : null,
                 ];
             }
         }

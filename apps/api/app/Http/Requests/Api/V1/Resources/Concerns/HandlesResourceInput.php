@@ -73,11 +73,23 @@ trait HandlesResourceInput
         if (array_keys($values) !== $expectedKeys
             || ! is_bool($values['_pointsToNextItems'] ?? null)
             || ! is_string($sortValue)
-            || ! $this->validCursorTimestamp($sortValue)
+            || ! $this->validCursorValue($definition['value_type'], $sortValue)
             || ! is_string($publicId)
             || preg_match('/^[01234567][0-9abcdefghjkmnpqrstvwxyz]{25}$/D', $publicId) !== 1) {
             $validator->errors()->add('cursor', 'The cursor does not match the requested sort.');
         }
+    }
+
+    /** @param 'timestamp'|'text' $valueType */
+    private function validCursorValue(string $valueType, string $value): bool
+    {
+        if ($valueType === 'text') {
+            return $value !== ''
+                && mb_strlen($value) <= 160
+                && preg_match('/[\x00-\x1F\x7F]/u', $value) !== 1;
+        }
+
+        return $this->validCursorTimestamp($value);
     }
 
     private function validCursorTimestamp(string $value): bool

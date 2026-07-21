@@ -8,18 +8,21 @@ use App\Domains\SecondBrain\Models\Collection;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\SecondBrain\Models\KnowledgeNote;
 use App\Domains\SecondBrain\Models\KnowledgeTag;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use App\Domains\Users\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Tests\Concerns\CreatesRetainedResearchRows;
+use Tests\Concerns\RollsBackDependentMigrations;
 use Tests\TestCase;
 
 final class SecondBrainMigrationTest extends TestCase
 {
+    use CreatesRetainedResearchRows;
     use RefreshDatabase;
+    use RollsBackDependentMigrations;
 
     public function test_identity_and_shape_constraints_are_database_enforced(): void
     {
@@ -27,7 +30,7 @@ final class SecondBrainMigrationTest extends TestCase
         $collection = Collection::factory()->for($user, 'user')->create();
         $item = KnowledgeItem::factory()->for($user, 'user')->create();
         $note = KnowledgeNote::factory()->forItem($item)->create();
-        $topic = ResearchTopic::factory()->for($user, 'user')->create();
+        $topicId = $this->insertResearchTopic((int) $user->getKey());
 
         $this->assertQueryRejected('23514', static fn () => DB::table('collections')
             ->where('id', $collection->getKey())
@@ -57,11 +60,11 @@ final class SecondBrainMigrationTest extends TestCase
             'updated_at' => now('UTC'),
         ]));
         $this->assertQueryRejected('23514', static fn () => DB::table('research_topics')
-            ->where('id', $topic->getKey())
+            ->where('id', $topicId)
             ->update(['keywords' => json_encode(['nested' => 'object'])]));
         $this->assertQueryRejected('23514', static fn () => DB::table('research_topic_sources')->insert([
             'user_id' => $user->getKey(),
-            'research_topic_id' => $topic->getKey(),
+            'research_topic_id' => $topicId,
             'knowledge_item_id' => $item->getKey(),
             'reading_status' => 'skimmed',
             'created_at' => now('UTC'),
@@ -107,7 +110,7 @@ final class SecondBrainMigrationTest extends TestCase
         $other = KnowledgeItem::factory()->for($user, 'user')->create();
         KnowledgeNote::factory()->forItem($item)->create();
         $tag = KnowledgeTag::factory()->for($user, 'user')->create();
-        $topic = ResearchTopic::factory()->for($user, 'user')->create();
+        $topicId = $this->insertResearchTopic((int) $user->getKey());
         DB::table('knowledge_item_tags')->insert([
             'user_id' => $user->getKey(),
             'knowledge_item_id' => $item->getKey(),
@@ -124,14 +127,7 @@ final class SecondBrainMigrationTest extends TestCase
             'to_item_id' => $other->getKey(),
             'relation_type' => 'supports',
         ]);
-        DB::table('research_topic_sources')->insert([
-            'user_id' => $user->getKey(),
-            'research_topic_id' => $topic->getKey(),
-            'knowledge_item_id' => $item->getKey(),
-            'reading_status' => 'to_read',
-            'created_at' => now('UTC'),
-            'updated_at' => now('UTC'),
-        ]);
+        $this->insertResearchTopicSource((int) $user->getKey(), $topicId, (int) $item->getKey());
 
         DB::table('users')->where('id', $user->getKey())->delete();
 
@@ -148,12 +144,17 @@ final class SecondBrainMigrationTest extends TestCase
     {
         $migration = $this->migration();
 
+        // Phase 29 study artifacts and knowledge purposes hang off
+        // knowledge_items(user_id, id), so they lower first.
+        $this->rollBackStudyAndPurposeFoundation();
+
         $migration->down();
         self::assertFalse(Schema::hasTable('knowledge_items'));
         self::assertFalse(Schema::hasTable('collections'));
         self::assertFalse(Schema::hasTable('research_topics'));
 
         $migration->up();
+        $this->restoreStudyAndPurposeFoundation();
         self::assertTrue(Schema::hasTable('knowledge_items'));
 
         $item = KnowledgeItem::factory()->create();

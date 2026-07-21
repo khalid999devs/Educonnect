@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Domains\Intake\Models\IntakeSuggestion;
 use App\Domains\Planner\Models\Task;
 use App\Domains\Resources\Models\Resource;
+use App\Domains\SecondBrain\Models\KnowledgeItem;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,6 +21,9 @@ final class IntakeSuggestionResource extends JsonResource
         $payload = $this->payload;
         $createdTask = $this->relationLoaded('createdTask') ? $this->getRelation('createdTask') : null;
         $createdResource = $this->relationLoaded('createdResource') ? $this->getRelation('createdResource') : null;
+        $createdKnowledgeItem = $this->relationLoaded('createdKnowledgeItem')
+            ? $this->getRelation('createdKnowledgeItem')
+            : null;
 
         return [
             'id' => (string) $this->public_id,
@@ -37,6 +41,9 @@ final class IntakeSuggestionResource extends JsonResource
             'status' => $this->status->value,
             'created_task_id' => $createdTask instanceof Task ? (string) $createdTask->public_id : null,
             'created_resource_id' => $createdResource instanceof Resource ? (string) $createdResource->public_id : null,
+            'created_knowledge_item_id' => $createdKnowledgeItem instanceof KnowledgeItem
+                ? (string) $createdKnowledgeItem->public_id
+                : null,
             'created_at' => $this->timestamp($this->getAttribute('created_at')),
         ];
     }

@@ -14,13 +14,22 @@ import {
   Select,
   Textarea,
 } from "@educonnect/ui";
-import { CheckCircle2, CircleSlash, FileText, ListTodo } from "lucide-react";
+import {
+  BookMarked,
+  CheckCircle2,
+  CircleSlash,
+  FileText,
+  ListTodo,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { Course } from "@/lib/api/courses";
 import type { ConfirmDecision, IntakeSuggestion } from "@/lib/api/intake";
 
+type SuggestionKind = IntakeSuggestion["kind"];
+
 type Draft = {
+  kind: SuggestionKind;
   action: "apply" | "dismiss" | undefined;
   title: string;
   description: string;
@@ -28,6 +37,27 @@ type Draft = {
   course_id: string;
   url: string;
 };
+
+const kindLabel: Record<SuggestionKind, string> = {
+  task: "Suggested task",
+  resource: "Suggested resource",
+  knowledge_item: "Suggested knowledge item",
+};
+
+function KindIcon({ kind }: { kind: SuggestionKind }) {
+  if (kind === "task") {
+    return (
+      <ListTodo aria-hidden="true" className="size-5 text-brand-primary" />
+    );
+  }
+  if (kind === "knowledge_item") {
+    return (
+      <BookMarked aria-hidden="true" className="size-5 text-status-success" />
+    );
+  }
+
+  return <FileText aria-hidden="true" className="size-5 text-status-info" />;
+}
 
 function confidenceLabel(confidence: number): {
   label: string;
@@ -66,6 +96,7 @@ export function IntakeReview({
 
     for (const suggestion of suggestions) {
       map[suggestion.id] = {
+        kind: suggestion.kind,
         action: undefined,
         title: suggestion.proposal.title ?? "",
         description: suggestion.proposal.description ?? "",
@@ -158,20 +189,8 @@ export function IntakeReview({
             <CardHeader className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle className="flex items-center gap-2 text-h4">
-                  {suggestion.kind === "task" ? (
-                    <ListTodo
-                      aria-hidden="true"
-                      className="size-5 text-brand-primary"
-                    />
-                  ) : (
-                    <FileText
-                      aria-hidden="true"
-                      className="size-5 text-status-info"
-                    />
-                  )}
-                  {suggestion.kind === "task"
-                    ? "Suggested task"
-                    : "Suggested resource"}
+                  <KindIcon kind={draft.kind} />
+                  {kindLabel[draft.kind]}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Badge variant={confidence.variant}>
@@ -204,23 +223,28 @@ export function IntakeReview({
                 )}
               </FormField>
 
-              {suggestion.kind === "task" ? (
+              {draft.kind === "resource" ? null : (
+                <FormField
+                  label={draft.kind === "task" ? "Description" : "Summary"}
+                >
+                  {(control) => (
+                    <Textarea
+                      {...control}
+                      value={draft.description}
+                      maxLength={2000}
+                      onChange={(event) =>
+                        setDraft(suggestion.id, {
+                          description: event.target.value,
+                        })
+                      }
+                      disabled={decided}
+                    />
+                  )}
+                </FormField>
+              )}
+
+              {draft.kind === "task" ? (
                 <>
-                  <FormField label="Description">
-                    {(control) => (
-                      <Textarea
-                        {...control}
-                        value={draft.description}
-                        maxLength={2000}
-                        onChange={(event) =>
-                          setDraft(suggestion.id, {
-                            description: event.target.value,
-                          })
-                        }
-                        disabled={decided}
-                      />
-                    )}
-                  </FormField>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <FormField label="Due date">
                       {(control) => (
@@ -262,7 +286,14 @@ export function IntakeReview({
                   </div>
                 </>
               ) : (
-                <FormField label="Link" hint="HTTPS only">
+                <FormField
+                  label="Link"
+                  hint={
+                    draft.kind === "knowledge_item"
+                      ? "HTTPS only, optional"
+                      : "HTTPS only"
+                  }
+                >
                   {(control) => (
                     <Input
                       {...control}

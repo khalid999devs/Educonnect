@@ -8,18 +8,19 @@ use App\Domains\Resources\Models\Resource;
 use App\Domains\SecondBrain\Models\KnowledgeItem;
 use App\Domains\SecondBrain\Models\KnowledgeNote;
 use App\Domains\SecondBrain\Models\KnowledgeTag;
-use App\Domains\SecondBrain\Models\ResearchTopic;
 use App\Domains\Users\Models\User;
 use App\Support\ApiErrorCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\AssertsApiResponses;
+use Tests\Concerns\CreatesRetainedResearchRows;
 use Tests\Feature\SecondBrain\Concerns\InteractsWithSecondBrain;
 use Tests\TestCase;
 
 final class KnowledgeItemLifecycleTest extends TestCase
 {
     use AssertsApiResponses;
+    use CreatesRetainedResearchRows;
     use InteractsWithSecondBrain;
     use RefreshDatabase;
 
@@ -182,7 +183,7 @@ final class KnowledgeItemLifecycleTest extends TestCase
         $other = KnowledgeItem::factory()->for($user, 'user')->create();
         $note = KnowledgeNote::factory()->forItem($item)->create();
         $tag = KnowledgeTag::factory()->for($user, 'user')->create();
-        $topic = ResearchTopic::factory()->for($user, 'user')->create();
+        $topicId = $this->insertResearchTopic((int) $user->getKey());
         DB::table('knowledge_item_tags')->insert([
             'user_id' => $user->getKey(),
             'knowledge_item_id' => $item->getKey(),
@@ -194,14 +195,7 @@ final class KnowledgeItemLifecycleTest extends TestCase
             'to_item_id' => $other->getKey(),
             'relation_type' => 'related',
         ]);
-        DB::table('research_topic_sources')->insert([
-            'user_id' => $user->getKey(),
-            'research_topic_id' => $topic->getKey(),
-            'knowledge_item_id' => $item->getKey(),
-            'reading_status' => 'to_read',
-            'created_at' => now('UTC'),
-            'updated_at' => now('UTC'),
-        ]);
+        $this->insertResearchTopicSource((int) $user->getKey(), $topicId, (int) $item->getKey());
 
         $this->actingAs($user, 'web');
         $this->withHeaders($this->headers())
@@ -214,6 +208,6 @@ final class KnowledgeItemLifecycleTest extends TestCase
         $this->assertDatabaseMissing('research_topic_sources', ['knowledge_item_id' => $item->getKey()]);
         $this->assertDatabaseHas('knowledge_tags', ['id' => $tag->getKey()]);
         $this->assertDatabaseHas('knowledge_items', ['id' => $other->getKey()]);
-        $this->assertDatabaseHas('research_topics', ['id' => $topic->getKey()]);
+        $this->assertDatabaseHas('research_topics', ['id' => $topicId]);
     }
 }

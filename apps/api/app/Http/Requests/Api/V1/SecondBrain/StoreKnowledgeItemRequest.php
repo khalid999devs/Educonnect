@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\SecondBrain;
 
+use App\Domains\SecondBrain\Enums\KnowledgePurpose;
 use App\Domains\SecondBrain\Enums\KnowledgeSourceType;
 use App\Domains\Users\Models\User;
 use App\Http\Requests\Api\V1\SecondBrain\Concerns\HandlesBrainInput;
@@ -48,6 +49,7 @@ class StoreKnowledgeItemRequest extends FormRequest
             'published_year' => ['nullable', 'integer', 'min:1000', 'max:2100'],
             'venue' => ['nullable', 'string', 'max:200', $this->plainSingleLineText()],
             'doi' => ['nullable', 'string', 'max:255', $this->plainSingleLineText()],
+            'purpose' => ['nullable', 'string', Rule::in(KnowledgePurpose::values())],
         ];
     }
 
@@ -56,7 +58,7 @@ class StoreKnowledgeItemRequest extends FormRequest
     {
         return [fn (Validator $validator) => $this->rejectUnknownFields($validator, [
             'title', 'summary', 'source_type', 'resource_id', 'source_url',
-            'authors', 'published_year', 'venue', 'doi',
+            'authors', 'published_year', 'venue', 'doi', 'purpose',
         ])];
     }
 
@@ -71,6 +73,7 @@ class StoreKnowledgeItemRequest extends FormRequest
      *     published_year: ?int,
      *     venue: ?string,
      *     doi: ?string,
+     *     purpose: ?string,
      * }
      */
     public function knowledgeItemData(): array
@@ -89,7 +92,16 @@ class StoreKnowledgeItemRequest extends FormRequest
             'published_year' => $publishedYear === null ? null : (int) $publishedYear,
             'venue' => $this->validated('venue'),
             'doi' => $this->validated('doi'),
+            'purpose' => $this->purpose(),
         ];
+    }
+
+    /** Null means "no purpose recorded", which is not the same as any purpose. */
+    private function purpose(): ?string
+    {
+        $value = $this->validated('purpose');
+
+        return is_string($value) ? $value : null;
     }
 
     protected function prepareForValidation(): void
@@ -104,6 +116,7 @@ class StoreKnowledgeItemRequest extends FormRequest
             'authors' => $this->nullableTrimmed($this->input('authors')),
             'venue' => $this->nullableTrimmed($this->input('venue')),
             'doi' => $this->nullableTrimmed($this->input('doi')),
+            'purpose' => $this->nullableTrimmed($this->input('purpose')),
         ]);
     }
 }

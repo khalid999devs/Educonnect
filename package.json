@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "pnpm run dev",
-    "dev": "concurrently -k -n api,queue,web,admin -c blue,magenta,green,yellow \"php apps/api/artisan serve\" \"php apps/api/artisan queue:listen --tries=1\" \"pnpm --filter @educonnect/web dev\" \"pnpm --filter @educonnect/admin dev\"",
+    "dev": "concurrently -k -n api,queue,web,admin -c blue,magenta,green,yellow \"php apps/api/artisan serve\" \"php apps/api/artisan queue:listen --tries=1 --timeout=0\" \"pnpm --filter @educonnect/web dev\" \"pnpm --filter @educonnect/admin dev\"",
     "dev:apps": "concurrently -k -n api,web,admin -c blue,green,yellow \"php apps/api/artisan serve\" \"pnpm --filter @educonnect/web dev\" \"pnpm --filter @educonnect/admin dev\"",
     "versions:check": "node scripts/verify-toolchain.mjs",
     "install:all": "pnpm install --frozen-lockfile && composer --working-dir=apps/api install --no-interaction --prefer-dist --no-progress",

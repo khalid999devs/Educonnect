@@ -1,0 +1,23 @@
+# The first version in backup/ carries its own .gitignore files.
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Dependencies and builds
+node_modules/
+vendor/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
